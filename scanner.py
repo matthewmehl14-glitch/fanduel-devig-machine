@@ -19,7 +19,8 @@ SPORTS_CONFIG = {
     'basketball_wnba': 'player_points,player_rebounds,player_assists,player_points_rebounds,player_points_rebounds_assists',
     'icehockey_nhl': 'player_points,player_assists,player_shots_on_goal,player_total_saves',
     'icehockey_nhl_preseason': 'player_points,player_assists,player_shots_on_goal,player_total_saves',
-    'americanfootball_nfl': 'player_pass_yds,player_pass_attempts,player_rush_yds,player_rush_attempts,player_reception_yds,player_receptions'
+    'americanfootball_nfl': 'player_pass_yds,player_pass_attempts,player_rush_yds,player_rush_attempts,player_reception_yds,player_receptions',
+    'americanfootball_ncaaf': 'player_pass_yds,player_pass_attempts,player_rush_yds,player_rush_attempts,player_reception_yds,player_receptions'
 }
 
 def american_to_prob(odds):
