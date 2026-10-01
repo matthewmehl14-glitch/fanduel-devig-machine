@@ -66,3 +66,18 @@ Timestamp,Game,Market,Player,Side,Line,Bookmaker,Odds,True Prob %,Edge %,Kelly U
 2026-10-01 15:54:38,Pittsburgh Steelers @ Cleveland Browns,Receptions,KC Concepcion,Under,3.5,Novig,+147,42.8,5.78,1.97,49.15
 2026-10-01 15:54:38,Pittsburgh Steelers @ Cleveland Browns,Receptions,Michael Pittman Jr.,Over,3.5,Novig,+127,45.4,3.10,1.22,30.55
 2026-10-01 15:54:38,Pittsburgh Steelers @ Cleveland Browns,Rush Yds,Travis Homer,Over,6.5,Novig,+104,50.0,2.00,0.96,24.04
+---,=== RUN: 2026-10-01 16:44:23 (14 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
+2026-10-01 16:44:23,Indiana Fever @ Las Vegas Aces,Points Rebounds,Jackie Young,Under,25.5,DraftKings,-109,52.4,0.49,0.27,6.67
+2026-10-01 16:44:23,Indiana Fever @ Las Vegas Aces,Points,Jackie Young,Under,20.5,Novig,+106,48.8,0.46,0.22,5.46
+2026-10-01 16:44:23,Indiana Fever @ Las Vegas Aces,Points,Aliyah Boston,Under,15.5,Novig,+115,46.9,0.92,0.40,9.98
+2026-10-01 16:44:23,Indiana Fever @ Las Vegas Aces,Points Rebounds Assists,Lexie Hull,Under,8.5,Novig,+100,52.4,4.82,2.41,60.21
+2026-10-01 16:44:24,Tampa Bay Lightning @ New York Rangers,Shots On Goal,Pavel Dorofeyev,Over,2.5,theScore Bet,+100,50.8,1.64,0.82,20.51
+2026-10-01 16:44:24,Minnesota Wild @ Nashville Predators,Shots On Goal,Matt Boldy,Over,3.5,theScore Bet,+120,46.9,3.27,1.36,34.01
+2026-10-01 16:44:24,Minnesota Wild @ Nashville Predators,Shots On Goal,Joel Eriksson Ek,Under,2.5,theScore Bet,-105,52.1,1.81,0.95,23.77
+2026-10-01 16:44:24,Minnesota Wild @ Nashville Predators,Shots On Goal,Blake Coleman,Under,2.5,Novig,-138,59.2,2.02,1.39,34.80
+2026-10-01 16:44:24,Seattle Kraken @ Calgary Flames,Shots On Goal,Brandon Montour,Under,2.5,DraftKings,+115,46.5,0.03,0.01,0.35
+2026-10-01 16:44:24,Chicago Blackhawks @ Utah Mammoth,Shots On Goal,Roman Kantserov,Under,1.5,Novig,+115,48.4,3.97,1.72,43.10
+2026-10-01 16:44:24,Florida Panthers @ San Jose Sharks,Shots On Goal,Ivar Stenberg,Under,1.5,theScore Bet,-105,52.6,2.79,1.46,36.58
+2026-10-01 16:44:25,Pittsburgh Steelers @ Cleveland Browns,Reception Yds,Jerry Jeudy,Over,14.5,Novig,+104,50.0,2.00,0.96,24.04
+2026-10-01 16:44:25,Pittsburgh Steelers @ Cleveland Browns,Reception Yds,Denzel Boston,Under,37.5,Novig,+102,50.0,1.00,0.49,12.25
+2026-10-01 16:44:25,Pittsburgh Steelers @ Cleveland Browns,Reception Yds,Jaylen Warren,Under,25.5,Novig,+104,50.0,2.00,0.96,24.04
