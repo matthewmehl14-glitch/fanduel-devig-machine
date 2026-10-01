@@ -116,3 +116,19 @@ Timestamp,Game,Market,Player,Side,Line,Bookmaker,Odds,True Prob %,Edge %,Kelly U
 2026-10-01 20:35:41,Pittsburgh Steelers @ Cleveland Browns,Reception Yds,Quinshon Judkins,Over,11.5,Novig,+108,50.0,4.00,1.85,46.30
 2026-10-01 20:35:41,Pittsburgh Steelers @ Cleveland Browns,Reception Yds,KC Concepcion,Under,35.5,Novig,+102,50.0,1.00,0.49,12.25
 2026-10-01 20:35:41,Pittsburgh Steelers @ Cleveland Browns,Receptions,Blake Whiteheart,Over,0.5,Novig,+108,50.0,4.00,1.85,46.30
+---,=== RUN: 2026-10-01 21:53:46 (15 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
+2026-10-01 21:53:47,Indiana Fever @ Las Vegas Aces,Points,Kelsey Mitchell,Under,24.5,Novig,-108,52.6,1.39,0.75,18.82
+2026-10-01 21:53:47,Indiana Fever @ Las Vegas Aces,Rebounds,A'ja Wilson,Under,10.5,Novig,+106,49.4,1.75,0.83,20.63
+2026-10-01 21:53:47,Buffalo Sabres @ Columbus Blue Jackets,Shots On Goal,Adam Fantilli,Under,2.5,Novig,+108,48.4,0.58,0.27,6.72
+2026-10-01 21:53:47,Buffalo Sabres @ Columbus Blue Jackets,Shots On Goal,Tage Thompson,Over,3.5,Novig,+141,41.5,0.12,0.04,1.04
+2026-10-01 21:53:47,Buffalo Sabres @ Columbus Blue Jackets,Shots On Goal,Conor Garland,Over,1.5,Novig,-125,56.1,0.95,0.59,14.87
+2026-10-01 21:53:47,Philadelphia Flyers @ New Jersey Devils,Shots On Goal,Timo Meier,Over,2.5,theScore Bet,-130,57.3,1.34,0.87,21.70
+2026-10-01 21:53:47,Tampa Bay Lightning @ New York Rangers,Total Saves,Igor Shesterkin,Over,25.5,Novig,+111,48.1,1.46,0.66,16.43
+2026-10-01 21:53:48,Edmonton Oilers @ Vancouver Canucks,Total Saves,Kevin Lankinen,Over,28.5,Novig,+130,46.8,7.58,2.92,72.89
+2026-10-01 21:53:48,Florida Panthers @ San Jose Sharks,Shots On Goal,Aleksander Barkov,Under,1.5,theScore Bet,+170,37.6,1.46,0.43,10.76
+2026-10-01 21:53:48,Florida Panthers @ San Jose Sharks,Shots On Goal,Sam Reinhart,Over,2.5,Novig,+117,49.0,6.30,2.69,67.35
+2026-10-01 21:53:48,Florida Panthers @ San Jose Sharks,Shots On Goal,Seth Jones,Over,1.5,Novig,+100,50.2,0.41,0.20,5.12
+2026-10-01 21:53:49,Pittsburgh Steelers @ Cleveland Browns,Pass Yds,Deshaun Watson,Under,185.5,Novig,+102,50.0,1.00,0.49,12.25
+2026-10-01 21:53:49,Pittsburgh Steelers @ Cleveland Browns,Reception Yds,DK Metcalf,Under,45.5,Novig,+104,50.0,2.00,0.96,24.04
+2026-10-01 21:53:49,Pittsburgh Steelers @ Cleveland Browns,Receptions,Quinshon Judkins,Over,2.5,Novig,+163,39.0,2.47,0.76,18.92
+2026-10-01 21:53:49,Pittsburgh Steelers @ Cleveland Browns,Rush Yds,Aaron Rodgers,Over,0.5,Novig,-122,55.1,0.18,0.11,2.81
