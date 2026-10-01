@@ -70,7 +70,6 @@ def load_seen_plays():
     with open(CSV_FILENAME, mode='r', newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
-            # Skip divider rows and empty records
             player = row.get('Player', '')
             game = row.get('Game', '')
             if not player or player.startswith('---') or game.startswith('==='):
@@ -93,18 +92,15 @@ def log_batch_to_csv(new_plays, run_timestamp):
     with open(CSV_FILENAME, mode='a', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
         
-        # Write headers if starting a fresh file
         if is_empty:
             writer.writerow(['Timestamp', 'Game', 'Market', 'Player', 'Side', 'Line', 'Bookmaker', 'Odds', 'True Prob %', 'Edge %', 'Kelly Units', 'Bet Amount'])
         else:
-            # Visual Divider Row between runs
             writer.writerow([
                 '---',
                 f'=== RUN: {run_timestamp} ({len(new_plays)} PLAYS FOUND) ===',
                 '---', '---', '---', '---', '---', '---', '---', '---', '---', '---'
             ])
 
-        # Write all plays found in this scan
         for play in new_plays:
             writer.writerow([
                 play['timestamp'], play['game'], play['market'], 
@@ -113,23 +109,41 @@ def log_batch_to_csv(new_plays, run_timestamp):
                 play['edge'], play['units'], play['wager']
             ])
 
-def send_discord_alert(play_data):
-    if not DISCORD_WEBHOOK_URL: return
-    embed = {
-        "title": "🚨 +EV Play Detected",
-        "color": 65280,
-        "fields": [
-            {"name": "Game", "value": play_data['game'], "inline": False},
-            {"name": "Play", "value": f"{play_data['player']} {play_data['side']} {play_data['line']} {play_data['market']}", "inline": False},
-            {"name": "Odds & Book", "value": f"{play_data['odds']} at **${play_data['book']}**", "inline": True},
-            {"name": "Edge", "value": f"+{play_data['edge']}%", "inline": True},
-            {"name": "True Prob", "value": f"{play_data['true_prob']}%", "inline": True},
-            {"name": "Recommendation", "value": f"{play_data['units']} Units (${play_data['wager']})", "inline": False}
-        ],
-        "footer": {"text": f"Found at {play_data['timestamp']}"}
-    }
-    try: requests.post(DISCORD_WEBHOOK_URL, json={"embeds": [embed]}, timeout=10)
-    except Exception: pass
+def send_discord_digest(new_plays, run_timestamp):
+    if not DISCORD_WEBHOOK_URL or not new_plays:
+        return
+
+    # Sort descending by edge so top edges appear first
+    sorted_plays = sorted(new_plays, key=lambda x: float(x['edge']), reverse=True)
+
+    # Chunk into groups of 15 to stay well under Discord embed limits
+    chunk_size = 15
+    for chunk_idx in range(0, len(sorted_plays), chunk_size):
+        chunk = sorted_plays[chunk_idx:chunk_idx + chunk_size]
+        
+        lines = []
+        for play in chunk:
+            edge_val = float(play['edge'])
+            icon = "🔥" if edge_val >= 5.0 else ("🟢" if edge_val >= 2.0 else "▫️")
+            
+            line_1 = f"{icon} **+{play['edge']}%** | **{play['player']}** {play['side']} {play['line']} {play['market']}"
+            line_2 = f"↳ **{play['odds']}** @ {play['book']} • **{play['units']}u** (${play['wager']}) • *{play['game']}*"
+            lines.append(f"{line_1}\n{line_2}")
+
+        total_chunks = (len(sorted_plays) + chunk_size - 1) // chunk_size
+        part_tag = f" (Part {chunk_idx // chunk_size + 1}/{total_chunks})" if total_chunks > 1 else ""
+
+        embed = {
+            "title": f"🚨 +EV Prop Digest ({len(sorted_plays)} Plays Found){part_tag}",
+            "description": "\n\n".join(lines),
+            "color": 65280,
+            "footer": {"text": f"Scanned at {run_timestamp} CT • Ranked by Edge %"}
+        }
+
+        try:
+            requests.post(DISCORD_WEBHOOK_URL, json={"embeds": [embed]}, timeout=10)
+        except Exception as e:
+            print(f"Error sending Discord digest: {e}")
 
 def fetch_and_scan():
     if not API_KEY:
@@ -143,7 +157,7 @@ def fetch_and_scan():
     run_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"--- Starting EV Prop Scanner (Run at {run_timestamp}) ---")
     
-    # Define local date range in Central Time
+    # Local Central Time filter
     utc_now = datetime.now(timezone.utc)
     central_time = utc_now - timedelta(hours=5)
     today = central_time.date()
@@ -173,7 +187,6 @@ def fetch_and_scan():
             event_id = event['id']
             game_name = f"{event['away_team']} @ {event['home_team']}"
             
-            # Python Date Filter
             try:
                 commence_time = datetime.strptime(event['commence_time'], '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc)
                 if not (start_local.astimezone(timezone.utc) <= commence_time <= end_local.astimezone(timezone.utc)):
@@ -281,12 +294,12 @@ def fetch_and_scan():
                             
                             seen_plays.add(dedup_key)
                             new_plays_to_log.append(play_data)
-                            send_discord_alert(play_data)
 
     if new_plays_to_log:
         log_batch_to_csv(new_plays_to_log, run_timestamp)
+        send_discord_digest(new_plays_to_log, run_timestamp)
 
-    print(f"Scan complete. Found {edges_found} active edges ({len(new_plays_to_log)} new plays logged).")
+    print(f"Scan complete. Found {edges_found} active edges ({len(new_plays_to_log)} new plays logged & alerted).")
 
 if __name__ == "__main__":
     fetch_and_scan()
