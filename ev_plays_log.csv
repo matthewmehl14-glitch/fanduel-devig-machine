@@ -81,3 +81,24 @@ Timestamp,Game,Market,Player,Side,Line,Bookmaker,Odds,True Prob %,Edge %,Kelly U
 2026-10-01 16:44:25,Pittsburgh Steelers @ Cleveland Browns,Reception Yds,Jerry Jeudy,Over,14.5,Novig,+104,50.0,2.00,0.96,24.04
 2026-10-01 16:44:25,Pittsburgh Steelers @ Cleveland Browns,Reception Yds,Denzel Boston,Under,37.5,Novig,+102,50.0,1.00,0.49,12.25
 2026-10-01 16:44:25,Pittsburgh Steelers @ Cleveland Browns,Reception Yds,Jaylen Warren,Under,25.5,Novig,+104,50.0,2.00,0.96,24.04
+---,=== RUN: 2026-10-01 18:42:45 (20 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
+2026-10-01 18:42:45,Indiana Fever @ Las Vegas Aces,Points,Lexie Hull,Under,4.5,DraftKings,+101,50.0,0.50,0.25,6.19
+2026-10-01 18:42:45,Indiana Fever @ Las Vegas Aces,Points Rebounds Assists,Jewell Loyd,Under,12.5,DraftKings,-111,52.8,0.40,0.22,5.52
+2026-10-01 18:42:45,Indiana Fever @ Las Vegas Aces,Assists,Aliyah Boston,Over,3.5,Novig,+111,47.6,0.42,0.19,4.71
+2026-10-01 18:42:45,Indiana Fever @ Las Vegas Aces,Points,Chelsea Gray,Under,12.5,Novig,+100,50.8,1.64,0.82,20.51
+2026-10-01 18:42:45,Indiana Fever @ Las Vegas Aces,Points,Kelsey Mitchell,Over,24.5,Novig,+111,49.2,3.77,1.70,42.44
+2026-10-01 18:42:45,Indiana Fever @ Las Vegas Aces,Rebounds,Cheyenne Parker-Tyus,Under,3.5,Novig,-106,52.4,1.85,0.98,24.52
+2026-10-01 18:42:45,Buffalo Sabres @ Columbus Blue Jackets,Total Saves,Ukko-Pekka Luukkonen,Under,25.5,theScore Bet,+100,50.6,1.21,0.61,15.17
+2026-10-01 18:42:45,Buffalo Sabres @ Columbus Blue Jackets,Total Saves,Jet Greaves,Over,25.5,Novig,+100,50.6,1.21,0.61,15.17
+2026-10-01 18:42:45,Tampa Bay Lightning @ New York Rangers,Shots On Goal,Jake Guentzel,Over,2.5,DraftKings,-105,51.2,0.02,0.01,0.31
+2026-10-01 18:42:46,Minnesota Wild @ Nashville Predators,Shots On Goal,Ryan O'Reilly,Under,1.5,DraftKings,+125,44.7,0.48,0.19,4.76
+2026-10-01 18:42:46,Minnesota Wild @ Nashville Predators,Shots On Goal,Steven Stamkos,Over,2.5,Novig,-104,51.6,1.30,0.68,16.92
+2026-10-01 18:42:46,Minnesota Wild @ Nashville Predators,Total Saves,Juuse Saros,Over,25.5,Novig,+104,50.0,2.00,0.96,24.04
+2026-10-01 18:42:46,Edmonton Oilers @ Vancouver Canucks,Shots On Goal,Vasily Podkolzin,Over,2.5,Novig,+120,46.9,3.27,1.36,34.01
+2026-10-01 18:42:46,Florida Panthers @ San Jose Sharks,Total Saves,Yaroslav Askarov,Under,25.5,theScore Bet,-105,51.4,0.39,0.20,5.10
+2026-10-01 18:42:46,Pittsburgh Steelers @ Cleveland Browns,Reception Yds,Darnell Washington,Under,16.5,Novig,+104,50.0,2.00,0.96,24.04
+2026-10-01 18:42:46,Pittsburgh Steelers @ Cleveland Browns,Reception Yds,Raheim Sanders,Under,11.5,Novig,+102,50.0,1.00,0.49,12.25
+2026-10-01 18:42:46,Pittsburgh Steelers @ Cleveland Browns,Reception Yds,Germie Bernard,Under,9.5,Novig,-106,51.9,0.82,0.43,10.81
+2026-10-01 18:42:46,Pittsburgh Steelers @ Cleveland Browns,Receptions,DK Metcalf,Under,3.5,Novig,+130,44.9,3.25,1.25,31.28
+2026-10-01 18:42:46,Pittsburgh Steelers @ Cleveland Browns,Receptions,Quinshon Judkins,Under,2.5,Novig,-156,61.0,0.17,0.13,3.25
+2026-10-01 18:42:46,Pittsburgh Steelers @ Cleveland Browns,Receptions,Pat Freiermuth,Over,3.5,Novig,+147,40.6,0.38,0.13,3.25
