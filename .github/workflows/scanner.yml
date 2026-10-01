@@ -32,9 +32,15 @@ jobs:
         run: |
           git config --global user.name "EV-Scanner-Bot"
           git config --global user.email "bot@example.com"
-          git add ev_plays_log.csv
-          if ! git diff --quiet --cached; then
-            git commit -m "Auto-log new EV plays"
-            git pull origin main --rebase
-            git push
+          
+          # Only attempt to add and commit if the CSV file was actually created
+          if [ -f ev_plays_log.csv ]; then
+            git add ev_plays_log.csv
+            if ! git diff --quiet --cached; then
+              git commit -m "Auto-log new EV plays"
+              git pull origin main --rebase
+              git push
+            fi
+          else
+            echo "No edges found. CSV was not created, skipping commit."
           fi
