@@ -15,10 +15,11 @@ KS_BOOKS = 'fanduel,draftkings,betmgm,caesars,espnbet,novig'
 ALLOWED_BOOKS = set(KS_BOOKS.split(','))
 CSV_FILENAME = 'ev_plays_log.csv'
 
+# CORRECTED: player_total_saves is the exact Odds API string
 SPORTS_CONFIG = {
     'basketball_wnba': 'player_points,player_rebounds,player_assists,player_points_rebounds,player_points_rebounds_assists',
-    'icehockey_nhl': 'player_points,player_assists,player_shots_on_goal,player_saves',
-    'icehockey_nhl_preseason': 'player_points,player_assists,player_shots_on_goal,player_saves',
+    'icehockey_nhl': 'player_points,player_assists,player_shots_on_goal,player_total_saves',
+    'icehockey_nhl_preseason': 'player_points,player_assists,player_shots_on_goal,player_total_saves',
     'americanfootball_nfl': 'player_pass_yds,player_pass_attempts,player_rush_yds,player_rush_attempts,player_reception_yds,player_receptions'
 }
 
@@ -70,13 +71,14 @@ def load_seen_plays():
     with open(CSV_FILENAME, mode='r', newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
+            # STRICT DEDUP: Only looks at Game, Market, Player, Side, and Line. 
+            # Ignores odds and bookmaker completely to stop spam.
             key = (
                 row.get('Game', '').strip().lower(),
                 row.get('Market', '').strip().lower(),
                 normalize_name(row.get('Player', '')),
                 row.get('Side', '').strip().lower(),
-                str(row.get('Line', '')).strip(),
-                str(row.get('Odds', '')).strip() 
+                str(row.get('Line', '')).strip()
             )
             seen.add(key)
     return seen
@@ -151,7 +153,7 @@ def fetch_and_scan():
             event_id = event['id']
             game_name = f"{event['away_team']} @ {event['home_team']}"
             
-            # Python Date Filter - Ignore future/past games safely
+            # Python Date Filter
             try:
                 commence_time = datetime.strptime(event['commence_time'], '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc)
                 if not (start_local.astimezone(timezone.utc) <= commence_time <= end_local.astimezone(timezone.utc)):
@@ -238,8 +240,7 @@ def fetch_and_scan():
                                 m_display.strip().lower(), 
                                 normalize_name(raw_player), 
                                 side.strip().lower(), 
-                                str(pt).strip(), 
-                                formatted_odds
+                                str(pt).strip()
                             )
                             if dedup_key in seen_plays: continue
 
