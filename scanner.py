@@ -10,12 +10,11 @@ API_KEY = os.environ.get('ODDS_API_KEY')
 DISCORD_WEBHOOK_URL = os.environ.get('DISCORD_WEBHOOK_URL')
 UNIT_SIZE = 25.00
 
-# Strict list of approved bookmaker keys
+# Approved Kansas books
 KS_BOOKS = 'fanduel,draftkings,betmgm,caesars,espnbet,novig'
 ALLOWED_BOOKS = set(KS_BOOKS.split(','))
 CSV_FILENAME = 'ev_plays_log.csv'
 
-# CORRECTED: player_total_saves is the exact Odds API string
 SPORTS_CONFIG = {
     'basketball_wnba': 'player_points,player_rebounds,player_assists,player_points_rebounds,player_points_rebounds_assists',
     'icehockey_nhl': 'player_points,player_assists,player_shots_on_goal,player_total_saves',
@@ -71,30 +70,48 @@ def load_seen_plays():
     with open(CSV_FILENAME, mode='r', newline='', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
-            # STRICT DEDUP: Only looks at Game, Market, Player, Side, and Line. 
-            # Ignores odds and bookmaker completely to stop spam.
+            # Skip divider rows and empty records
+            player = row.get('Player', '')
+            game = row.get('Game', '')
+            if not player or player.startswith('---') or game.startswith('==='):
+                continue
+                
             key = (
-                row.get('Game', '').strip().lower(),
+                game.strip().lower(),
                 row.get('Market', '').strip().lower(),
-                normalize_name(row.get('Player', '')),
+                normalize_name(player),
                 row.get('Side', '').strip().lower(),
                 str(row.get('Line', '')).strip()
             )
             seen.add(key)
     return seen
 
-def log_to_csv(play_data):
+def log_batch_to_csv(new_plays, run_timestamp):
     file_exists = os.path.isfile(CSV_FILENAME)
+    is_empty = not file_exists or os.path.getsize(CSV_FILENAME) == 0
+
     with open(CSV_FILENAME, mode='a', newline='', encoding='utf-8') as file:
         writer = csv.writer(file)
-        if not file_exists:
+        
+        # Write headers if starting a fresh file
+        if is_empty:
             writer.writerow(['Timestamp', 'Game', 'Market', 'Player', 'Side', 'Line', 'Bookmaker', 'Odds', 'True Prob %', 'Edge %', 'Kelly Units', 'Bet Amount'])
-        writer.writerow([
-            play_data['timestamp'], play_data['game'], play_data['market'], 
-            play_data['player'], play_data['side'], play_data['line'], 
-            play_data['book'], play_data['odds'], play_data['true_prob'], 
-            play_data['edge'], play_data['units'], play_data['wager']
-        ])
+        else:
+            # Visual Divider Row between runs
+            writer.writerow([
+                '---',
+                f'=== RUN: {run_timestamp} ({len(new_plays)} PLAYS FOUND) ===',
+                '---', '---', '---', '---', '---', '---', '---', '---', '---', '---'
+            ])
+
+        # Write all plays found in this scan
+        for play in new_plays:
+            writer.writerow([
+                play['timestamp'], play['game'], play['market'], 
+                play['player'], play['side'], play['line'], 
+                play['book'], play['odds'], play['true_prob'], 
+                play['edge'], play['units'], play['wager']
+            ])
 
 def send_discord_alert(play_data):
     if not DISCORD_WEBHOOK_URL: return
@@ -104,7 +121,7 @@ def send_discord_alert(play_data):
         "fields": [
             {"name": "Game", "value": play_data['game'], "inline": False},
             {"name": "Play", "value": f"{play_data['player']} {play_data['side']} {play_data['line']} {play_data['market']}", "inline": False},
-            {"name": "Odds & Book", "value": f"{play_data['odds']} at **{play_data['book']}**", "inline": True},
+            {"name": "Odds & Book", "value": f"{play_data['odds']} at **${play_data['book']}**", "inline": True},
             {"name": "Edge", "value": f"+{play_data['edge']}%", "inline": True},
             {"name": "True Prob", "value": f"{play_data['true_prob']}%", "inline": True},
             {"name": "Recommendation", "value": f"{play_data['units']} Units (${play_data['wager']})", "inline": False}
@@ -120,10 +137,13 @@ def fetch_and_scan():
         return
         
     seen_plays = load_seen_plays()
-    edges_found, new_alerts = 0, 0
-    print(f"--- Starting EV Prop Scanner (Python Timezone Filter) ---")
+    new_plays_to_log = []
+    edges_found = 0
     
-    # Strictly define Today in Central Time
+    run_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"--- Starting EV Prop Scanner (Run at {run_timestamp}) ---")
+    
+    # Define local date range in Central Time
     utc_now = datetime.now(timezone.utc)
     central_time = utc_now - timedelta(hours=5)
     today = central_time.date()
@@ -260,11 +280,13 @@ def fetch_and_scan():
                             }
                             
                             seen_plays.add(dedup_key)
-                            log_to_csv(play_data)
+                            new_plays_to_log.append(play_data)
                             send_discord_alert(play_data)
-                            new_alerts += 1
 
-    print(f"Scan complete. Found {edges_found} active edges ({new_alerts} new alerts triggered).")
+    if new_plays_to_log:
+        log_batch_to_csv(new_plays_to_log, run_timestamp)
+
+    print(f"Scan complete. Found {edges_found} active edges ({len(new_plays_to_log)} new plays logged).")
 
 if __name__ == "__main__":
     fetch_and_scan()
