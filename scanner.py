@@ -3,10 +3,9 @@ import re
 import csv
 import requests
 import unicodedata
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from difflib import SequenceMatcher
 
-# Setup
 API_KEY = os.environ.get('ODDS_API_KEY')
 DISCORD_WEBHOOK_URL = os.environ.get('DISCORD_WEBHOOK_URL')
 UNIT_SIZE = 25.00
@@ -19,13 +18,11 @@ SPORTS_CONFIG = {
 }
 
 def american_to_prob(odds):
-    if odds < 0:
-        return abs(odds) / (abs(odds) + 100)
+    if odds < 0: return abs(odds) / (abs(odds) + 100)
     return 100 / (odds + 100)
 
 def american_to_decimal(odds):
-    if odds > 0:
-        return (odds / 100) + 1
+    if odds > 0: return (odds / 100) + 1
     return (100 / abs(odds)) + 1
 
 def format_market_name(market_key):
@@ -113,31 +110,45 @@ def send_discord_alert(play_data):
 def fetch_and_scan():
     seen_plays = load_seen_plays()
     edges_found, new_alerts = 0, 0
-    print(f"--- Starting EV Prop Scanner (Manual Mode) ---")
+    print(f"--- Starting EV Prop Scanner (Today Only) ---")
+    
+    utc_now = datetime.now(timezone.utc)
+    central_time = utc_now - timedelta(hours=5)
+    today = central_time.date()
+    
+    start_local = datetime(today.year, today.month, today.day, 0, 0, 0, tzinfo=timezone(timedelta(hours=-5)))
+    end_local = datetime(today.year, today.month, today.day, 23, 59, 59, tzinfo=timezone(timedelta(hours=-5)))
+    
+    commence_from = start_local.astimezone(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+    commence_to = end_local.astimezone(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
     
     for sport, markets in SPORTS_CONFIG.items():
         print(f"\nFetching Schedule for {sport}...")
         
-        # STEP 1: Fetch the active games schedule first
         events_url = f'https://api.the-odds-api.com/v4/sports/{sport}/events'
+        events_params = {
+            'apiKey': API_KEY,
+            'commenceTimeFrom': commence_from,
+            'commenceTimeTo': commence_to
+        }
+        
         try:
-            events_res = requests.get(events_url, params={'apiKey': API_KEY}, timeout=15)
-        except Exception as e:
+            events_res = requests.get(events_url, params=events_params, timeout=15)
+        except Exception:
             continue
             
         if events_res.status_code != 200: continue
         events = events_res.json()
         
-        # STEP 2: Fetch props for EACH specific game independently 
         for event in events:
             event_id = event['id']
             game_name = f"{event['away_team']} @ {event['home_team']}"
             
             odds_url = f'https://api.the-odds-api.com/v4/sports/{sport}/events/{event_id}/odds'
-            params = {'apiKey': API_KEY, 'regions': 'us,us_ex', 'markets': markets, 'bookmakers': KS_BOOKS, 'oddsFormat': 'american'}
+            odds_params = {'apiKey': API_KEY, 'regions': 'us,us_ex', 'markets': markets, 'bookmakers': KS_BOOKS, 'oddsFormat': 'american'}
             
             try:
-                odds_res = requests.get(odds_url, params=params, timeout=15)
+                odds_res = requests.get(odds_url, params=odds_params, timeout=15)
             except Exception: continue
                 
             if odds_res.status_code != 200: continue
@@ -201,8 +212,11 @@ def fetch_and_scan():
                             if dedup_key in seen_plays: continue
 
                             b = dec_odds - 1
-                            kelly = (true_prob * b - (1 - true_prob)) / b
-                            dollar_wager = (kelly / 2) * UNIT_SIZE
+                            kelly_decimal = (true_prob * b - (1 - true_prob)) / b
+                            
+                            kelly_units = kelly_decimal * 100
+                            half_kelly_units = kelly_units / 2
+                            dollar_wager = half_kelly_units * UNIT_SIZE
                             formatted_odds = f"+{avail_odds}" if avail_odds > 0 else str(avail_odds)
                             
                             play_data = {
@@ -210,7 +224,7 @@ def fetch_and_scan():
                                 'game': game_name, 'market': m_display, 'player': raw_player,
                                 'side': side, 'line': pt, 'book': book_name, 'odds': formatted_odds,
                                 'true_prob': f"{true_prob * 100:.1f}", 'edge': f"{edge * 100:.2f}",
-                                'units': f"{kelly/2:.2f}", 'wager': f"{dollar_wager:.2f}"
+                                'units': f"{half_kelly_units:.2f}", 'wager': f"{dollar_wager:.2f}"
                             }
                             
                             seen_plays.add(dedup_key)
