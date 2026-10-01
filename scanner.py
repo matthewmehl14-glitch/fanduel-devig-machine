@@ -9,13 +9,16 @@ from difflib import SequenceMatcher
 API_KEY = os.environ.get('ODDS_API_KEY')
 DISCORD_WEBHOOK_URL = os.environ.get('DISCORD_WEBHOOK_URL')
 UNIT_SIZE = 25.00
+
+# Strict list of approved bookmaker keys
 KS_BOOKS = 'fanduel,draftkings,betmgm,caesars,espnbet,novig'
+ALLOWED_BOOKS = set(KS_BOOKS.split(','))
 CSV_FILENAME = 'ev_plays_log.csv'
 
 SPORTS_CONFIG = {
     'basketball_wnba': 'player_points,player_rebounds,player_assists,player_points_rebounds,player_points_rebounds_assists',
-    'icehockey_nhl': 'player_points,player_shots_on_goal,player_saves',
-    'icehockey_nhl_preseason': 'player_points,player_shots_on_goal,player_saves',
+    'icehockey_nhl': 'player_points,player_assists,player_shots_on_goal,player_saves',
+    'icehockey_nhl_preseason': 'player_points,player_assists,player_shots_on_goal,player_saves',
     'americanfootball_nfl': 'player_pass_yds,player_pass_attempts,player_rush_yds,player_rush_attempts,player_reception_yds,player_receptions'
 }
 
@@ -73,7 +76,7 @@ def load_seen_plays():
                 normalize_name(row.get('Player', '')),
                 row.get('Side', '').strip().lower(),
                 str(row.get('Line', '')).strip(),
-                row.get('Bookmaker', '').strip().lower()
+                str(row.get('Odds', '')).strip() 
             )
             seen.add(key)
     return seen
@@ -110,10 +113,15 @@ def send_discord_alert(play_data):
     except Exception: pass
 
 def fetch_and_scan():
+    if not API_KEY:
+        print("CRITICAL ERROR: API Key missing.")
+        return
+        
     seen_plays = load_seen_plays()
     edges_found, new_alerts = 0, 0
-    print(f"--- Starting EV Prop Scanner (Today Only) ---")
+    print(f"--- Starting EV Prop Scanner (Python Timezone Filter) ---")
     
+    # Strictly define Today in Central Time
     utc_now = datetime.now(timezone.utc)
     central_time = utc_now - timedelta(hours=5)
     today = central_time.date()
@@ -121,43 +129,55 @@ def fetch_and_scan():
     start_local = datetime(today.year, today.month, today.day, 0, 0, 0, tzinfo=timezone(timedelta(hours=-5)))
     end_local = datetime(today.year, today.month, today.day, 23, 59, 59, tzinfo=timezone(timedelta(hours=-5)))
     
-    commence_from = start_local.astimezone(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
-    commence_to = end_local.astimezone(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
-    
     for sport, markets in SPORTS_CONFIG.items():
         print(f"\nFetching Schedule for {sport}...")
         
         events_url = f'https://api.the-odds-api.com/v4/sports/{sport}/events'
-        events_params = {
-            'apiKey': API_KEY,
-            'commenceTimeFrom': commence_from,
-            'commenceTimeTo': commence_to
-        }
+        events_params = {'apiKey': API_KEY}
         
         try:
             events_res = requests.get(events_url, params=events_params, timeout=15)
-        except Exception:
+        except Exception as e:
+            print(f"Network error fetching events: {e}")
             continue
             
-        if events_res.status_code != 200: continue
+        if events_res.status_code != 200:
+            print(f"API Error fetching schedule for {sport}: {events_res.text}")
+            continue
+            
         events = events_res.json()
         
         for event in events:
             event_id = event['id']
             game_name = f"{event['away_team']} @ {event['home_team']}"
             
+            # Python Date Filter - Ignore future/past games safely
+            try:
+                commence_time = datetime.strptime(event['commence_time'], '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc)
+                if not (start_local.astimezone(timezone.utc) <= commence_time <= end_local.astimezone(timezone.utc)):
+                    continue
+            except Exception:
+                pass
+            
             odds_url = f'https://api.the-odds-api.com/v4/sports/{sport}/events/{event_id}/odds'
             odds_params = {'apiKey': API_KEY, 'regions': 'us,us_ex', 'markets': markets, 'bookmakers': KS_BOOKS, 'oddsFormat': 'american'}
             
             try:
                 odds_res = requests.get(odds_url, params=odds_params, timeout=15)
-            except Exception: continue
+            except Exception as e: 
+                print(f"Network error on {game_name}: {e}")
+                continue
                 
-            if odds_res.status_code != 200: continue
+            if odds_res.status_code != 200: 
+                print(f"API Error fetching odds for {game_name} ({sport}): {odds_res.text}")
+                continue
+                
             event_data = odds_res.json()
             
             fd_props = {}
             for book in event_data.get('bookmakers', []):
+                if book['key'] not in ALLOWED_BOOKS: continue
+                
                 if book['key'] == 'fanduel':
                     for market in book.get('markets', []):
                         m_key = market['key']
@@ -181,6 +201,7 @@ def fetch_and_scan():
                         true_probs[m_key][(player, pt)] = {'Over': p_over / (p_over + p_under), 'Under': p_under / (p_over + p_under)}
 
             for book in event_data.get('bookmakers', []):
+                if book['key'] not in ALLOWED_BOOKS: continue
                 if book['key'] == 'fanduel': continue
                 book_name = book['title']
                 
@@ -210,7 +231,16 @@ def fetch_and_scan():
                         if edge > 0:
                             edges_found += 1
                             m_display = format_market_name(m_key)
-                            dedup_key = (game_name.strip().lower(), m_display.strip().lower(), normalize_name(raw_player), side.strip().lower(), str(pt).strip(), book_name.strip().lower())
+                            formatted_odds = f"+{avail_odds}" if avail_odds > 0 else str(avail_odds)
+                            
+                            dedup_key = (
+                                game_name.strip().lower(), 
+                                m_display.strip().lower(), 
+                                normalize_name(raw_player), 
+                                side.strip().lower(), 
+                                str(pt).strip(), 
+                                formatted_odds
+                            )
                             if dedup_key in seen_plays: continue
 
                             b = dec_odds - 1
@@ -219,7 +249,6 @@ def fetch_and_scan():
                             kelly_units = kelly_decimal * 100
                             half_kelly_units = kelly_units / 2
                             dollar_wager = half_kelly_units * UNIT_SIZE
-                            formatted_odds = f"+{avail_odds}" if avail_odds > 0 else str(avail_odds)
                             
                             play_data = {
                                 'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
