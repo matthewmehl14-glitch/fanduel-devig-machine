@@ -114,10 +114,8 @@ def send_discord_digest(new_plays, run_timestamp):
     if not DISCORD_WEBHOOK_URL or not new_plays:
         return
 
-    # Sort descending by edge so top edges appear first
     sorted_plays = sorted(new_plays, key=lambda x: float(x['edge']), reverse=True)
 
-    # Chunk into groups of 15 to stay well under Discord embed limits
     chunk_size = 15
     for chunk_idx in range(0, len(sorted_plays), chunk_size):
         chunk = sorted_plays[chunk_idx:chunk_idx + chunk_size]
@@ -158,7 +156,6 @@ def fetch_and_scan():
     run_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"--- Starting EV Prop Scanner (Run at {run_timestamp}) ---")
     
-    # Local Central Time filter
     utc_now = datetime.now(timezone.utc)
     central_time = utc_now - timedelta(hours=5)
     today = central_time.date()
@@ -194,6 +191,9 @@ def fetch_and_scan():
                     continue
             except Exception:
                 pass
+            
+            # --- VISIBILITY LOG ADDED HERE ---
+            print(f"  -> Scanning {game_name}...")
             
             odds_url = f'https://api.the-odds-api.com/v4/sports/{sport}/events/{event_id}/odds'
             odds_params = {'apiKey': API_KEY, 'regions': 'us,us_ex', 'markets': markets, 'bookmakers': KS_BOOKS, 'oddsFormat': 'american'}
