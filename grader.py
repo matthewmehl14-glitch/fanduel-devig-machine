@@ -50,7 +50,14 @@ def fetch_recent_boxscores():
     print("Fetching ESPN box scores from the last 3 days...")
     boxscores = []
     seen_events = set()
-    sports = [('basketball', 'wnba'), ('hockey', 'nhl'), ('football', 'nfl')]
+    
+    sports = [
+        ('basketball', 'wnba'), 
+        ('hockey', 'nhl'), 
+        ('football', 'nfl'),
+        ('football', 'college-football')
+    ]
+    
     dates_to_check = [(datetime.now() - timedelta(days=i)).strftime('%Y%m%d') for i in range(3)]
     
     for sport, league in sports:
