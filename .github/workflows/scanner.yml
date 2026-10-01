@@ -1,8 +1,6 @@
 name: EV Odds Scanner
 
 on:
-  schedule:
-    - cron: '*/30 * * * *' 
   workflow_dispatch: 
 
 permissions:
@@ -33,7 +31,6 @@ jobs:
           git config --global user.name "EV-Scanner-Bot"
           git config --global user.email "bot@example.com"
           
-          # Only attempt to add and commit if the CSV file was actually created
           if [ -f ev_plays_log.csv ]; then
             git add ev_plays_log.csv
             if ! git diff --quiet --cached; then
