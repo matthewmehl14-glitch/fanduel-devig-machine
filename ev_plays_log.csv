@@ -47,3 +47,22 @@ Timestamp,Game,Market,Player,Side,Line,Bookmaker,Odds,True Prob %,Edge %,Kelly U
 2026-10-01 14:24:47,Pittsburgh Steelers @ Cleveland Browns,Rush Yds,Quinshon Judkins,Under,55.5,Novig,+102,50.0,1.00,0.49,12.25
 2026-10-01 14:24:47,Pittsburgh Steelers @ Cleveland Browns,Rush Yds,KC Concepcion,Over,0.5,Novig,+115,46.7,0.39,0.17,4.19
 2026-10-01 14:24:47,Pittsburgh Steelers @ Cleveland Browns,Receptions,Germie Bernard,Over,1.5,theScore Bet,+180,36.8,2.92,0.81,20.26
+---,=== RUN: 2026-10-01 15:54:36 (18 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
+2026-10-01 15:54:37,Indiana Fever @ Las Vegas Aces,Points Rebounds,Raven Johnson,Over,7.5,DraftKings,-113,53.2,0.33,0.19,4.64
+2026-10-01 15:54:37,Indiana Fever @ Las Vegas Aces,Assists,Chelsea Gray,Under,6.5,Novig,-102,50.6,0.22,0.11,2.82
+2026-10-01 15:54:37,Indiana Fever @ Las Vegas Aces,Points,Sophie Cunningham,Under,5.5,Novig,+108,48.4,0.58,0.27,6.72
+2026-10-01 15:54:37,Indiana Fever @ Las Vegas Aces,Rebounds,Chelsea Gray,Under,3.5,Novig,-138,60.1,3.60,2.48,62.04
+2026-10-01 15:54:37,Buffalo Sabres @ Columbus Blue Jackets,Shots On Goal,Tage Thompson,Under,3.5,theScore Bet,-135,58.8,2.42,1.63,40.78
+2026-10-01 15:54:37,Buffalo Sabres @ Columbus Blue Jackets,Shots On Goal,Jack Quinn,Under,2.5,theScore Bet,-105,51.2,0.02,0.01,0.31
+2026-10-01 15:54:37,Philadelphia Flyers @ New Jersey Devils,Shots On Goal,Jesper Bratt,Over,2.5,DraftKings,+140,41.7,0.09,0.03,0.85
+2026-10-01 15:54:37,Philadelphia Flyers @ New Jersey Devils,Shots On Goal,Luke Hughes,Over,2.5,theScore Bet,+170,38.2,3.15,0.93,23.17
+2026-10-01 15:54:37,Philadelphia Flyers @ New Jersey Devils,Shots On Goal,Dougie Hamilton,Over,2.5,theScore Bet,+130,43.9,1.01,0.39,9.67
+2026-10-01 15:54:37,Tampa Bay Lightning @ New York Rangers,Shots On Goal,Oliver Bjorkstrand,Over,1.5,DraftKings,+105,49.2,0.82,0.39,9.74
+2026-10-01 15:54:37,Tampa Bay Lightning @ New York Rangers,Shots On Goal,John Carlson,Under,1.5,theScore Bet,+170,37.8,2.19,0.64,16.10
+2026-10-01 15:54:38,Seattle Kraken @ Calgary Flames,Shots On Goal,Jordan Eberle,Over,1.5,theScore Bet,-160,62.4,1.43,1.15,28.69
+2026-10-01 15:54:38,Edmonton Oilers @ Vancouver Canucks,Shots On Goal,Elias Pettersson,Under,1.5,theScore Bet,+150,41.2,2.91,0.97,24.27
+2026-10-01 15:54:38,Pittsburgh Steelers @ Cleveland Browns,Reception Yds,Raheim Sanders,Over,11.5,Novig,+102,50.0,1.00,0.49,12.25
+2026-10-01 15:54:38,Pittsburgh Steelers @ Cleveland Browns,Reception Yds,Roman Wilson,Under,19.5,Novig,+111,50.0,5.50,2.48,61.94
+2026-10-01 15:54:38,Pittsburgh Steelers @ Cleveland Browns,Receptions,KC Concepcion,Under,3.5,Novig,+147,42.8,5.78,1.97,49.15
+2026-10-01 15:54:38,Pittsburgh Steelers @ Cleveland Browns,Receptions,Michael Pittman Jr.,Over,3.5,Novig,+127,45.4,3.10,1.22,30.55
+2026-10-01 15:54:38,Pittsburgh Steelers @ Cleveland Browns,Rush Yds,Travis Homer,Over,6.5,Novig,+104,50.0,2.00,0.96,24.04
