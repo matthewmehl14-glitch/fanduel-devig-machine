@@ -269,3 +269,6 @@ Timestamp,Game,Market,Player,Side,Line,Bookmaker,Odds,True Prob %,Edge %,Kelly U
 2026-10-02 22:56:22,Dallas Wings @ Golden State Valkyries,Points Rebounds Assists,Gabby Williams,Under,26.5,Novig,+108,48.1,0.02,0.01,0.19
 2026-10-02 22:56:22,Washington Capitals @ Carolina Hurricanes,Shots On Goal,Alex Ovechkin,Under,2.5,theScore Bet,-105,51.2,0.02,0.01,0.31
 2026-10-02 22:56:23,Boston Bruins @ Winnipeg Jets,Shots On Goal,Gabriel Vilardi,Over,1.5,Novig,-120,55.3,1.46,0.88,21.96
+---,=== RUN: 2026-10-02 23:55:12 (2 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
+2026-10-02 23:55:12,Dallas Wings @ Golden State Valkyries,Points Rebounds,Cecilia Zandalasini,Under,9.5,DraftKings,-104,52.8,3.60,1.87,46.80
+2026-10-02 23:55:13,Boston Bruins @ Winnipeg Jets,Shots On Goal,Mark Scheifele,Under,2.5,Novig,-153,61.2,1.26,0.96,24.09
