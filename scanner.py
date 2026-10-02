@@ -123,7 +123,8 @@ def send_discord_digest(new_plays, run_timestamp):
         lines = []
         for play in chunk:
             edge_val = float(play['edge'])
-            icon = "🔥" if edge_val >= 5.0 else ("🟢" if edge_val >= 2.0 else "▫️")
+            # Updated to use the Diamond logo for edges between 2.0% and 4.99%
+            icon = "🔥" if edge_val >= 5.0 else ("💎" if edge_val >= 2.0 else "▫️")
             
             line_1 = f"{icon} **+{play['edge']}%** | **{play['player']}** {play['side']} {play['line']} {play['market']}"
             line_2 = f"↳ **{play['odds']}** @ {play['book']} • **{play['units']}u** (${play['wager']}) • *{play['game']}*"
