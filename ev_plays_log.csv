@@ -228,3 +228,13 @@ Timestamp,Game,Market,Player,Side,Line,Bookmaker,Odds,True Prob %,Edge %,Kelly U
 2026-10-02 17:27:56,Washington Capitals @ Carolina Hurricanes,Shots On Goal,Nikolaj Ehlers,Under,2.5,theScore Bet,-130,57.7,2.15,1.40,34.95
 2026-10-02 17:27:56,Boston Bruins @ Winnipeg Jets,Shots On Goal,Morgan Geekie,Under,1.5,DraftKings,+145,40.8,0.08,0.03,0.65
 2026-10-02 17:27:57,St Louis Blues @ Dallas Stars,Shots On Goal,Wyatt Johnston,Over,2.5,Novig,+102,50.0,1.00,0.49,12.25
+---,=== RUN: 2026-10-02 18:33:32 (9 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
+2026-10-02 18:33:32,Dallas Wings @ Golden State Valkyries,Points,Kayla Thornton,Under,7.5,Novig,+104,50.0,2.00,0.96,24.04
+2026-10-02 18:33:32,Dallas Wings @ Golden State Valkyries,Points Rebounds Assists,Cecilia Zandalasini,Under,10.5,Novig,+130,47.2,8.52,3.28,81.96
+2026-10-02 18:33:32,Dallas Wings @ Golden State Valkyries,Rebounds,Kiah Stokes,Over,6.5,Novig,+150,43.3,8.24,2.75,68.70
+2026-10-02 18:33:33,New York Rangers @ Detroit Red Wings,Shots On Goal,Pavel Dorofeyev,Over,2.5,theScore Bet,-110,52.6,0.51,0.28,6.98
+2026-10-02 18:33:33,New York Rangers @ Detroit Red Wings,Shots On Goal,Mika Zibanejad,Over,2.5,theScore Bet,+130,44.7,2.71,1.04,26.04
+2026-10-02 18:33:33,New York Rangers @ Detroit Red Wings,Shots On Goal,Oliver Bjorkstrand,Under,1.5,Novig,-108,52.6,1.39,0.75,18.82
+2026-10-02 18:33:33,Boston Bruins @ Winnipeg Jets,Shots On Goal,Pavel Zacha,Under,1.5,theScore Bet,+105,50.0,2.50,1.19,29.76
+2026-10-02 18:33:33,St Louis Blues @ Dallas Stars,Shots On Goal,Roope Hintz,Under,2.5,theScore Bet,-160,62.4,1.43,1.15,28.69
+2026-10-02 18:33:33,Anaheim Ducks @ Vegas Golden Knights,Shots On Goal,Mark Stone,Over,1.5,Novig,-150,60.2,0.29,0.22,5.52
