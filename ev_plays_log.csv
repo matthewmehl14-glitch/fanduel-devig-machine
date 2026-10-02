@@ -165,3 +165,14 @@ Timestamp,Game,Market,Player,Side,Line,Bookmaker,Odds,True Prob %,Edge %,Kelly U
 2026-10-02 00:06:04,Pittsburgh Steelers @ Cleveland Browns,Reception Yds,Darnell Washington,Over,16.5,Novig,+106,50.0,3.00,1.42,35.38
 2026-10-02 00:06:04,Pittsburgh Steelers @ Cleveland Browns,Receptions,Darnell Washington,Over,2.5,Novig,+190,36.8,6.59,1.73,43.37
 2026-10-02 00:06:04,Pittsburgh Steelers @ Cleveland Browns,Rush Yds,Jaylen Warren,Over,75.5,Novig,+102,50.0,1.00,0.49,12.25
+---,=== RUN: 2026-10-02 00:57:51 (10 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
+2026-10-02 00:57:51,Indiana Fever @ Las Vegas Aces,Points,Jackie Young,Over,21.5,Novig,+102,51.6,4.32,2.12,52.95
+2026-10-02 00:57:51,Indiana Fever @ Las Vegas Aces,Rebounds,Caitlin Clark,Over,4.5,Novig,+106,49.4,1.75,0.83,20.63
+2026-10-02 00:57:52,Seattle Kraken @ Calgary Flames,Shots On Goal,Bobby McMann,Under,2.5,DraftKings,-105,51.2,0.02,0.01,0.31
+2026-10-02 00:57:52,Seattle Kraken @ Calgary Flames,Shots On Goal,Joel Farabee,Over,1.5,theScore Bet,-140,59.6,2.12,1.48,37.04
+2026-10-02 00:57:52,Seattle Kraken @ Calgary Flames,Shots On Goal,Matt Coronato,Over,2.5,Novig,+108,49.2,2.29,1.06,26.55
+2026-10-02 00:57:52,Seattle Kraken @ Calgary Flames,Shots On Goal,Brandon Montour,Over,2.5,Novig,-111,53.1,0.86,0.48,11.99
+2026-10-02 00:57:52,Chicago Blackhawks @ Utah Mammoth,Shots On Goal,Bowen Byram,Over,1.5,Novig,+117,48.5,5.34,2.28,57.03
+2026-10-02 00:57:52,Chicago Blackhawks @ Utah Mammoth,Shots On Goal,Vincent Trocheck,Over,1.5,Novig,-120,54.8,0.50,0.30,7.53
+2026-10-02 00:57:52,Chicago Blackhawks @ Utah Mammoth,Shots On Goal,Clayton Keller,Over,2.5,Novig,-108,53.5,2.99,1.61,40.31
+2026-10-02 00:57:53,Pittsburgh Steelers @ Cleveland Browns,Reception Yds,Blake Whiteheart,Over,0.5,DraftKings,+125,45.4,2.20,0.88,21.95
