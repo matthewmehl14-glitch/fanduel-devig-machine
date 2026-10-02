@@ -51,8 +51,10 @@ def fetch_recent_boxscores():
     boxscores = []
     seen_events = set()
     
+    # NBA added to sports mapping
     sports = [
         ('basketball', 'wnba'), 
+        ('basketball', 'nba'),
         ('hockey', 'nhl'), 
         ('football', 'nfl'),
         ('football', 'college-football')
@@ -85,6 +87,9 @@ def fetch_recent_boxscores():
 def extract_stat_value(stat_name, labels, stats):
     if stat_name == 'Pass Attempts' and 'C/ATT' in labels:
         return float(stats[labels.index('C/ATT')].split('/')[1])
+    # Added parser to extract made 3-pointers from ESPN's "Made/Attempted" string
+    if stat_name == '3PT Made' and '3PT' in labels:
+        return float(stats[labels.index('3PT')].split('/')[0])
     if stat_name in labels:
         val = stats[labels.index(stat_name)]
         return float(val) if val != '--' else 0.0
@@ -94,9 +99,10 @@ def get_player_stat(boxscores, player_name, market):
     market_map = {
         'Points': [('PTS', None)],
         'Rebounds': [('REB', None)],
-        'Assists': [('AST', None), ('A', 'skaters')],
+        'Assists': [('AST', None)],
         'Points Rebounds': [('PTS', None), ('REB', None)],
         'Points Rebounds Assists': [('PTS', None), ('REB', None), ('AST', None)],
+        'Threes': [('3PT Made', None)],
         'Shots On Goal': [('SOG', 'skaters')],
         'Total Saves': [('SV', 'goalies')],
         'Pass Yds': [('YDS', 'passing')],
