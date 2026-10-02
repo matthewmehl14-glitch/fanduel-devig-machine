@@ -192,3 +192,13 @@ Timestamp,Game,Market,Player,Side,Line,Bookmaker,Odds,True Prob %,Edge %,Kelly U
 2026-10-02 13:38:24,St Louis Blues @ Dallas Stars,Shots On Goal,Robert Thomas,Under,1.5,theScore Bet,-105,51.6,0.83,0.44,10.88
 2026-10-02 13:38:24,St Louis Blues @ Dallas Stars,Shots On Goal,Jason Robertson,Over,3.5,Novig,+106,50.0,3.00,1.42,35.38
 2026-10-02 13:38:24,Anaheim Ducks @ Vegas Golden Knights,Shots On Goal,Jack Eichel,Over,3.5,theScore Bet,+135,42.7,0.40,0.15,3.71
+---,=== RUN: 2026-10-02 15:16:57 (9 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
+2026-10-02 15:16:58,Dallas Wings @ Golden State Valkyries,Assists,Paige Bueckers,Under,4.5,Novig,+122,47.2,4.75,1.95,48.66
+2026-10-02 15:16:58,Dallas Wings @ Golden State Valkyries,Points,Gabby Williams,Over,19.5,Novig,+113,48.4,3.00,1.33,33.17
+2026-10-02 15:16:58,Dallas Wings @ Golden State Valkyries,Points,Arike Ogunbowale,Under,15.5,Novig,-104,51.0,0.06,0.03,0.81
+2026-10-02 15:16:58,Dallas Wings @ Golden State Valkyries,Points,Alysha Clark,Over,5.5,Novig,+102,49.8,0.59,0.29,7.18
+2026-10-02 15:16:58,Dallas Wings @ Golden State Valkyries,Points,Paige Bueckers,Under,18.5,Novig,+108,49.2,2.29,1.06,26.55
+2026-10-02 15:16:58,New York Rangers @ Detroit Red Wings,Shots On Goal,Moritz Seider,Under,2.5,theScore Bet,-140,58.8,0.86,0.60,15.05
+2026-10-02 15:16:58,New York Rangers @ Detroit Red Wings,Shots On Goal,Alexis Lafrenière,Under,2.5,theScore Bet,-160,61.8,0.42,0.33,8.37
+2026-10-02 15:16:59,St Louis Blues @ Dallas Stars,Shots On Goal,Tyler Seguin,Over,1.5,Novig,-111,52.6,0.08,0.04,1.06
+2026-10-02 15:16:59,Anaheim Ducks @ Vegas Golden Knights,Shots On Goal,Mitch Marner,Under,2.5,Novig,-150,60.2,0.29,0.22,5.52
