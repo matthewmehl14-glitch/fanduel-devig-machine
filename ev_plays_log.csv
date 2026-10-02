@@ -249,3 +249,9 @@ Timestamp,Game,Market,Player,Side,Line,Bookmaker,Odds,True Prob %,Edge %,Kelly U
 2026-10-02 20:16:05,New York Rangers @ Detroit Red Wings,Shots On Goal,Adam Fox,Over,1.5,Novig,+102,50.0,1.00,0.49,12.25
 2026-10-02 20:16:05,Washington Capitals @ Carolina Hurricanes,Shots On Goal,Jakob Chychrun,Under,1.5,Novig,+160,39.1,1.76,0.55,13.78
 2026-10-02 20:16:05,Boston Bruins @ Winnipeg Jets,Shots On Goal,JJ Peterka,Over,2.5,theScore Bet,+180,37.8,5.97,1.66,41.48
+---,=== RUN: 2026-10-02 21:25:05 (5 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
+2026-10-02 21:25:06,Dallas Wings @ Golden State Valkyries,Points,Awak Kuier,Over,6.5,Novig,-106,52.6,2.31,1.23,30.66
+2026-10-02 21:25:07,New York Rangers @ Detroit Red Wings,Shots On Goal,Lucas Raymond,Over,2.5,DraftKings,+120,45.6,0.25,0.11,2.63
+2026-10-02 21:25:07,New York Rangers @ Detroit Red Wings,Total Saves,John Gibson,Under,23.5,DraftKings,-110,52.8,0.83,0.46,11.41
+2026-10-02 21:25:07,St Louis Blues @ Dallas Stars,Shots On Goal,Mikko Rantanen,Over,2.5,DraftKings,+120,46.0,1.29,0.54,13.47
+2026-10-02 21:25:07,Anaheim Ducks @ Vegas Golden Knights,Shots On Goal,Jackson LaCombe,Under,1.5,theScore Bet,+110,47.9,0.49,0.22,5.58
