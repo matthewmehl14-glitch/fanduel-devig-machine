@@ -176,3 +176,19 @@ Timestamp,Game,Market,Player,Side,Line,Bookmaker,Odds,True Prob %,Edge %,Kelly U
 2026-10-02 00:57:52,Chicago Blackhawks @ Utah Mammoth,Shots On Goal,Vincent Trocheck,Over,1.5,Novig,-120,54.8,0.50,0.30,7.53,PENDING,0.00
 2026-10-02 00:57:52,Chicago Blackhawks @ Utah Mammoth,Shots On Goal,Clayton Keller,Over,2.5,Novig,-108,53.5,2.99,1.61,40.31,PENDING,0.00
 2026-10-02 00:57:53,Pittsburgh Steelers @ Cleveland Browns,Reception Yds,Blake Whiteheart,Over,0.5,DraftKings,+125,45.4,2.20,0.88,21.95,PENDING,0.00
+---,=== RUN: 2026-10-02 13:38:23 (15 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
+2026-10-02 13:38:23,Dallas Wings @ Golden State Valkyries,Assists,Tiffany Hayes,Under,2.5,Novig,-150,61.4,2.35,1.76,44.01
+2026-10-02 13:38:23,Dallas Wings @ Golden State Valkyries,Points,Jessica Shepard,Under,9.5,Novig,+111,49.2,3.77,1.70,42.44
+2026-10-02 13:38:23,Dallas Wings @ Golden State Valkyries,Points Rebounds Assists,Jessica Shepard,Under,24.5,Novig,+104,49.4,0.76,0.37,9.16
+2026-10-02 13:38:24,New York Rangers @ Detroit Red Wings,Shots On Goal,Adam Fox,Under,1.5,DraftKings,+105,50.0,2.50,1.19,29.76
+2026-10-02 13:38:24,New York Rangers @ Detroit Red Wings,Shots On Goal,Moritz Seider,Over,2.5,theScore Bet,+125,45.2,1.66,0.66,16.57
+2026-10-02 13:38:24,Washington Capitals @ Carolina Hurricanes,Shots On Goal,Alex Ovechkin,Over,2.5,Novig,-102,51.6,2.28,1.16,29.01
+2026-10-02 13:38:24,Boston Bruins @ Winnipeg Jets,Shots On Goal,David Pastrnak,Over,3.5,Novig,+120,46.5,2.36,0.98,24.57
+2026-10-02 13:38:24,Boston Bruins @ Winnipeg Jets,Shots On Goal,Morgan Geekie,Over,1.5,Novig,-147,59.6,0.09,0.07,1.66
+2026-10-02 13:38:24,Boston Bruins @ Winnipeg Jets,Shots On Goal,Pavel Zacha,Over,1.5,Novig,+106,50.8,4.69,2.21,55.31
+2026-10-02 13:38:24,Boston Bruins @ Winnipeg Jets,Shots On Goal,Fraser Minten,Over,1.5,Novig,+125,46.0,3.60,1.44,35.95
+2026-10-02 13:38:24,St Louis Blues @ Dallas Stars,Shots On Goal,Thomas Harley,Under,1.5,DraftKings,+120,46.9,3.27,1.36,34.01
+2026-10-02 13:38:24,St Louis Blues @ Dallas Stars,Shots On Goal,Dylan Holloway,Under,2.5,theScore Bet,-105,52.1,1.81,0.95,23.77
+2026-10-02 13:38:24,St Louis Blues @ Dallas Stars,Shots On Goal,Robert Thomas,Under,1.5,theScore Bet,-105,51.6,0.83,0.44,10.88
+2026-10-02 13:38:24,St Louis Blues @ Dallas Stars,Shots On Goal,Jason Robertson,Over,3.5,Novig,+106,50.0,3.00,1.42,35.38
+2026-10-02 13:38:24,Anaheim Ducks @ Vegas Golden Knights,Shots On Goal,Jack Eichel,Over,3.5,theScore Bet,+135,42.7,0.40,0.15,3.71
