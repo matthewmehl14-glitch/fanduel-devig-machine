@@ -134,24 +134,35 @@ def get_player_stat(boxscores, player_name, market):
                 return total
     return None
 
-def send_digest(buckets, graded_count):
+def send_digest(daily_buckets, all_time_buckets, graded_count):
     if not DISCORD_WEBHOOK_URL: return
-    
-    lines = []
-    total_units = 0.0
     
     labels = ["1️⃣ **0.0% to 1.99% Edge**", "2️⃣ **2.0% to 4.99% Edge**", "3️⃣ **5.0%+ Edge**"]
     
-    for i, b in enumerate(buckets):
-        w, l, p, units = b['W'], b['L'], b['P'], b['Units']
-        total_units += units
-        total_bets = w + l
-        win_pct = (w / total_bets * 100) if total_bets > 0 else 0.0
+    daily_total_units = 0.0
+    all_time_total_units = 0.0
+    
+    lines = []
+    
+    for i in range(3):
+        # Daily Stats
+        dw, dl, dp, d_units = daily_buckets[i]['W'], daily_buckets[i]['L'], daily_buckets[i]['P'], daily_buckets[i]['Units']
+        daily_total_units += d_units
+        d_bets = dw + dl
+        d_pct = (dw / d_bets * 100) if d_bets > 0 else 0.0
+        
+        # All-Time Stats
+        aw, al, ap, a_units = all_time_buckets[i]['W'], all_time_buckets[i]['L'], all_time_buckets[i]['P'], all_time_buckets[i]['Units']
+        all_time_total_units += a_units
+        a_bets = aw + al
+        a_pct = (aw / a_bets * 100) if a_bets > 0 else 0.0
         
         lines.append(f"{labels[i]}")
-        lines.append(f"Record: {w}-{l}-{p} ({win_pct:.1f}%) | {units:+.2f} Units\n")
+        lines.append(f"**Today:** {dw}-{dl}-{dp} ({d_pct:.1f}%) | {d_units:+.2f}u")
+        lines.append(f"**Lifetime:** {aw}-{al}-{ap} ({a_pct:.1f}%) | {a_units:+.2f}u\n")
 
-    lines.append(f"💰 **Total System Profit:** {total_units:+.2f} Units (${total_units * UNIT_SIZE:+.2f})")
+    lines.append(f"💰 **Batch Profit:** {daily_total_units:+.2f} Units (${daily_total_units * UNIT_SIZE:+.2f})")
+    lines.append(f"🏦 **Lifetime Profit:** {all_time_total_units:+.2f} Units (${all_time_total_units * UNIT_SIZE:+.2f})")
 
     embed = {
         "title": f"📊 EV Auto-Grader Report ({graded_count} New Settlements)",
@@ -173,13 +184,18 @@ def run_grader():
         rows = list(csv.DictReader(f))
         
     newly_graded = 0
-    buckets = [{'W': 0, 'L': 0, 'P': 0, 'Units': 0.0} for _ in range(3)]
+    
+    # Track the current batch separately from all-time history
+    daily_buckets = [{'W': 0, 'L': 0, 'P': 0, 'Units': 0.0} for _ in range(3)]
+    all_time_buckets = [{'W': 0, 'L': 0, 'P': 0, 'Units': 0.0} for _ in range(3)]
     
     for row in rows:
         if row.get('Player', '').startswith('---'): continue
             
         edge = float(row.get('Edge %', 0))
         b_idx = 0 if edge < 2.0 else (1 if edge < 5.0 else 2)
+        
+        just_graded_now = False
         
         if row.get('Result') == 'PENDING':
             player = row['Player']
@@ -193,6 +209,7 @@ def run_grader():
             
             if actual is not None:
                 newly_graded += 1
+                just_graded_now = True
                 if actual == line:
                     res = 'PUSH'
                     net = 0.0
@@ -207,12 +224,19 @@ def run_grader():
                 row['Net Units'] = f"{net:.2f}"
                 print(f"Graded: {player} {side} {line} {market} -> Actual: {actual} ({res})")
 
-        # Compile bucket statistics for ALL graded plays (historical + new)
+        # Compile bucket statistics
         if row.get('Result') in ['WIN', 'LOSS', 'PUSH']:
             res = row['Result']
             net = float(row['Net Units'])
-            buckets[b_idx][res[0]] += 1
-            buckets[b_idx]['Units'] += net
+            
+            # Add to all-time buckets regardless
+            all_time_buckets[b_idx][res[0]] += 1
+            all_time_buckets[b_idx]['Units'] += net
+            
+            # Add to daily buckets ONLY if it was graded in this exact run
+            if just_graded_now:
+                daily_buckets[b_idx][res[0]] += 1
+                daily_buckets[b_idx]['Units'] += net
 
     if newly_graded > 0:
         fieldnames = list(rows[0].keys())
@@ -221,7 +245,7 @@ def run_grader():
             writer.writeheader()
             writer.writerows(rows)
             
-        send_digest(buckets, newly_graded)
+        send_digest(daily_buckets, all_time_buckets, newly_graded)
     else:
         print("No new pending plays were ready to be graded.")
 
