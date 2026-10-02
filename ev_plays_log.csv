@@ -260,3 +260,8 @@ Timestamp,Game,Market,Player,Side,Line,Bookmaker,Odds,True Prob %,Edge %,Kelly U
 2026-10-02 22:04:07,Dallas Wings @ Golden State Valkyries,Points,Janelle Salaun,Under,10.5,Novig,+115,46.9,0.92,0.40,9.98
 2026-10-02 22:04:07,Dallas Wings @ Golden State Valkyries,Points,Jessica Shepard,Over,9.5,Novig,-113,53.1,0.02,0.01,0.26
 2026-10-02 22:04:08,Anaheim Ducks @ Vegas Golden Knights,Total Saves,Carter Hart,Under,23.5,Novig,+108,50.6,5.26,2.44,60.91
+---,=== RUN: 2026-10-02 22:33:30 (4 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
+2026-10-02 22:33:30,Dallas Wings @ Golden State Valkyries,Points,Paige Bueckers,Under,19.5,Novig,-117,54.0,0.08,0.04,1.10
+2026-10-02 22:33:30,Dallas Wings @ Golden State Valkyries,Rebounds,Jessica Shepard,Over,10.5,Novig,+133,43.3,0.88,0.33,8.30
+2026-10-02 22:33:32,St Louis Blues @ Dallas Stars,Total Saves,Joel Hofer,Over,25.5,theScore Bet,-110,52.8,0.83,0.46,11.41
+2026-10-02 22:33:32,St Louis Blues @ Dallas Stars,Shots On Goal,Miro Heiskanen,Over,2.5,Novig,+160,40.4,5.12,1.60,40.03
