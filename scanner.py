@@ -16,7 +16,9 @@ ALLOWED_BOOKS = set(KS_BOOKS.split(','))
 CSV_FILENAME = 'ev_plays_log.csv'
 
 SPORTS_CONFIG = {
-    'basketball_wnba': 'player_points,player_rebounds,player_assists,player_points_rebounds,player_points_rebounds_assists',
+    'basketball_wnba': 'player_points,player_rebounds,player_assists,player_points_rebounds,player_points_rebounds_assists,player_threes',
+    'basketball_nba': 'player_points,player_rebounds,player_assists,player_points_rebounds,player_points_rebounds_assists,player_threes',
+    'basketball_nba_preseason': 'player_points,player_rebounds,player_assists,player_points_rebounds,player_points_rebounds_assists,player_threes',
     'icehockey_nhl': 'player_points,player_assists,player_shots_on_goal,player_total_saves',
     'icehockey_nhl_preseason': 'player_points,player_assists,player_shots_on_goal,player_total_saves',
     'americanfootball_nfl': 'player_pass_yds,player_pass_attempts,player_rush_yds,player_rush_attempts,player_reception_yds,player_receptions',
@@ -123,7 +125,6 @@ def send_discord_digest(new_plays, run_timestamp):
         lines = []
         for play in chunk:
             edge_val = float(play['edge'])
-            # Updated to use the Diamond logo for edges between 2.0% and 4.99%
             icon = "🔥" if edge_val >= 5.0 else ("💎" if edge_val >= 2.0 else "▫️")
             
             line_1 = f"{icon} **+{play['edge']}%** | **{play['player']}** {play['side']} {play['line']} {play['market']}"
