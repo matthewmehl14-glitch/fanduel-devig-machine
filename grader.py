@@ -51,7 +51,6 @@ def fetch_recent_boxscores():
     boxscores = []
     seen_events = set()
     
-    # NBA added to sports mapping
     sports = [
         ('basketball', 'wnba'), 
         ('basketball', 'nba'),
@@ -87,7 +86,6 @@ def fetch_recent_boxscores():
 def extract_stat_value(stat_name, labels, stats):
     if stat_name == 'Pass Attempts' and 'C/ATT' in labels:
         return float(stats[labels.index('C/ATT')].split('/')[1])
-    # Added parser to extract made 3-pointers from ESPN's "Made/Attempted" string
     if stat_name == '3PT Made' and '3PT' in labels:
         return float(stats[labels.index('3PT')].split('/')[0])
     if stat_name in labels:
@@ -99,7 +97,7 @@ def get_player_stat(boxscores, player_name, market):
     market_map = {
         'Points': [('PTS', None)],
         'Rebounds': [('REB', None)],
-        'Assists': [('AST', None)],
+        'Assists': [('AST', None), ('A', 'skaters')],
         'Points Rebounds': [('PTS', None), ('REB', None)],
         'Points Rebounds Assists': [('PTS', None), ('REB', None), ('AST', None)],
         'Threes': [('3PT Made', None)],
@@ -191,7 +189,6 @@ def run_grader():
         
     newly_graded = 0
     
-    # Track the current batch separately from all-time history
     daily_buckets = [{'W': 0, 'L': 0, 'P': 0, 'Units': 0.0} for _ in range(3)]
     all_time_buckets = [{'W': 0, 'L': 0, 'P': 0, 'Units': 0.0} for _ in range(3)]
     
@@ -200,10 +197,11 @@ def run_grader():
             
         edge = float(row.get('Edge %', 0))
         b_idx = 0 if edge < 2.0 else (1 if edge < 5.0 else 2)
-        
         just_graded_now = False
         
-        if row.get('Result') == 'PENDING':
+        # FIX: Check for 'PENDING', completely blank strings, or None. 
+        current_result = row.get('Result')
+        if current_result in ['PENDING', None, '']:
             player = row['Player']
             market = row['Market']
             side = row['Side'].lower()
@@ -229,23 +227,29 @@ def run_grader():
                 row['Result'] = res
                 row['Net Units'] = f"{net:.2f}"
                 print(f"Graded: {player} {side} {line} {market} -> Actual: {actual} ({res})")
+            else:
+                # Forces new 12-column entries to officially adopt the 14-column format.
+                row['Result'] = 'PENDING'
+                row['Net Units'] = '0.00'
 
-        # Compile bucket statistics
+        # Compile bucket statistics for ALL graded plays
         if row.get('Result') in ['WIN', 'LOSS', 'PUSH']:
             res = row['Result']
-            net = float(row['Net Units'])
+            net = float(row.get('Net Units', 0))
             
-            # Add to all-time buckets regardless
             all_time_buckets[b_idx][res[0]] += 1
             all_time_buckets[b_idx]['Units'] += net
             
-            # Add to daily buckets ONLY if it was graded in this exact run
             if just_graded_now:
                 daily_buckets[b_idx][res[0]] += 1
                 daily_buckets[b_idx]['Units'] += net
 
     if newly_graded > 0:
+        # Guarantee headers remain properly structured when writing back
         fieldnames = list(rows[0].keys())
+        if 'Result' not in fieldnames:
+            fieldnames.extend(['Result', 'Net Units'])
+            
         with open(CSV_FILENAME, 'w', newline='', encoding='utf-8') as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
