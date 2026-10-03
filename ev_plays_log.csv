@@ -282,3 +282,10 @@ Timestamp,Game,Market,Player,Side,Line,Bookmaker,Odds,True Prob %,Edge %,Kelly U
 2026-10-03 00:51:10,St Louis Blues @ Dallas Stars,Shots On Goal,Dylan Holloway,Over,2.5,theScore Bet,-105,53.1,3.60,1.89,47.19
 2026-10-03 00:51:10,St Louis Blues @ Dallas Stars,Total Saves,Jake Oettinger,Over,22.5,Novig,+108,50.6,5.26,2.44,60.91
 2026-10-03 00:51:11,Anaheim Ducks @ Vegas Golden Knights,Shots On Goal,Shea Theodore,Over,1.5,Novig,-138,60.2,3.78,2.61,65.25
+---,=== RUN: 2026-10-03 01:56:25 (6 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
+2026-10-03 01:56:25,Dallas Wings @ Golden State Valkyries,Assists,Arike Ogunbowale,Under,3.5,DraftKings,-125,56.7,2.06,1.29,32.26
+2026-10-03 01:56:25,Dallas Wings @ Golden State Valkyries,Points,Gabby Williams,Over,13.5,DraftKings,+100,51.4,2.84,1.42,35.46
+2026-10-03 01:56:25,Dallas Wings @ Golden State Valkyries,Threes,Gabby Williams,Over,1.5,DraftKings,+170,38.3,3.45,1.01,25.34
+2026-10-03 01:56:25,Dallas Wings @ Golden State Valkyries,Threes,Paige Bueckers,Over,0.5,DraftKings,-155,61.0,0.42,0.32,8.12
+2026-10-03 01:56:25,Dallas Wings @ Golden State Valkyries,Threes,Veronica Burton,Over,0.5,DraftKings,-125,57.2,2.91,1.82,45.52
+2026-10-03 01:56:25,Dallas Wings @ Golden State Valkyries,Threes,Kayla Thornton,Over,0.5,DraftKings,+135,43.3,1.75,0.65,16.19
