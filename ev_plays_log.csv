@@ -272,3 +272,13 @@ Timestamp,Game,Market,Player,Side,Line,Bookmaker,Odds,True Prob %,Edge %,Kelly U
 ---,=== RUN: 2026-10-02 23:55:12 (2 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
 2026-10-02 23:55:12,Dallas Wings @ Golden State Valkyries,Points Rebounds,Cecilia Zandalasini,Under,9.5,DraftKings,-104,52.8,3.60,1.87,46.80
 2026-10-02 23:55:13,Boston Bruins @ Winnipeg Jets,Shots On Goal,Mark Scheifele,Under,2.5,Novig,-153,61.2,1.26,0.96,24.09
+---,=== RUN: 2026-10-03 00:51:09 (9 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
+2026-10-03 00:51:10,Dallas Wings @ Golden State Valkyries,Points,Aziaha James,Under,5.5,DraftKings,-114,54.0,1.29,0.73,18.37
+2026-10-03 00:51:10,Dallas Wings @ Golden State Valkyries,Points Rebounds,Jessica Shepard,Under,19.5,DraftKings,-109,52.8,1.27,0.69,17.31
+2026-10-03 00:51:10,Dallas Wings @ Golden State Valkyries,Assists,Awak Kuier,Over,1.5,Novig,+141,42.8,3.21,1.14,28.46
+2026-10-03 00:51:10,Dallas Wings @ Golden State Valkyries,Points Rebounds Assists,Awak Kuier,Over,13.5,Novig,+108,48.1,0.02,0.01,0.19
+2026-10-03 00:51:10,Dallas Wings @ Golden State Valkyries,Points Rebounds Assists,Gabby Williams,Over,27.5,Novig,+108,48.1,0.02,0.01,0.19
+2026-10-03 00:51:10,Dallas Wings @ Golden State Valkyries,Rebounds,Paige Bueckers,Under,4.5,Novig,-138,60.1,3.60,2.48,62.04
+2026-10-03 00:51:10,St Louis Blues @ Dallas Stars,Shots On Goal,Dylan Holloway,Over,2.5,theScore Bet,-105,53.1,3.60,1.89,47.19
+2026-10-03 00:51:10,St Louis Blues @ Dallas Stars,Total Saves,Jake Oettinger,Over,22.5,Novig,+108,50.6,5.26,2.44,60.91
+2026-10-03 00:51:11,Anaheim Ducks @ Vegas Golden Knights,Shots On Goal,Shea Theodore,Over,1.5,Novig,-138,60.2,3.78,2.61,65.25
