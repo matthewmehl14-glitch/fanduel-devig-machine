@@ -84,13 +84,25 @@ def fetch_recent_boxscores():
     return boxscores
 
 def extract_stat_value(stat_name, labels, stats):
-    if stat_name == 'Pass Attempts' and 'C/ATT' in labels:
-        return float(stats[labels.index('C/ATT')].split('/')[1])
-    if stat_name == '3PT Made' and '3PT' in labels:
-        return float(stats[labels.index('3PT')].split('/')[0])
-    if stat_name in labels:
-        val = stats[labels.index(stat_name)]
-        return float(val) if val != '--' else 0.0
+    try:
+        if stat_name == 'Pass Attempts' and 'C/ATT' in labels:
+            val = stats[labels.index('C/ATT')]
+            if val == '--': return 0.0
+            delim = '/' if '/' in val else ('-' if '-' in val else None)
+            return float(val.split(delim)[1]) if delim else float(val)
+
+        # Handles both hyphens ("1-2") and slashes ("1/2") for 3PT props
+        if stat_name == '3PT Made' and '3PT' in labels:
+            val = stats[labels.index('3PT')]
+            if val == '--': return 0.0
+            delim = '-' if '-' in val else ('/' if '/' in val else None)
+            return float(val.split(delim)[0]) if delim else float(val)
+
+        if stat_name in labels:
+            val = stats[labels.index(stat_name)]
+            return float(val) if val != '--' else 0.0
+    except Exception:
+        return None
     return None
 
 def get_player_stat(boxscores, player_name, market):
@@ -188,25 +200,26 @@ def run_grader():
         rows = list(csv.DictReader(f))
         
     newly_graded = 0
-    
     daily_buckets = [{'W': 0, 'L': 0, 'P': 0, 'Units': 0.0} for _ in range(3)]
     all_time_buckets = [{'W': 0, 'L': 0, 'P': 0, 'Units': 0.0} for _ in range(3)]
     
     for row in rows:
-        if row.get('Player', '').startswith('---'): continue
+        player_cell = row.get('Player', '')
+        game_cell = row.get('Game', '')
+        if not player_cell or player_cell.startswith('---') or game_cell.startswith('==='):
+            continue
             
         edge = float(row.get('Edge %', 0))
         b_idx = 0 if edge < 2.0 else (1 if edge < 5.0 else 2)
         just_graded_now = False
         
-        # FIX: Check for 'PENDING', completely blank strings, or None. 
         current_result = row.get('Result')
         if current_result in ['PENDING', None, '']:
             player = row['Player']
             market = row['Market']
             side = row['Side'].lower()
             line = float(row['Line'])
-            odds = float(row['Odds'].replace('+', ''))
+            odds = float(str(row['Odds']).replace('+', ''))
             units = float(row['Kelly Units'])
             
             actual = get_player_stat(boxscores, player, market)
@@ -228,14 +241,15 @@ def run_grader():
                 row['Net Units'] = f"{net:.2f}"
                 print(f"Graded: {player} {side} {line} {market} -> Actual: {actual} ({res})")
             else:
-                # Forces new 12-column entries to officially adopt the 14-column format.
                 row['Result'] = 'PENDING'
                 row['Net Units'] = '0.00'
 
-        # Compile bucket statistics for ALL graded plays
         if row.get('Result') in ['WIN', 'LOSS', 'PUSH']:
             res = row['Result']
-            net = float(row.get('Net Units', 0))
+            try:
+                net = float(row.get('Net Units', 0))
+            except (ValueError, TypeError):
+                net = 0.0
             
             all_time_buckets[b_idx][res[0]] += 1
             all_time_buckets[b_idx]['Units'] += net
@@ -245,7 +259,6 @@ def run_grader():
                 daily_buckets[b_idx]['Units'] += net
 
     if newly_graded > 0:
-        # Guarantee headers remain properly structured when writing back
         fieldnames = list(rows[0].keys())
         if 'Result' not in fieldnames:
             fieldnames.extend(['Result', 'Net Units'])
