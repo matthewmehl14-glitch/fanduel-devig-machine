@@ -316,3 +316,23 @@ Timestamp,Game,Market,Player,Side,Line,Bookmaker,Odds,True Prob %,Edge %,Kelly U
 ---,=== RUN: 2026-10-03 13:50:48 (2 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
 2026-10-03 13:50:49,Utah Mammoth @ Columbus Blue Jackets,Shots On Goal,Mikhail Sergachev,Under,1.5,theScore Bet,+130,44.3,1.85,0.36,8.90
 2026-10-03 13:50:50,Dallas Stars @ Nashville Predators,Shots On Goal,Roman Josi,Over,2.5,theScore Bet,+115,46.9,0.92,0.20,4.99
+---,=== RUN: 2026-10-03 16:24:30 (19 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
+2026-10-03 16:24:31,Carolina Hurricanes @ Philadelphia Flyers,Shots On Goal,Taylor Hall,Under,1.5,Novig,+122,45.2,0.30,0.06,1.54
+2026-10-03 16:24:31,Carolina Hurricanes @ Philadelphia Flyers,Shots On Goal,Travis Konecny,Under,1.5,theScore Bet,-105,52.1,1.81,0.48,11.89
+2026-10-03 16:24:32,Montréal Canadiens @ Pittsburgh Penguins,Shots On Goal,Juraj Slafkovsky,Under,1.5,theScore Bet,+150,40.4,1.08,0.18,4.50
+2026-10-03 16:24:32,Montréal Canadiens @ Pittsburgh Penguins,Shots On Goal,Sidney Crosby,Under,2.5,Novig,-115,54.8,2.49,0.72,17.88
+2026-10-03 16:24:32,Ottawa Senators @ Toronto Maple Leafs,Shots On Goal,Dylan Cozens,Over,2.5,Novig,-108,52.6,1.39,0.38,9.41
+2026-10-03 16:24:32,Washington Capitals @ Tampa Bay Lightning,Shots On Goal,Brayden Point,Over,2.5,theScore Bet,+135,43.9,3.20,0.59,14.82
+2026-10-03 16:24:32,Washington Capitals @ Tampa Bay Lightning,Shots On Goal,Nikita Kucherov,Over,2.5,theScore Bet,-110,53.1,1.30,0.36,8.93
+2026-10-03 16:24:32,Washington Capitals @ Tampa Bay Lightning,Shots On Goal,Anthony Cirelli,Over,1.5,theScore Bet,-110,52.6,0.51,0.14,3.49
+2026-10-03 16:24:32,Washington Capitals @ Tampa Bay Lightning,Total Saves,Andrei Vasilevskiy,Under,22.5,theScore Bet,+100,51.9,3.83,0.96,23.94
+2026-10-03 16:24:32,New Jersey Devils @ New York Islanders,Shots On Goal,Matthew Schaefer,Over,2.5,theScore Bet,+100,50.2,0.41,0.10,2.56
+2026-10-03 16:24:32,Boston Bruins @ Minnesota Wild,Shots On Goal,Matt Boldy,Over,3.5,DraftKings,+105,49.2,0.82,0.19,4.87
+2026-10-03 16:24:32,Boston Bruins @ Minnesota Wild,Shots On Goal,David Pastrnak,Over,3.5,DraftKings,+125,45.6,2.53,0.51,12.66
+2026-10-03 16:24:32,Boston Bruins @ Minnesota Wild,Shots On Goal,Quinn Hughes,Over,2.5,DraftKings,+110,49.2,3.28,0.74,18.62
+2026-10-03 16:24:32,Boston Bruins @ Minnesota Wild,Shots On Goal,JJ Peterka,Under,2.5,theScore Bet,-160,62.4,1.43,0.57,14.34
+2026-10-03 16:24:33,Dallas Stars @ Nashville Predators,Shots On Goal,Mikko Rantanen,Under,2.5,DraftKings,-155,60.9,0.12,0.05,1.21
+2026-10-03 16:24:33,St Louis Blues @ Colorado Avalanche,Shots On Goal,Cale Makar,Under,2.5,DraftKings,+115,48.4,3.97,0.86,21.55
+2026-10-03 16:24:33,St Louis Blues @ Colorado Avalanche,Shots On Goal,Martin Necas,Over,2.5,DraftKings,-135,57.7,0.51,0.17,4.27
+2026-10-03 16:24:33,Calgary Flames @ Vancouver Canucks,Shots On Goal,Joel Farabee,Over,1.5,DraftKings,-140,59.9,2.64,0.92,23.12
+2026-10-03 16:24:33,Calgary Flames @ Vancouver Canucks,Shots On Goal,Matt Coronato,Under,2.5,theScore Bet,+110,50.0,5.00,1.14,28.41
