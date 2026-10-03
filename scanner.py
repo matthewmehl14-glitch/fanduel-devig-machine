@@ -194,7 +194,6 @@ def fetch_and_scan():
             except Exception:
                 pass
             
-            # --- VISIBILITY LOG ADDED HERE ---
             print(f"  -> Scanning {game_name}...")
             
             odds_url = f'https://api.the-odds-api.com/v4/sports/{sport}/events/{event_id}/odds'
@@ -283,16 +282,17 @@ def fetch_and_scan():
                             b = dec_odds - 1
                             kelly_decimal = (true_prob * b - (1 - true_prob)) / b
                             
+                            # Quarter-Kelly Sizing
                             kelly_units = kelly_decimal * 100
-                            half_kelly_units = kelly_units / 2
-                            dollar_wager = half_kelly_units * UNIT_SIZE
+                            quarter_kelly_units = kelly_units / 4
+                            dollar_wager = quarter_kelly_units * UNIT_SIZE
                             
                             play_data = {
                                 'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                                 'game': game_name, 'market': m_display, 'player': raw_player,
                                 'side': side, 'line': pt, 'book': book_name, 'odds': formatted_odds,
                                 'true_prob': f"{true_prob * 100:.1f}", 'edge': f"{edge * 100:.2f}",
-                                'units': f"{half_kelly_units:.2f}", 'wager': f"{dollar_wager:.2f}"
+                                'units': f"{quarter_kelly_units:.2f}", 'wager': f"{dollar_wager:.2f}"
                             }
                             
                             seen_plays.add(dedup_key)
