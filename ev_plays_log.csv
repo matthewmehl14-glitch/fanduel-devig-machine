@@ -313,3 +313,6 @@ Timestamp,Game,Market,Player,Side,Line,Bookmaker,Odds,True Prob %,Edge %,Kelly U
 2026-10-03 12:20:38,St Louis Blues @ Colorado Avalanche,Shots On Goal,Gabriel Landeskog,Over,2.5,theScore Bet,+120,46.9,3.27,0.68,17.01
 2026-10-03 12:20:39,Los Angeles Kings @ San Jose Sharks,Shots On Goal,Artemi Panarin,Over,2.5,DraftKings,-140,58.5,0.21,0.07,1.86
 2026-10-03 12:20:39,Los Angeles Kings @ San Jose Sharks,Shots On Goal,Quinton Byfield,Over,2.5,theScore Bet,-110,52.6,0.51,0.14,3.49
+---,=== RUN: 2026-10-03 13:50:48 (2 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
+2026-10-03 13:50:49,Utah Mammoth @ Columbus Blue Jackets,Shots On Goal,Mikhail Sergachev,Under,1.5,theScore Bet,+130,44.3,1.85,0.36,8.90
+2026-10-03 13:50:50,Dallas Stars @ Nashville Predators,Shots On Goal,Roman Josi,Over,2.5,theScore Bet,+115,46.9,0.92,0.20,4.99
