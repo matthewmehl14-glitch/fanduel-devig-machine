@@ -356,3 +356,36 @@ Timestamp,Game,Market,Player,Side,Line,Bookmaker,Odds,True Prob %,Edge %,Kelly U
 2026-10-03 20:32:27,Los Angeles Kings @ San Jose Sharks,Total Saves,Anton Forsberg,Over,25.5,Novig,+104,50.0,2.00,0.48,12.02
 2026-10-03 20:32:27,Los Angeles Kings @ San Jose Sharks,Shots On Goal,Alex Laferriere,Under,2.5,theScore Bet,-125,57.7,3.93,1.23,30.68
 2026-10-03 20:32:27,Los Angeles Kings @ San Jose Sharks,Shots On Goal,Artemi Panarin,Under,2.5,theScore Bet,+130,43.9,1.01,0.19,4.84
+---,=== RUN: 2026-10-03 22:51:46 (32 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
+2026-10-03 22:51:47,Chicago Blackhawks @ Buffalo Sabres,Total Saves,Spencer Knight,Over,25.5,theScore Bet,-105,52.4,2.32,0.61,15.23
+2026-10-03 22:51:47,Carolina Hurricanes @ Philadelphia Flyers,Shots On Goal,Tyson Foerster,Under,1.5,Novig,-106,54.0,4.86,1.29,32.21
+2026-10-03 22:51:47,Carolina Hurricanes @ Philadelphia Flyers,Shots On Goal,Jackson Blake,Over,2.5,theScore Bet,+180,42.7,19.63,2.73,68.15
+2026-10-03 22:51:47,Utah Mammoth @ Columbus Blue Jackets,Shots On Goal,Matthew Knies,Over,1.5,DraftKings,-145,59.6,0.65,0.24,5.88
+2026-10-03 22:51:47,Utah Mammoth @ Columbus Blue Jackets,Shots On Goal,Zach Werenski,Over,3.5,theScore Bet,+120,46.0,1.29,0.27,6.73
+2026-10-03 22:51:47,Seattle Kraken @ Edmonton Oilers,Shots On Goal,Matty Beniers,Under,1.5,DraftKings,-110,52.6,0.51,0.14,3.49
+2026-10-03 22:51:47,Seattle Kraken @ Edmonton Oilers,Shots On Goal,Vasily Podkolzin,Over,2.5,Novig,-108,54.4,4.83,1.30,32.60
+2026-10-03 22:51:47,Seattle Kraken @ Edmonton Oilers,Shots On Goal,Brandon Montour,Under,2.5,theScore Bet,-125,58.5,5.22,1.63,40.81
+2026-10-03 22:51:47,Seattle Kraken @ Edmonton Oilers,Shots On Goal,Jared McCann,Under,1.5,theScore Bet,+170,37.8,2.19,0.32,8.05
+2026-10-03 22:51:47,Seattle Kraken @ Edmonton Oilers,Shots On Goal,Bobby McMann,Under,2.5,theScore Bet,-130,56.6,0.10,0.03,0.78
+2026-10-03 22:51:47,Seattle Kraken @ Edmonton Oilers,Shots On Goal,Jordan Eberle,Under,1.5,theScore Bet,+115,47.4,1.81,0.39,9.83
+2026-10-03 22:51:48,Montréal Canadiens @ Pittsburgh Penguins,Shots On Goal,Evgeni Malkin,Under,1.5,theScore Bet,+170,38.5,3.90,0.57,14.34
+2026-10-03 22:51:48,Ottawa Senators @ Toronto Maple Leafs,Shots On Goal,William Eklund,Over,1.5,DraftKings,-140,58.8,0.86,0.30,7.53
+2026-10-03 22:51:48,Ottawa Senators @ Toronto Maple Leafs,Shots On Goal,Auston Matthews,Over,3.5,Novig,+122,45.2,0.30,0.06,1.54
+2026-10-03 22:51:48,Ottawa Senators @ Toronto Maple Leafs,Shots On Goal,Tim Stützle,Under,2.5,theScore Bet,-110,53.1,1.30,0.36,8.93
+2026-10-03 22:51:48,Washington Capitals @ Tampa Bay Lightning,Shots On Goal,Brayden Point,Under,2.5,DraftKings,+100,55.3,10.69,2.67,66.80
+2026-10-03 22:51:48,Washington Capitals @ Tampa Bay Lightning,Shots On Goal,Anthony Cirelli,Under,1.5,DraftKings,+110,48.4,1.55,0.35,8.79
+2026-10-03 22:51:48,Washington Capitals @ Tampa Bay Lightning,Shots On Goal,John Carlson,Under,2.5,theScore Bet,-105,53.1,3.60,0.94,23.60
+2026-10-03 22:51:48,Washington Capitals @ Tampa Bay Lightning,Shots On Goal,Alex Tuch,Under,2.5,Novig,-135,59.2,2.97,1.00,25.06
+2026-10-03 22:51:48,Washington Capitals @ Tampa Bay Lightning,Shots On Goal,Nikita Kucherov,Under,2.5,Novig,+130,43.9,1.01,0.19,4.84
+2026-10-03 22:51:48,Boston Bruins @ Minnesota Wild,Shots On Goal,Blake Coleman,Under,2.5,DraftKings,-120,56.6,3.72,1.12,27.92
+2026-10-03 22:51:48,Boston Bruins @ Minnesota Wild,Shots On Goal,Maxim Shabanov,Under,1.5,DraftKings,+110,50.0,5.00,1.14,28.41
+2026-10-03 22:51:48,Boston Bruins @ Minnesota Wild,Shots On Goal,Kirill Kaprizov,Under,3.5,theScore Bet,-120,55.3,1.46,0.44,10.98
+2026-10-03 22:51:48,Boston Bruins @ Minnesota Wild,Shots On Goal,Elias Lindholm,Under,1.5,theScore Bet,+110,47.9,0.49,0.11,2.79
+2026-10-03 22:51:48,Boston Bruins @ Minnesota Wild,Shots On Goal,Pavel Zacha,Under,1.5,theScore Bet,+110,48.8,2.41,0.55,13.71
+2026-10-03 22:51:48,Boston Bruins @ Minnesota Wild,Shots On Goal,Ryan Hartman,Under,1.5,theScore Bet,+160,38.8,0.79,0.12,3.07
+2026-10-03 22:51:48,Boston Bruins @ Minnesota Wild,Total Saves,Jesper Wallstedt,Over,23.5,theScore Bet,-105,53.2,3.92,1.03,25.71
+2026-10-03 22:51:49,St Louis Blues @ Colorado Avalanche,Shots On Goal,Colton Parayko,Over,1.5,Novig,+127,47.4,7.49,1.47,36.87
+2026-10-03 22:51:49,St Louis Blues @ Colorado Avalanche,Shots On Goal,Jimmy Snuggerud,Under,2.5,Novig,-138,59.2,2.02,0.70,17.40
+2026-10-03 22:51:49,St Louis Blues @ Colorado Avalanche,Shots On Goal,Brent Burns,Under,1.5,theScore Bet,+135,43.1,1.22,0.23,5.64
+2026-10-03 22:51:49,Los Angeles Kings @ San Jose Sharks,Shots On Goal,Michael Misa,Over,1.5,Novig,-120,56.1,2.82,0.85,21.16
+2026-10-03 22:51:49,Los Angeles Kings @ San Jose Sharks,Shots On Goal,Mats Zuccarello,Over,2.5,theScore Bet,+160,40.8,6.20,0.97,24.23
