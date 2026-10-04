@@ -10,10 +10,15 @@ API_KEY = os.environ.get('ODDS_API_KEY')
 DISCORD_WEBHOOK_URL = os.environ.get('DISCORD_WEBHOOK_URL')
 UNIT_SIZE = 25.00
 
-# Pinnacle added strictly for sharp consensus checks
-KS_BOOKS = 'fanduel,draftkings,betmgm,caesars,espnbet,novig,pinnacle'
+# Kansas-regulated sportsbooks only (Pinnacle/EU removed to preserve API quota)
+KS_BOOKS = 'fanduel,draftkings,betmgm,caesars,espnbet,novig'
 ALLOWED_BOOKS = set(KS_BOOKS.split(','))
 CSV_FILENAME = 'ev_plays_log.csv'
+
+# Minimum peer books required to establish consensus (excluding FanDuel and target book)
+MIN_CONSENSUS_BOOKS = 2
+# Minimum discount vs market average implied probability (1.5% outlier threshold)
+MIN_OUTLIER_DELTA = 0.015
 
 SPORTS_CONFIG = {
     'basketball_wnba': 'player_points,player_rebounds,player_assists,player_points_rebounds,player_points_rebounds_assists,player_threes',
@@ -35,10 +40,10 @@ def american_to_decimal(odds):
 
 def prob_to_american(prob):
     if prob <= 0 or prob >= 1: return "N/A"
-    if prob > 0.5:
+    if prob >= 0.5:
         odds = (prob / (1 - prob)) * -100
     else:
-        odds = ((1 / prob) - 1) * 100
+        odds = ((1 - prob) / prob) * 100
     return f"+{int(round(odds))}" if odds > 0 else str(int(round(odds)))
 
 def format_market_name(market_key):
@@ -144,10 +149,10 @@ def send_discord_digest(new_plays, run_timestamp):
         part_tag = f" (Part {chunk_idx // chunk_size + 1}/{total_chunks})" if total_chunks > 1 else ""
 
         embed = {
-            "title": f"🚨 +EV Prop Digest ({len(sorted_plays)} Plays Found){part_tag}",
+            "title": f"🚨 +EV Prop Digest ({len(sorted_plays)} Outliers Found){part_tag}",
             "description": "\n\n".join(lines),
             "color": 65280,
-            "footer": {"text": f"Scanned at {run_timestamp} CT • Ranked by Edge % against FanDuel baseline"}
+            "footer": {"text": f"Scanned at {run_timestamp} CT • FD Devig vs Retail Consensus"}
         }
 
         try:
@@ -205,9 +210,15 @@ def fetch_and_scan():
             
             print(f"  -> Scanning {game_name}...")
             
-            # EU region added to explicitly guarantee Pinnacle data is captured if available
+            # Limited to us and us_ex to conserve API requests
             odds_url = f'https://api.the-odds-api.com/v4/sports/{sport}/events/{event_id}/odds'
-            odds_params = {'apiKey': API_KEY, 'regions': 'us,us_ex,eu', 'markets': markets, 'bookmakers': KS_BOOKS, 'oddsFormat': 'american'}
+            odds_params = {
+                'apiKey': API_KEY, 
+                'regions': 'us,us_ex', 
+                'markets': markets, 
+                'bookmakers': KS_BOOKS, 
+                'oddsFormat': 'american'
+            }
             
             try:
                 odds_res = requests.get(odds_url, params=odds_params, timeout=15)
@@ -221,23 +232,21 @@ def fetch_and_scan():
                 
             event_data = odds_res.json()
             
-            # Phase 1: Build FanDuel True Probability Baseline
+            # Step 1: Extract FanDuel Two-Way Lines for Sharp Devig
             fd_props = {}
             for book in event_data.get('bookmakers', []):
-                if book['key'] not in ALLOWED_BOOKS: continue
-                
-                if book['key'] == 'fanduel':
-                    for market in book.get('markets', []):
-                        m_key = market['key']
-                        if m_key not in fd_props: fd_props[m_key] = {}
-                        for outcome in market['outcomes']:
-                            player = outcome.get('description', 'Unknown')
-                            side = outcome['name']
-                            pt = outcome.get('point')
-                            if pt is None: continue
-                            key = (player, pt)
-                            if key not in fd_props[m_key]: fd_props[m_key][key] = {}
-                            fd_props[m_key][key][side] = outcome['price']
+                if book['key'] != 'fanduel': continue
+                for market in book.get('markets', []):
+                    m_key = market['key']
+                    if m_key not in fd_props: fd_props[m_key] = {}
+                    for outcome in market['outcomes']:
+                        player = outcome.get('description', 'Unknown')
+                        side = outcome['name']
+                        pt = outcome.get('point')
+                        if pt is None: continue
+                        key = (player, pt)
+                        if key not in fd_props[m_key]: fd_props[m_key][key] = {}
+                        fd_props[m_key][key][side] = outcome['price']
             
             true_probs = {}
             for m_key, props in fd_props.items():
@@ -246,9 +255,13 @@ def fetch_and_scan():
                     if 'Over' in sides and 'Under' in sides:
                         p_over = american_to_prob(sides['Over'])
                         p_under = american_to_prob(sides['Under'])
-                        true_probs[m_key][(player, pt)] = {'Over': p_over / (p_over + p_under), 'Under': p_under / (p_over + p_under)}
+                        # Proportional de-vigging
+                        true_probs[m_key][(player, pt)] = {
+                            'Over': p_over / (p_over + p_under), 
+                            'Under': p_under / (p_over + p_under)
+                        }
 
-            # Phase 2: Build Market Consensus Dictionary
+            # Step 2: Assemble All Competitor Books
             market_data = {}
             for book in event_data.get('bookmakers', []):
                 if book['key'] not in ALLOWED_BOOKS or book['key'] == 'fanduel': continue
@@ -287,51 +300,36 @@ def fetch_and_scan():
                             'raw_player': raw_player
                         })
 
-            # Phase 3: Evaluate Edges against Consensus
+            # Step 3: Identify High-Probability Outliers Against Peer Consensus
             for m_key, lines in market_data.items():
                 for line_key, sides in lines.items():
                     matched_fd_player, pt = line_key
                     for side, offers in sides.items():
                         true_prob = true_probs[m_key][line_key][side]
                         
-                        pinny_offer = next((o for o in offers if o['book_key'] == 'pinnacle'), None)
-                        
                         for offer in offers:
-                            if offer['book_key'] == 'pinnacle': continue # Do not alert on Pinnacle
-                            
                             dec_odds = offer['dec_odds']
                             edge = (true_prob * dec_odds) - 1
                             
+                            # Initial check against FanDuel devig baseline
                             if edge > 0:
-                                # TRAP PREVENTION & CONSENSUS CHECK
-                                other_offers = [o for o in offers if o['book_key'] != offer['book_key']]
+                                peer_offers = [o for o in offers if o['book_key'] != offer['book_key']]
                                 
-                                # Do not fire if we have literally nothing to verify the edge against
-                                if not other_offers and not pinny_offer:
-                                    continue 
+                                # Quorum Gate: Require at least MIN_CONSENSUS_BOOKS to verify the market
+                                if len(peer_offers) < MIN_CONSENSUS_BOOKS:
+                                    continue
                                     
-                                market_avg_str = ""
+                                # Calculate Peer Consensus Implied Probability
+                                peer_implied_probs = [1 / o['dec_odds'] for o in peer_offers]
+                                avg_peer_prob = sum(peer_implied_probs) / len(peer_implied_probs)
+                                target_implied_prob = 1 / dec_odds
                                 
-                                # 1. The Pinnacle Check
-                                if pinny_offer:
-                                    # Target MUST pay better than Pinnacle
-                                    if dec_odds <= pinny_offer['dec_odds']:
-                                        continue 
-                                    market_avg_str = f"Pinnacle Check: {pinny_offer['odds_str']}"
+                                # Outlier Gate: Target book must beat consensus by at least 1.5%
+                                if (avg_peer_prob - target_implied_prob) < MIN_OUTLIER_DELTA:
+                                    continue
                                     
-                                # 2. The Retail Consensus Check
-                                if other_offers:
-                                    avg_other_prob = sum(1 / o['dec_odds'] for o in other_offers) / len(other_offers)
-                                    target_implied_prob = 1 / dec_odds
-                                    
-                                    # Target must be at least a 1.5% outlier against the market average
-                                    if (avg_other_prob - target_implied_prob) < 0.015:
-                                        continue 
-                                        
-                                    if not market_avg_str:
-                                        market_avg_str = f"Consensus Avg: {prob_to_american(avg_other_prob)}"
-                                        
-                                # WE HAVE A VERIFIED OUTLIER
+                                market_avg_str = f"Consensus: {prob_to_american(avg_peer_prob)} ({len(peer_offers)} books)"
+
                                 edges_found += 1
                                 m_display = format_market_name(m_key)
                                 raw_player = offer['raw_player']
@@ -347,9 +345,9 @@ def fetch_and_scan():
                                 )
                                 if dedup_key in seen_plays: continue
 
+                                # Staking Math: Quarter-Kelly
                                 b = dec_odds - 1
                                 kelly_decimal = (true_prob * b - (1 - true_prob)) / b
-                                
                                 kelly_units = kelly_decimal * 100
                                 quarter_kelly_units = kelly_units / 4
                                 dollar_wager = quarter_kelly_units * UNIT_SIZE
@@ -370,7 +368,7 @@ def fetch_and_scan():
         log_batch_to_csv(new_plays_to_log, run_timestamp)
         send_discord_digest(new_plays_to_log, run_timestamp)
 
-    print(f"Scan complete. Found {edges_found} active outliers ({len(new_plays_to_log)} new plays logged & alerted).")
+    print(f"Scan complete. Found {edges_found} verified consensus outliers ({len(new_plays_to_log)} new plays logged & alerted).")
 
 if __name__ == "__main__":
     fetch_and_scan()
