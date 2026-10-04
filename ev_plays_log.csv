@@ -389,3 +389,7 @@ Timestamp,Game,Market,Player,Side,Line,Bookmaker,Odds,True Prob %,Edge %,Kelly U
 2026-10-03 22:51:49,St Louis Blues @ Colorado Avalanche,Shots On Goal,Brent Burns,Under,1.5,theScore Bet,+135,43.1,1.22,0.23,5.64
 2026-10-03 22:51:49,Los Angeles Kings @ San Jose Sharks,Shots On Goal,Michael Misa,Over,1.5,Novig,-120,56.1,2.82,0.85,21.16
 2026-10-03 22:51:49,Los Angeles Kings @ San Jose Sharks,Shots On Goal,Mats Zuccarello,Over,2.5,theScore Bet,+160,40.8,6.20,0.97,24.23
+---,=== RUN: 2026-10-04 00:35:29 (3 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
+2026-10-04 00:35:32,St Louis Blues @ Colorado Avalanche,Shots On Goal,Dylan Holloway,Over,2.5,DraftKings,+110,48.8,2.41,0.55,13.71
+2026-10-04 00:35:32,Los Angeles Kings @ San Jose Sharks,Shots On Goal,Adrian Kempe,Under,2.5,theScore Bet,+150,40.4,1.08,0.18,4.50
+2026-10-04 00:35:32,Los Angeles Kings @ San Jose Sharks,Shots On Goal,Trevor Moore,Under,1.5,theScore Bet,+130,43.9,1.01,0.19,4.84
