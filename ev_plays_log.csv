@@ -691,3 +691,20 @@ Timestamp,Game,Market,Player,Side,Line,Bookmaker,Odds,True Prob %,Edge %,Kelly U
 2026-10-04 16:23:51,Los Angeles Chargers @ Seattle Seahawks,Receptions,Cooper Kupp,Over,2.5,BetMGM,+125,45.4,2.20,0.44,10.98
 2026-10-04 16:23:51,Los Angeles Chargers @ Seattle Seahawks,Receptions,Tory Horton,Over,0.5,Novig,-190,66.8,2.00,0.95,23.70
 2026-10-04 16:23:51,Detroit Lions @ Carolina Panthers,Receptions,Chuba Hubbard,Over,2.5,Novig,-130,57.2,1.15,0.38,9.38
+---,=== RUN: 2026-10-04 16:47:35 (16 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
+2026-10-04 16:47:35,New York Liberty @ Atlanta Dream,Assists,Jordin Canada,Over,7.5,Novig,+102,50.6,2.23,0.55,13.64
+2026-10-04 16:47:35,New York Liberty @ Atlanta Dream,Assists,Pauline Astier,Over,3.5,Novig,+138,44.1,5.07,0.92,22.96
+2026-10-04 16:47:35,New York Liberty @ Atlanta Dream,Points,Sabrina Ionescu,Over,15.5,Novig,+111,49.8,5.07,1.14,28.53
+2026-10-04 16:47:35,New York Liberty @ Atlanta Dream,Rebounds,Angel Reese,Under,12.5,DraftKings,-121,56.3,2.91,0.88,22.04
+2026-10-04 16:47:35,New York Liberty @ Atlanta Dream,Rebounds,Rhyne Howard,Under,3.5,DraftKings,+113,47.2,0.50,0.11,2.78
+2026-10-04 16:47:35,New York Liberty @ Atlanta Dream,Threes,Jonquel Jones,Under,1.5,Novig,+122,45.8,1.70,0.35,8.72
+2026-10-04 16:47:35,Las Vegas Aces @ Golden State Valkyries,Threes,Jackie Young,Over,2.5,Novig,+150,40.2,0.58,0.10,2.44
+2026-10-04 16:47:36,Winnipeg Jets @ Detroit Red Wings,Shots On Goal,Lucas Raymond,Over,2.5,Novig,+133,46.0,7.28,1.37,34.20
+2026-10-04 16:47:37,Vegas Golden Knights @ Vancouver Canucks,Shots On Goal,Tomas Hertl,Over,2.5,theScore Bet,+140,43.4,4.22,0.75,18.83
+2026-10-04 16:47:37,Jacksonville Jaguars @ Cincinnati Bengals,Receptions,Brian Thomas Jr,Under,2.5,Novig,-135,57.5,0.12,0.04,1.02
+2026-10-04 16:47:38,Dallas Cowboys @ Houston Texans,Reception Yds,Nico Collins,Over,72.5,Novig,+106,50.0,3.00,0.71,17.69
+2026-10-04 16:47:38,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,Emeka Egbuka,Under,3.5,Novig,-122,55.1,0.28,0.08,2.12
+2026-10-04 16:47:38,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,Cade Otton,Over,2.5,Novig,-133,57.5,0.76,0.25,6.33
+2026-10-04 16:47:38,New York Jets @ Chicago Bears,Receptions,Kenyon Sadiq,Over,4.5,Novig,+127,44.1,0.21,0.04,1.05
+2026-10-04 16:47:38,New York Jets @ Chicago Bears,Receptions,Kyle Monangai,Under,0.5,DraftKings,+162,38.6,1.11,0.17,4.28
+2026-10-04 16:47:38,Miami Dolphins @ Minnesota Vikings,Receptions,Malik Washington,Over,4.5,Novig,+117,46.2,0.27,0.06,1.46
