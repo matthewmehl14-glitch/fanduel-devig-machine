@@ -708,3 +708,26 @@ Timestamp,Game,Market,Player,Side,Line,Bookmaker,Odds,True Prob %,Edge %,Kelly U
 2026-10-04 16:47:38,New York Jets @ Chicago Bears,Receptions,Kenyon Sadiq,Over,4.5,Novig,+127,44.1,0.21,0.04,1.05,PENDING,0.00
 2026-10-04 16:47:38,New York Jets @ Chicago Bears,Receptions,Kyle Monangai,Under,0.5,DraftKings,+162,38.6,1.11,0.17,4.28,PENDING,0.00
 2026-10-04 16:47:38,Miami Dolphins @ Minnesota Vikings,Receptions,Malik Washington,Over,4.5,Novig,+117,46.2,0.27,0.06,1.46,PENDING,0.00
+---,=== RUN: 2026-10-04 19:44:00 (22 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
+2026-10-04 19:44:01,Las Vegas Aces @ Golden State Valkyries,Assists,Jackie Young,Under,6.5,Novig,-135,57.9,0.71,0.24,5.97
+2026-10-04 19:44:01,Las Vegas Aces @ Golden State Valkyries,Rebounds,A'ja Wilson,Over,10.5,Novig,+113,48.6,3.48,0.77,19.24
+2026-10-04 19:44:01,Las Vegas Aces @ Golden State Valkyries,Rebounds,Veronica Burton,Under,3.5,Novig,+108,49.0,1.89,0.44,10.96
+2026-10-04 19:44:01,Las Vegas Aces @ Golden State Valkyries,Rebounds,Chelsea Gray,Under,3.5,Novig,-130,57.5,1.76,0.57,14.30
+2026-10-04 19:44:02,Utah Mammoth @ New York Rangers,Shots On Goal,Clayton Keller,Over,2.5,BetMGM,+105,50.0,2.50,0.60,14.88
+2026-10-04 19:44:02,Utah Mammoth @ New York Rangers,Shots On Goal,Mika Zibanejad,Over,2.5,theScore Bet,+105,49.9,2.29,0.55,13.64
+2026-10-04 19:44:02,Utah Mammoth @ New York Rangers,Shots On Goal,J.T. Miller,Over,1.5,theScore Bet,-135,57.7,0.51,0.17,4.27
+2026-10-04 19:44:02,Florida Panthers @ Anaheim Ducks,Shots On Goal,Carter Verhaeghe,Under,2.5,BetMGM,-155,60.9,0.12,0.05,1.21
+2026-10-04 19:44:02,Calgary Flames @ Seattle Kraken,Shots On Goal,Zayne Parekh,Over,1.5,theScore Bet,+105,50.0,2.50,0.60,14.88
+2026-10-04 19:44:02,Vegas Golden Knights @ Vancouver Canucks,Shots On Goal,Mitch Marner,Under,2.5,BetMGM,-150,61.2,2.06,0.77,19.31
+2026-10-04 19:44:03,Miami Dolphins @ Minnesota Vikings,Receptions,Tai Felton,Over,1.5,Novig,-104,52.8,3.60,0.94,23.40
+2026-10-04 19:44:03,Denver Broncos @ San Francisco 49ers,Reception Yds,Pat Bryant,Under,22.5,Novig,+102,50.0,1.00,0.25,6.13
+2026-10-04 19:44:03,Denver Broncos @ San Francisco 49ers,Receptions,Courtland Sutton,Over,3.5,Novig,+130,43.7,0.40,0.08,1.93
+2026-10-04 19:44:03,Denver Broncos @ San Francisco 49ers,Receptions,Troy Franklin,Under,0.5,DraftKings,+145,42.5,4.08,0.70,17.61
+2026-10-04 19:44:03,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Tre Tucker,Over,3.5,Novig,+138,42.8,1.93,0.35,8.72
+2026-10-04 19:44:03,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Jalen Nailor,Over,1.5,Novig,-144,59.0,0.05,0.02,0.45
+2026-10-04 19:44:03,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Emmett Johnson,Under,1.5,Novig,-167,63.2,1.11,0.47,11.63
+2026-10-04 19:44:03,Kansas City Chiefs @ Las Vegas Raiders,Rush Yds,Ashton Jeanty,Over,59.5,Novig,+106,50.0,3.00,0.71,17.69
+2026-10-04 19:44:03,Kansas City Chiefs @ Las Vegas Raiders,Rush Yds,Patrick Mahomes,Under,15.5,Novig,+104,50.0,2.00,0.48,12.02
+2026-10-04 19:44:04,Los Angeles Chargers @ Seattle Seahawks,Receptions,Tre Harris,Over,3.5,Novig,+138,42.5,1.11,0.20,5.03
+2026-10-04 19:44:04,Detroit Lions @ Carolina Panthers,Reception Yds,Isaac TeSlaa,Over,17.5,Novig,+104,50.0,2.00,0.48,12.02
+2026-10-04 19:44:04,Detroit Lions @ Carolina Panthers,Reception Yds,Tommy Tremble,Under,12.5,Novig,+106,50.0,3.00,0.71,17.69
