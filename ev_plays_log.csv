@@ -525,14 +525,14 @@ Timestamp,Game,Market,Player,Side,Line,Bookmaker,Odds,True Prob %,Edge %,Kelly U
 2026-10-04 12:27:35,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,Kenny Gainwell,Over,2.5,Novig,+170,38.3,3.45,0.51,12.67,PENDING,0.00
 2026-10-04 12:27:35,Green Bay Packers @ Tampa Bay Buccaneers,Rush Yds,Kaleb Johnson,Over,31.5,Novig,+102,50.0,1.00,0.25,6.13,PENDING,0.00
 2026-10-04 12:27:35,Green Bay Packers @ Tampa Bay Buccaneers,Rush Yds,MarShawn Lloyd,Over,23.5,Novig,+108,50.0,4.00,0.93,23.15,PENDING,0.00
-2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Reception Yds,Kyren Williams,Over,13.5,Novig,+108,50.0,4.00,0.93,23.15,PENDING,0.00
+2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Reception Yds,Kyren Williams,Over,13.5,Novig,+108,50.0,4.00,0.93,23.15,LOSS,-0.93
 2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Reception Yds,Dontayvion Wicks,Over,56.5,Novig,+111,50.0,5.50,1.24,30.97,PENDING,0.00
 2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Receptions,Puka Nacua,Over,6.5,BetMGM,+105,51.4,5.41,1.29,32.19,PENDING,0.00
 2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Receptions,Makai Lemon,Under,3.5,Novig,+111,51.0,7.64,1.72,42.99,PENDING,0.00
 2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Receptions,Tyler Higbee,Over,3.5,BetMGM,+130,44.1,1.54,0.30,7.39,PENDING,0.00
 2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Receptions,Zach Ertz,Under,2.5,Novig,-108,54.6,5.12,1.38,34.54,PENDING,0.00
 2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Receptions,Saquon Barkley,Under,2.5,Novig,-138,58.3,0.54,0.19,4.66,PENDING,0.00
-2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Receptions,Kyren Williams,Over,2.5,Novig,+138,42.8,1.93,0.35,8.72,PENDING,0.00
+2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Receptions,Kyren Williams,Over,2.5,Novig,+138,42.8,1.93,0.35,8.72,LOSS,-0.35
 2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Receptions,Darius Cooper,Over,2.5,Novig,+163,40.2,5.82,0.89,22.30,PENDING,0.00
 2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Rush Yds,Tank Bigsby,Over,8.5,Novig,+104,50.0,2.00,0.48,12.02,PENDING,0.00
 2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Rush Yds,Matthew Stafford,Over,1.5,Novig,+141,44.1,6.16,1.09,27.32,PENDING,0.00
