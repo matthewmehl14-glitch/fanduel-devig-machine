@@ -731,3 +731,19 @@ Timestamp,Game,Market,Player,Side,Line,Bookmaker,Odds,True Prob %,Edge %,Kelly U
 2026-10-04 19:44:04,Los Angeles Chargers @ Seattle Seahawks,Receptions,Tre Harris,Over,3.5,Novig,+138,42.5,1.11,0.20,5.03
 2026-10-04 19:44:04,Detroit Lions @ Carolina Panthers,Reception Yds,Isaac TeSlaa,Over,17.5,Novig,+104,50.0,2.00,0.48,12.02
 2026-10-04 19:44:04,Detroit Lions @ Carolina Panthers,Reception Yds,Tommy Tremble,Under,12.5,Novig,+106,50.0,3.00,0.71,17.69
+---,=== RUN: 2026-10-04 23:26:59 (15 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
+2026-10-04 23:27:00,Florida Panthers @ Anaheim Ducks,Shots On Goal,Sam Reinhart,Over,2.5,Novig,+141,44.7,7.62,1.35,33.78
+2026-10-04 23:27:00,Florida Panthers @ Anaheim Ducks,Shots On Goal,Carter Verhaeghe,Over,2.5,theScore Bet,+170,37.6,1.46,0.22,5.38
+2026-10-04 23:27:00,Florida Panthers @ Anaheim Ducks,Shots On Goal,Mikael Granlund,Under,1.5,theScore Bet,+115,46.5,0.03,0.01,0.17
+2026-10-04 23:27:00,Calgary Flames @ Seattle Kraken,Shots On Goal,Bobby McMann,Under,2.5,theScore Bet,+105,50.2,2.92,0.70,17.38
+2026-10-04 23:27:00,Calgary Flames @ Seattle Kraken,Shots On Goal,Vince Dunn,Under,1.5,theScore Bet,+150,40.8,2.12,0.35,8.83
+2026-10-04 23:27:00,Calgary Flames @ Seattle Kraken,Shots On Goal,Matvei Gridin,Under,1.5,Novig,+163,39.8,4.74,0.73,18.16
+2026-10-04 23:27:00,Vegas Golden Knights @ Vancouver Canucks,Shots On Goal,Filip Hronek,Under,1.5,theScore Bet,+125,44.7,0.48,0.10,2.38
+2026-10-04 23:27:00,Vegas Golden Knights @ Vancouver Canucks,Shots On Goal,Marco Rossi,Over,1.5,BetMGM,+105,50.0,2.50,0.60,14.88
+2026-10-04 23:27:01,Detroit Lions @ Carolina Panthers,Reception Yds,Brycen Tremayne,Under,33.5,Novig,+102,50.0,1.00,0.25,6.13
+2026-10-04 23:27:01,Detroit Lions @ Carolina Panthers,Reception Yds,Brock Wright,Over,5.5,Novig,+104,50.0,2.00,0.48,12.02
+2026-10-04 23:27:01,Detroit Lions @ Carolina Panthers,Receptions,Brycen Tremayne,Over,2.5,Novig,-104,51.0,0.06,0.02,0.40
+2026-10-04 23:27:01,Detroit Lions @ Carolina Panthers,Receptions,Tommy Tremble,Over,1.5,Novig,-133,57.9,1.35,0.45,11.24
+2026-10-04 23:27:01,Detroit Lions @ Carolina Panthers,Receptions,Tommy Tremble,Under,1.5,theScore Bet,+140,42.1,1.15,0.21,5.14
+2026-10-04 23:27:01,Detroit Lions @ Carolina Panthers,Receptions,Brock Wright,Over,0.5,Novig,-133,57.2,0.16,0.05,1.35
+2026-10-04 23:27:01,Detroit Lions @ Carolina Panthers,Receptions,Amon-Ra St. Brown,Under,6.5,Novig,+127,44.1,0.21,0.04,1.05
