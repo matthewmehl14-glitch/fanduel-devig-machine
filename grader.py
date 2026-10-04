@@ -63,24 +63,32 @@ def fetch_recent_boxscores():
     
     for sport, league in sports:
         for d in set(dates_to_check):
-            url = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/scoreboard?dates={d}"
-            try:
-                res = requests.get(url, timeout=10)
-                if res.status_code != 200: continue
-                events = res.json().get('events', [])
-                for event in events:
-                    game_id = event['id']
-                    if game_id in seen_events: continue
-                    seen_events.add(game_id)
-                    
-                    if event['status']['type']['completed']:
-                        summary_url = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/summary?event={game_id}"
-                        sum_res = requests.get(summary_url, timeout=10)
-                        if sum_res.status_code == 200:
-                            box = sum_res.json().get('boxscore')
-                            if box: boxscores.append(box)
-            except Exception:
-                pass
+            # Apply limit=300 to bypass the default truncation
+            base_url = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/scoreboard?dates={d}&limit=300"
+            
+            # ESPN requires explicit group IDs for college sports to bypass the Top 25 default
+            urls_to_check = [base_url]
+            if league == 'college-football':
+                urls_to_check = [f"{base_url}&groups=80", f"{base_url}&groups=81"] # Fetch FBS and FCS
+                
+            for url in urls_to_check:
+                try:
+                    res = requests.get(url, timeout=10)
+                    if res.status_code != 200: continue
+                    events = res.json().get('events', [])
+                    for event in events:
+                        game_id = event['id']
+                        if game_id in seen_events: continue
+                        seen_events.add(game_id)
+                        
+                        if event['status']['type']['completed']:
+                            summary_url = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/summary?event={game_id}"
+                            sum_res = requests.get(summary_url, timeout=10)
+                            if sum_res.status_code == 200:
+                                box = sum_res.json().get('boxscore')
+                                if box: boxscores.append(box)
+                except Exception:
+                    pass
     return boxscores
 
 def extract_stat_value(stat_name, labels, stats):
@@ -91,7 +99,6 @@ def extract_stat_value(stat_name, labels, stats):
             delim = '/' if '/' in val else ('-' if '-' in val else None)
             return float(val.split(delim)[1]) if delim else float(val)
 
-        # Handles both hyphens ("1-2") and slashes ("1/2") for 3PT props
         if stat_name == '3PT Made' and '3PT' in labels:
             val = stats[labels.index('3PT')]
             if val == '--': return 0.0
@@ -161,13 +168,11 @@ def send_digest(daily_buckets, all_time_buckets, graded_count):
     lines = []
     
     for i in range(3):
-        # Daily Stats
         dw, dl, dp, d_units = daily_buckets[i]['W'], daily_buckets[i]['L'], daily_buckets[i]['P'], daily_buckets[i]['Units']
         daily_total_units += d_units
         d_bets = dw + dl
         d_pct = (dw / d_bets * 100) if d_bets > 0 else 0.0
         
-        # All-Time Stats
         aw, al, ap, a_units = all_time_buckets[i]['W'], all_time_buckets[i]['L'], all_time_buckets[i]['P'], all_time_buckets[i]['Units']
         all_time_total_units += a_units
         a_bets = aw + al
