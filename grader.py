@@ -181,7 +181,7 @@ def index_players(box):
 
 def parse_value(label, raw):
     if raw in (None, "", "--", "-"):
-        return 0.0
+        return None  # missing data is NOT zero
     s = str(raw).strip()
     if label in ("3PT", "C/ATT") and re.search(r"\d[-/]\d", s):
         parts = re.split(r"[-/]", s)
@@ -204,6 +204,27 @@ def find_component(groups, table, labels):
                     if val is not None:
                         return "ok", val
     return ("no_label" if table_seen else "no_table"), None
+
+
+def box_has_data(idx, recipes):
+    """True if at least one player in the game has a nonzero value for every
+    component of some recipe. Catches box scores where a stat column exists
+    but is blank/zero for everyone (e.g. NHL shots all showing 0)."""
+    for recipe in recipes:
+        ok = True
+        for table, labels in recipe:
+            found = False
+            for entry in idx.values():
+                status, val = find_component(entry["groups"], table, labels)
+                if status == "ok" and val:
+                    found = True
+                    break
+            if not found:
+                ok = False
+                break
+        if ok:
+            return True
+    return False
 
 
 def stat_total(entry, recipes, is_football):
@@ -259,6 +280,11 @@ def grade_row(row):
             return "VOID", None, "not in box score"
         if not idx[name]["played"]:
             return "VOID", None, "DNP"
+        if sport != "football" and not box_has_data(idx, recipes):
+            labels = sorted({l for e in idx.values() for _, labs, _ in e["groups"] for l in labs})
+            print(f"  ! {market} is blank/zero for every player in {row['Game']} — "
+                  f"treating as missing data. Box labels: {labels}")
+            return "VOID", None, "stat missing from box score"
         total = stat_total(idx[name], recipes, sport == "football")
         if total is None:
             print(f"  ! stat labels not found for {row['Player']} {market} — check ESPN labels")
