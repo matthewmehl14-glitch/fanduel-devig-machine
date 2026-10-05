@@ -17,8 +17,8 @@ CSV_FILENAME = 'ev_plays_log.csv'
 
 # Minimum peer books required to establish consensus (excluding FanDuel and target book)
 MIN_CONSENSUS_BOOKS = 2
-# Minimum discount vs market average implied probability (1.5% outlier threshold)
-MIN_OUTLIER_DELTA = 0.015
+# Minimum discount vs market average implied probability (2.0% outlier threshold)
+MIN_OUTLIER_DELTA = 0.020
 
 SPORTS_CONFIG = {
     'basketball_wnba': 'player_points,player_rebounds,player_assists,player_points_rebounds,player_points_rebounds_assists,player_threes',
@@ -138,7 +138,8 @@ def send_discord_digest(new_plays, run_timestamp):
         lines = []
         for play in chunk:
             edge_val = float(play['edge'])
-            icon = "🔥" if edge_val >= 5.0 else ("💎" if edge_val >= 2.0 else "▫️")
+            # Only Fire and Diamond icons remain
+            icon = "🔥" if edge_val >= 5.0 else "💎" 
             
             line_1 = f"{icon} **+{play['edge']}%** | **{play['player']}** {play['side']} {play['line']} {play['market']}"
             line_2 = f"↳ **{play['odds']}** @ {play['book']} • **{play['units']}u** (${play['wager']}) • *{play['market_avg_str']}*"
@@ -311,8 +312,8 @@ def fetch_and_scan():
                             dec_odds = offer['dec_odds']
                             edge = (true_prob * dec_odds) - 1
                             
-                            # Initial check against FanDuel devig baseline
-                            if edge > 0:
+                            # Initial check against FanDuel devig baseline (Floor raised to 2.0%)
+                            if edge >= 0.02:
                                 peer_offers = [o for o in offers if o['book_key'] != offer['book_key']]
                                 
                                 # Quorum Gate: Require at least MIN_CONSENSUS_BOOKS to verify the market
@@ -324,7 +325,7 @@ def fetch_and_scan():
                                 avg_peer_prob = sum(peer_implied_probs) / len(peer_implied_probs)
                                 target_implied_prob = 1 / dec_odds
                                 
-                                # Outlier Gate: Target book must beat consensus by at least 1.5%
+                                # Outlier Gate: Target book must beat consensus by at least MIN_OUTLIER_DELTA
                                 if (avg_peer_prob - target_implied_prob) < MIN_OUTLIER_DELTA:
                                     continue
                                     
