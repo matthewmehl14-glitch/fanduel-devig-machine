@@ -756,3 +756,13 @@ Timestamp,Game,Market,Player,Side,Line,Bookmaker,Odds,True Prob %,Edge %,Kelly U
 2026-10-05 00:09:05,Detroit Lions @ Carolina Panthers,Rush Yds,Bryce Young,Over,12.5,Novig,+102,50.0,1.00,0.25,6.13,LOSS,-0.25
 ---,=== RUN: 2026-10-05 00:51:03 (1 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---,,
 2026-10-05 00:51:04,Vegas Golden Knights @ Vancouver Canucks,Shots On Goal,Filip Hronek,Over,1.5,Novig,-113,54.0,1.71,0.48,12.06,LOSS,-0.48
+---,=== RUN: 2026-10-05 14:53:43 (9 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
+2026-10-05 14:53:45,Ottawa Senators @ Boston Bruins,Shots On Goal,Drake Batherson,Under,2.5,DraftKings,-145,60.6,2.34,0.85,21.20
+2026-10-05 14:53:45,Ottawa Senators @ Boston Bruins,Shots On Goal,Dylan Cozens,Under,2.5,BetMGM,-130,57.7,2.15,0.70,17.47
+2026-10-05 14:53:45,Ottawa Senators @ Boston Bruins,Shots On Goal,JJ Peterka,Over,2.5,Novig,+163,39.8,4.74,0.73,18.16
+2026-10-05 14:53:45,San Jose Sharks @ Dallas Stars,Shots On Goal,Macklin Celebrini,Over,3.5,Novig,+133,45.2,5.27,0.99,24.77
+2026-10-05 14:53:45,San Jose Sharks @ Dallas Stars,Shots On Goal,Wyatt Johnston,Under,2.5,BetMGM,-105,52.6,2.79,0.73,18.29
+2026-10-05 14:53:45,San Jose Sharks @ Dallas Stars,Shots On Goal,Miro Heiskanen,Under,1.5,theScore Bet,+135,43.4,2.05,0.38,9.48
+2026-10-05 14:53:45,Atlanta Falcons @ New Orleans Saints,Reception Yds,Kyle Pitts,Under,29.5,Novig,+108,50.0,4.00,0.93,23.15
+2026-10-05 14:53:45,Atlanta Falcons @ New Orleans Saints,Receptions,Drake London,Under,5.5,Novig,+130,45.4,4.47,0.86,21.47
+2026-10-05 14:53:45,Atlanta Falcons @ New Orleans Saints,Receptions,Kyle Pitts,Under,2.5,Novig,+133,44.1,2.86,0.54,13.45
