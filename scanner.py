@@ -269,9 +269,12 @@ def run():
     rows = load_rows()
     seen = {play_key(r["Game"], r["Market"], r["Player"], r["Side"], r["Line"]) for r in rows}
     exposure = defaultdict(float)
+    sides_logged = defaultdict(set)   # (game, market, player) -> {"over","under"}
     pending_by_event = defaultdict(list)
     for r in rows:
         exposure[(r["Game"].strip().lower(), normalize_name(r["Player"]))] += safe_float(r["Kelly Units"], 0.0)
+        k = play_key(r["Game"], r["Market"], r["Player"], r["Side"], r["Line"])
+        sides_logged[k[:3]].add(k[3])
         if r["Result"] == "PENDING" and r["Event ID"]:
             pending_by_event[r["Event ID"]].append(r)
 
@@ -315,12 +318,15 @@ def run():
                 key = play_key(game, market, c["player"], c["side"], c["pt"])
                 if key in seen:
                     continue  # also keeps only the best-priced book per play
+                if sides_logged[key[:3]] - {key[3]}:
+                    continue  # already holding the opposite side of this prop
                 ek = (game.lower(), normalize_name(c["player"]))
                 units = min(kelly_units(c["p"], c["dec"]), MAX_UNITS_PER_PLAY,
                             MAX_UNITS_PER_PLAYER_GAME - exposure[ek])
                 if units < MIN_UNITS:
                     continue
                 seen.add(key)
+                sides_logged[key[:3]].add(key[3])
                 exposure[ek] += units
                 row = {
                     "Timestamp": run_ts, "Sport": sport, "Event ID": ev["id"],
