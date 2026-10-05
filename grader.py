@@ -63,13 +63,10 @@ def fetch_recent_boxscores():
     
     for sport, league in sports:
         for d in set(dates_to_check):
-            # Apply limit=300 to bypass the default truncation
             base_url = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/scoreboard?dates={d}&limit=300"
-            
-            # ESPN requires explicit group IDs for college sports to bypass the Top 25 default
             urls_to_check = [base_url]
             if league == 'college-football':
-                urls_to_check = [f"{base_url}&groups=80", f"{base_url}&groups=81"] # Fetch FBS and FCS
+                urls_to_check = [f"{base_url}&groups=80", f"{base_url}&groups=81"]
                 
             for url in urls_to_check:
                 try:
@@ -114,14 +111,14 @@ def extract_stat_value(stat_name, labels, stats):
 
 def get_player_stat(boxscores, player_name, market):
     market_map = {
-        'Points': [('PTS', None)],
+        'Points': [('PTS', None), ('P', 'skaters')],
         'Rebounds': [('REB', None)],
         'Assists': [('AST', None), ('A', 'skaters')],
         'Points Rebounds': [('PTS', None), ('REB', None)],
         'Points Rebounds Assists': [('PTS', None), ('REB', None), ('AST', None)],
         'Threes': [('3PT Made', None)],
-        'Shots On Goal': [('SOG', 'skaters')],
-        'Total Saves': [('SV', 'goalies')],
+        'Shots On Goal': [('SOG', 'skaters'), ('S', 'skaters')],
+        'Total Saves': [('SV', 'goalies'), ('SAVES', 'goalies')],
         'Pass Yds': [('YDS', 'passing')],
         'Pass Attempts': [('Pass Attempts', 'passing')],
         'Rush Yds': [('YDS', 'rushing')],
@@ -163,27 +160,40 @@ def send_digest(daily_buckets, all_time_buckets, graded_count):
     labels = ["1️⃣ **0.0% to 1.99% Edge**", "2️⃣ **2.0% to 4.99% Edge**", "3️⃣ **5.0%+ Edge**"]
     
     daily_total_units = 0.0
+    daily_total_staked = 0.0
     all_time_total_units = 0.0
+    all_time_total_staked = 0.0
     
     lines = []
     
     for i in range(3):
-        dw, dl, dp, d_units = daily_buckets[i]['W'], daily_buckets[i]['L'], daily_buckets[i]['P'], daily_buckets[i]['Units']
+        dw, dl, dp = daily_buckets[i]['W'], daily_buckets[i]['L'], daily_buckets[i]['P']
+        d_units = daily_buckets[i]['Units']
+        d_staked = daily_buckets[i]['Staked']
         daily_total_units += d_units
+        daily_total_staked += d_staked
         d_bets = dw + dl
         d_pct = (dw / d_bets * 100) if d_bets > 0 else 0.0
+        d_roi = (d_units / d_staked * 100) if d_staked > 0 else 0.0
         
-        aw, al, ap, a_units = all_time_buckets[i]['W'], all_time_buckets[i]['L'], all_time_buckets[i]['P'], all_time_buckets[i]['Units']
+        aw, al, ap = all_time_buckets[i]['W'], all_time_buckets[i]['L'], all_time_buckets[i]['P']
+        a_units = all_time_buckets[i]['Units']
+        a_staked = all_time_buckets[i]['Staked']
         all_time_total_units += a_units
+        all_time_total_staked += a_staked
         a_bets = aw + al
         a_pct = (aw / a_bets * 100) if a_bets > 0 else 0.0
+        a_roi = (a_units / a_staked * 100) if a_staked > 0 else 0.0
         
         lines.append(f"{labels[i]}")
-        lines.append(f"**Today:** {dw}-{dl}-{dp} ({d_pct:.1f}%) | {d_units:+.2f}u")
-        lines.append(f"**Lifetime:** {aw}-{al}-{ap} ({a_pct:.1f}%) | {a_units:+.2f}u\n")
+        lines.append(f"**Today:** {dw}-{dl}-{dp} ({d_pct:.1f}%) | {d_units:+.2f}u ({d_roi:+.1f}% ROI)")
+        lines.append(f"**Lifetime:** {aw}-{al}-{ap} ({a_pct:.1f}%) | {a_units:+.2f}u ({a_roi:+.1f}% ROI)\n")
 
-    lines.append(f"💰 **Batch Profit:** {daily_total_units:+.2f} Units (${daily_total_units * UNIT_SIZE:+.2f})")
-    lines.append(f"🏦 **Lifetime Profit:** {all_time_total_units:+.2f} Units (${all_time_total_units * UNIT_SIZE:+.2f})")
+    total_d_roi = (daily_total_units / daily_total_staked * 100) if daily_total_staked > 0 else 0.0
+    total_a_roi = (all_time_total_units / all_time_total_staked * 100) if all_time_total_staked > 0 else 0.0
+
+    lines.append(f"💰 **Batch Profit:** {daily_total_units:+.2f} Units (${daily_total_units * UNIT_SIZE:+.2f}) | {total_d_roi:+.1f}% ROI")
+    lines.append(f"🏦 **Lifetime Profit:** {all_time_total_units:+.2f} Units (${all_time_total_units * UNIT_SIZE:+.2f}) | {total_a_roi:+.1f}% ROI")
 
     embed = {
         "title": f"📊 EV Auto-Grader Report ({graded_count} New Settlements)",
@@ -205,8 +215,9 @@ def run_grader():
         rows = list(csv.DictReader(f))
         
     newly_graded = 0
-    daily_buckets = [{'W': 0, 'L': 0, 'P': 0, 'Units': 0.0} for _ in range(3)]
-    all_time_buckets = [{'W': 0, 'L': 0, 'P': 0, 'Units': 0.0} for _ in range(3)]
+    # Added 'Staked' tracking for ROI calculations
+    daily_buckets = [{'W': 0, 'L': 0, 'P': 0, 'Units': 0.0, 'Staked': 0.0} for _ in range(3)]
+    all_time_buckets = [{'W': 0, 'L': 0, 'P': 0, 'Units': 0.0, 'Staked': 0.0} for _ in range(3)]
     
     for row in rows:
         player_cell = row.get('Player', '')
@@ -255,13 +266,20 @@ def run_grader():
                 net = float(row.get('Net Units', 0))
             except (ValueError, TypeError):
                 net = 0.0
+                
+            try:
+                staked = float(row.get('Kelly Units', 0))
+            except (ValueError, TypeError):
+                staked = 0.0
             
             all_time_buckets[b_idx][res[0]] += 1
             all_time_buckets[b_idx]['Units'] += net
+            all_time_buckets[b_idx]['Staked'] += staked
             
             if just_graded_now:
                 daily_buckets[b_idx][res[0]] += 1
                 daily_buckets[b_idx]['Units'] += net
+                daily_buckets[b_idx]['Staked'] += staked
 
     if newly_graded > 0:
         fieldnames = list(rows[0].keys())
