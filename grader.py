@@ -1,343 +1,418 @@
+"""
+EV auto-grader.
+
+- Finds the specific game each play was on (teams + start time), not
+  "any box score from the last 3 days".
+- Combo props (P+R, PRA, NHL points) sum every component.
+- DNP / not in box score / postponed -> VOID instead of PENDING forever.
+- Reports CLV per edge tier, side and book.
+
+Run `python grader.py --regrade` (or set REGRADE=1) once to re-grade the
+whole log with the fixed logic.
+"""
 import os
 import re
-import csv
+import sys
+from collections import defaultdict
+from datetime import datetime, timedelta, timezone
+
 import requests
-import unicodedata
-from datetime import datetime, timedelta
-from difflib import SequenceMatcher
 
-DISCORD_WEBHOOK_URL = os.environ.get('DISCORD_WEBHOOK_URL')
-CSV_FILENAME = 'ev_plays_log.csv'
-UNIT_SIZE = 25.00
+from common import (
+    ET, GRADED, UNIT_SIZE, american_to_decimal, load_rows, match_name,
+    normalize_name, parse_american, parse_iso, safe_float, save_rows, similarity,
+)
 
-def american_to_decimal(odds):
-    if odds > 0: return (odds / 100) + 1
-    return (100 / abs(odds)) + 1
+DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
+ESPN = "https://site.api.espn.com/apis/site/v2/sports"
+MAX_AGE_DAYS = 14   # stop retrying pending plays older than this (unless regrading)
 
-def normalize_name(name):
-    if not name: return ""
-    name = unicodedata.normalize('NFKD', str(name)).encode('ASCII', 'ignore').decode('utf-8')
-    name = name.lower()
-    name = re.sub(r'\b(jr|sr|ii|iii|iv)\b\.?', '', name)
-    name = re.sub(r'[^a-z\s]', '', name)
-    return ' '.join(name.split())
+ESPN_LEAGUES = {
+    "basketball_nba": ("basketball", "nba"),
+    "basketball_nba_preseason": ("basketball", "nba"),
+    "basketball_wnba": ("basketball", "wnba"),
+    "icehockey_nhl": ("hockey", "nhl"),
+    "icehockey_nhl_preseason": ("hockey", "nhl"),
+    "americanfootball_nfl": ("football", "nfl"),
+    "americanfootball_ncaaf": ("football", "college-football"),
+}
 
-def similarity_score(s1, s2):
-    return SequenceMatcher(None, normalize_name(s1), normalize_name(s2)).ratio()
+# For old rows logged before the Sport column existed
+_NBA, _WNBA, _NHL = ("basketball", "nba"), ("basketball", "wnba"), ("hockey", "nhl")
+_NFL, _CFB = ("football", "nfl"), ("football", "college-football")
+MARKET_FALLBACK_LEAGUES = {
+    "Points": [_NBA, _WNBA, _NHL], "Assists": [_NBA, _WNBA, _NHL],
+    "Rebounds": [_NBA, _WNBA], "Points Rebounds": [_NBA, _WNBA],
+    "Points Rebounds Assists": [_NBA, _WNBA], "Threes": [_NBA, _WNBA],
+    "Shots On Goal": [_NHL], "Total Saves": [_NHL],
+    "Pass Yds": [_NFL, _CFB], "Pass Attempts": [_NFL, _CFB], "Rush Yds": [_NFL, _CFB],
+    "Rush Attempts": [_NFL, _CFB], "Reception Yds": [_NFL, _CFB], "Receptions": [_NFL, _CFB],
+}
 
-def migrate_csv():
-    if not os.path.isfile(CSV_FILENAME): return False
-    with open(CSV_FILENAME, 'r', encoding='utf-8') as f:
-        reader = list(csv.reader(f))
-    
-    if not reader: return False
-    headers = reader[0]
-    
-    if 'Result' not in headers:
-        headers.extend(['Result', 'Net Units'])
-        with open(CSV_FILENAME, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.writer(f)
-            writer.writerow(headers)
-            for row in reader[1:]:
-                if row[0] == '---':
-                    row.extend(['---', '---'])
-                else:
-                    row.extend(['PENDING', '0.00'])
-                writer.writerow(row)
-    return True
+# market -> list of recipes (first one that fully resolves wins).
+# recipe -> list of components that are SUMMED.
+# component -> (stat table or None, alternative labels for the same stat)
+STAT_MAP = {
+    "basketball": {
+        "Points": [[(None, ("PTS",))]],
+        "Rebounds": [[(None, ("REB",))]],
+        "Assists": [[(None, ("AST",))]],
+        "Points Rebounds": [[(None, ("PTS",)), (None, ("REB",))]],
+        "Points Rebounds Assists": [[(None, ("PTS",)), (None, ("REB",)), (None, ("AST",))]],
+        "Threes": [[(None, ("3PT", "3PM"))]],
+    },
+    "hockey": {
+        "Points": [[(None, ("PTS", "P"))], [(None, ("G",)), (None, ("A",))]],
+        "Assists": [[(None, ("A", "AST"))]],
+        "Shots On Goal": [[(None, ("SOG", "S"))]],
+        "Total Saves": [[(None, ("SV", "SAVES"))]],
+    },
+    "football": {
+        "Pass Yds": [[("passing", ("YDS",))]],
+        "Pass Attempts": [[("passing", ("C/ATT", "ATT"))]],
+        "Rush Yds": [[("rushing", ("YDS",))]],
+        "Rush Attempts": [[("rushing", ("CAR", "ATT"))]],
+        "Reception Yds": [[("receiving", ("YDS",))]],
+        "Receptions": [[("receiving", ("REC",))]],
+    },
+}
 
-def fetch_recent_boxscores():
-    print("Fetching ESPN box scores from the last 3 days...")
-    boxscores = []
-    seen_events = set()
-    
-    sports = [
-        ('basketball', 'wnba'), 
-        ('basketball', 'nba'),
-        ('hockey', 'nhl'), 
-        ('football', 'nfl'),
-        ('football', 'college-football')
-    ]
-    
-    dates_to_check = [(datetime.now() - timedelta(days=i)).strftime('%Y%m%d') for i in range(3)]
-    
-    for sport, league in sports:
-        for d in set(dates_to_check):
-            base_url = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/scoreboard?dates={d}&limit=300"
-            urls_to_check = [base_url]
-            if league == 'college-football':
-                urls_to_check = [f"{base_url}&groups=80", f"{base_url}&groups=81"]
-                
-            for url in urls_to_check:
-                try:
-                    res = requests.get(url, timeout=10)
-                    if res.status_code != 200: continue
-                    events = res.json().get('events', [])
-                    for event in events:
-                        game_id = event['id']
-                        if game_id in seen_events: continue
-                        seen_events.add(game_id)
-                        
-                        if event['status']['type']['completed']:
-                            summary_url = f"https://site.api.espn.com/apis/site/v2/sports/{sport}/{league}/summary?event={game_id}"
-                            sum_res = requests.get(summary_url, timeout=10)
-                            if sum_res.status_code == 200:
-                                box = sum_res.json().get('boxscore')
-                                if box: boxscores.append(box)
-                except Exception:
-                    pass
-    return boxscores
+SESSION = requests.Session()
+_scoreboards, _summaries = {}, {}
 
-def extract_stat_value(stat_name, labels, stats):
+
+# ------------------------------------------------------------------ ESPN
+def _get(url):
     try:
-        if stat_name == 'Pass Attempts' and 'C/ATT' in labels:
-            val = stats[labels.index('C/ATT')]
-            if val == '--': return 0.0
-            delim = '/' if '/' in val else ('-' if '-' in val else None)
-            return float(val.split(delim)[1]) if delim else float(val)
-
-        if stat_name == '3PT Made' and '3PT' in labels:
-            val = stats[labels.index('3PT')]
-            if val == '--': return 0.0
-            delim = '-' if '-' in val else ('/' if '/' in val else None)
-            return float(val.split(delim)[0]) if delim else float(val)
-
-        if stat_name in labels:
-            val = stats[labels.index(stat_name)]
-            return float(val) if val != '--' else 0.0
-    except Exception:
+        res = SESSION.get(url, timeout=12)
+        return res.json() if res.status_code == 200 else None
+    except (requests.RequestException, ValueError):
         return None
-    return None
 
-def get_player_stat(boxscores, player_name, market):
-    market_map = {
-        'Points': [('PTS', None), ('P', None)],
-        'Rebounds': [('REB', None)],
-        'Assists': [('AST', None), ('A', None)],
-        'Points Rebounds': [('PTS', None), ('REB', None)],
-        'Points Rebounds Assists': [('PTS', None), ('REB', None), ('AST', None)],
-        'Threes': [('3PT Made', None)],
-        'Shots On Goal': [('SOG', None), ('S', None)],
-        'Total Saves': [('SV', None), ('SAVES', None)],
-        'Pass Yds': [('YDS', 'passing')],
-        'Pass Attempts': [('Pass Attempts', 'passing')],
-        'Rush Yds': [('YDS', 'rushing')],
-        'Rush Attempts': [('CAR', 'rushing')],
-        'Reception Yds': [('YDS', 'receiving')],
-        'Receptions': [('REC', 'receiving')]
-    }
-    
-    targets = market_map.get(market)
-    if not targets: return None
-    
-    for boxscore in boxscores:
-        for target_stat, target_table in targets:
-            stat_found = False
-            total = 0.0
-            for team in boxscore.get('players', []):
-                for stat_group in team.get('statistics', []):
-                    table_name = stat_group.get('name', '')
-                    if target_table and target_table != table_name: continue
-                        
-                    labels = stat_group.get('labels', [])
-                    for ath in stat_group.get('athletes', []):
-                        ath_name = ath.get('athlete', {}).get('displayName', '')
-                        if similarity_score(player_name, ath_name) > 0.85:
-                            val = extract_stat_value(target_stat, labels, ath.get('stats', []))
-                            if val is not None:
-                                total += val
-                                stat_found = True
-                                break
-                    if stat_found: break
-                if stat_found: break
-            if stat_found: 
-                return total
-    return None
 
-def send_digest(daily_buckets, all_time_buckets, graded_count):
-    if not DISCORD_WEBHOOK_URL: return
-    
-    labels = ["1️⃣ **0.0% to 1.99% Edge**", "2️⃣ **2.0% to 4.99% Edge**", "3️⃣ **5.0%+ Edge**"]
-    
-    total_d_units = 0.0
-    total_d_staked = 0.0
-    total_a_units = 0.0
-    total_a_staked = 0.0
-    
-    total_over_a_units, total_over_a_staked = 0.0, 0.0
-    total_under_a_units, total_under_a_staked = 0.0, 0.0
-    
-    lines = []
-    
-    for i in range(3):
-        # Calculate combined total block first
-        tier_dw = daily_buckets['over'][i]['W'] + daily_buckets['under'][i]['W']
-        tier_dl = daily_buckets['over'][i]['L'] + daily_buckets['under'][i]['L']
-        tier_dp = daily_buckets['over'][i]['P'] + daily_buckets['under'][i]['P']
-        tier_d_units = daily_buckets['over'][i]['Units'] + daily_buckets['under'][i]['Units']
-        tier_d_staked = daily_buckets['over'][i]['Staked'] + daily_buckets['under'][i]['Staked']
-        
-        tier_aw = all_time_buckets['over'][i]['W'] + all_time_buckets['under'][i]['W']
-        tier_al = all_time_buckets['over'][i]['L'] + all_time_buckets['under'][i]['L']
-        tier_ap = all_time_buckets['over'][i]['P'] + all_time_buckets['under'][i]['P']
-        tier_a_units = all_time_buckets['over'][i]['Units'] + all_time_buckets['under'][i]['Units']
-        tier_a_staked = all_time_buckets['over'][i]['Staked'] + all_time_buckets['under'][i]['Staked']
-        
-        tier_d_bets = tier_dw + tier_dl
-        tier_a_bets = tier_aw + tier_al
-        tier_d_pct = (tier_dw / tier_d_bets * 100) if tier_d_bets > 0 else 0.0
-        tier_a_pct = (tier_aw / tier_a_bets * 100) if tier_a_bets > 0 else 0.0
-        tier_d_roi = (tier_d_units / tier_d_staked * 100) if tier_d_staked > 0 else 0.0
-        tier_a_roi = (tier_a_units / tier_a_staked * 100) if tier_a_staked > 0 else 0.0
-        
-        total_d_units += tier_d_units
-        total_d_staked += tier_d_staked
-        total_a_units += tier_a_units
-        total_a_staked += tier_a_staked
-        
-        lines.append(f"{labels[i]}")
-        lines.append(f"**Today:** {tier_dw}-{tier_dl}-{tier_dp} ({tier_d_pct:.1f}%) | {tier_d_units:+.2f}u ({tier_d_roi:+.1f}% ROI)")
-        lines.append(f"**Lifetime:** {tier_aw}-{tier_al}-{tier_ap} ({tier_a_pct:.1f}%) | {tier_a_units:+.2f}u ({tier_a_roi:+.1f}% ROI)")
-        
-        # Append Over/Under splits
-        for s_key, s_label, s_icon in [('over', 'OVER', '🔼'), ('under', 'UNDER', '🔽')]:
-            dw, dl, dp = daily_buckets[s_key][i]['W'], daily_buckets[s_key][i]['L'], daily_buckets[s_key][i]['P']
-            d_units, d_staked = daily_buckets[s_key][i]['Units'], daily_buckets[s_key][i]['Staked']
-            
-            aw, al, ap = all_time_buckets[s_key][i]['W'], all_time_buckets[s_key][i]['L'], all_time_buckets[s_key][i]['P']
-            a_units, a_staked = all_time_buckets[s_key][i]['Units'], all_time_buckets[s_key][i]['Staked']
-            
-            a_roi = (a_units / a_staked * 100) if a_staked > 0 else 0.0
-            
-            if s_key == 'over':
-                total_over_a_units += a_units
-                total_over_a_staked += a_staked
-            else:
-                total_under_a_units += a_units
-                total_under_a_staked += a_staked
+def scoreboard(sport, league, ymd):
+    key = (sport, league, ymd)
+    if key not in _scoreboards:
+        base = f"{ESPN}/{sport}/{league}/scoreboard?dates={ymd}&limit=300"
+        urls = [f"{base}&groups=80", f"{base}&groups=81"] if league == "college-football" else [base]
+        events, seen = [], set()
+        for url in urls:
+            for ev in (_get(url) or {}).get("events", []):
+                if ev.get("id") not in seen:
+                    seen.add(ev.get("id"))
+                    events.append(ev)
+        _scoreboards[key] = events
+    return _scoreboards[key]
 
-            lines.append(f"↳ {s_icon} **{s_label}:** Today {dw}-{dl}-{dp} ({d_units:+.2f}u) | Life {aw}-{al}-{ap} ({a_units:+.2f}u, {a_roi:+.1f}%)")
-        lines.append("")
 
-    over_roi = (total_over_a_units / total_over_a_staked * 100) if total_over_a_staked > 0 else 0.0
-    under_roi = (total_under_a_units / total_under_a_staked * 100) if total_under_a_staked > 0 else 0.0
-    
-    total_d_roi = (total_d_units / total_d_staked * 100) if total_d_staked > 0 else 0.0
-    total_a_roi = (total_a_units / total_a_staked * 100) if total_a_staked > 0 else 0.0
+def boxscore(sport, league, event_id):
+    key = (sport, league, event_id)
+    if key not in _summaries:
+        data = _get(f"{ESPN}/{sport}/{league}/summary?event={event_id}")
+        _summaries[key] = (data or {}).get("boxscore")
+    return _summaries[key]
 
-    lines.append(f"📈 **Lifetime OVERS:** {total_over_a_units:+.2f}u ({over_roi:+.1f}% ROI)")
-    lines.append(f"📉 **Lifetime UNDERS:** {total_under_a_units:+.2f}u ({under_roi:+.1f}% ROI)\n")
-    lines.append(f"💰 **Batch Profit:** {total_d_units:+.2f} Units (${total_d_units * UNIT_SIZE:+.2f}) | {total_d_roi:+.1f}% ROI")
-    lines.append(f"🏦 **Lifetime Profit:** {total_a_units:+.2f} Units (${total_a_units * UNIT_SIZE:+.2f}) | {total_a_roi:+.1f}% ROI")
 
-    embed = {
-        "title": f"📊 EV Auto-Grader Report ({graded_count} New Settlements)",
-        "description": "\n".join(lines),
-        "color": 3447003
-    }
-    try: requests.post(DISCORD_WEBHOOK_URL, json={"embeds": [embed]}, timeout=10)
-    except Exception: pass
+def _team_variants(team):
+    return [v for v in (
+        team.get("displayName", ""),
+        f"{team.get('location', '')} {team.get('name', '')}",
+        team.get("shortDisplayName", ""),
+    ) if v.strip()]
 
-def run_grader():
-    if not migrate_csv():
-        print("No CSV found to grade.")
-        return
-        
-    boxscores = fetch_recent_boxscores()
-    print(f"Loaded {len(boxscores)} completed box scores.")
-    
-    with open(CSV_FILENAME, 'r', encoding='utf-8') as f:
-        rows = list(csv.DictReader(f))
-        
-    newly_graded = 0
-    
-    daily_buckets = {
-        'over': [{'W': 0, 'L': 0, 'P': 0, 'Units': 0.0, 'Staked': 0.0} for _ in range(3)],
-        'under': [{'W': 0, 'L': 0, 'P': 0, 'Units': 0.0, 'Staked': 0.0} for _ in range(3)]
-    }
-    all_time_buckets = {
-        'over': [{'W': 0, 'L': 0, 'P': 0, 'Units': 0.0, 'Staked': 0.0} for _ in range(3)],
-        'under': [{'W': 0, 'L': 0, 'P': 0, 'Units': 0.0, 'Staked': 0.0} for _ in range(3)]
-    }
-    
-    for row in rows:
-        player_cell = row.get('Player', '')
-        game_cell = row.get('Game', '')
-        if not player_cell or player_cell.startswith('---') or game_cell.startswith('==='):
+
+def _team_score(name, team):
+    n = normalize_name(name)
+    return max((similarity(n, normalize_name(v)) for v in _team_variants(team)), default=0.0)
+
+
+def find_game(game_str, events, anchor, exact_start):
+    """Match 'Away @ Home' to an ESPN event, using start time to separate
+    back-to-backs / same-opponent series."""
+    if " @ " not in game_str:
+        return None
+    away, home = game_str.split(" @ ", 1)
+    best, best_key = None, None
+    for ev in events:
+        comps = (ev.get("competitions") or [{}])[0].get("competitors", [])
+        if len(comps) != 2:
             continue
-            
-        edge = float(row.get('Edge %', 0))
-        b_idx = 0 if edge < 2.0 else (1 if edge < 5.0 else 2)
-        just_graded_now = False
-        
-        side = row.get('Side', 'over').lower()
-        if side not in ['over', 'under']: 
-            side = 'over' 
-        
-        current_result = row.get('Result')
-        if current_result in ['PENDING', None, '']:
-            player = row['Player']
-            market = row['Market']
-            line = float(row['Line'])
-            odds = float(str(row['Odds']).replace('+', ''))
-            units = float(row['Kelly Units'])
-            
-            actual = get_player_stat(boxscores, player, market)
-            
-            if actual is not None:
-                newly_graded += 1
-                just_graded_now = True
-                if actual == line:
-                    res = 'PUSH'
-                    net = 0.0
-                elif (side == 'over' and actual > line) or (side == 'under' and actual < line):
-                    res = 'WIN'
-                    net = units * (american_to_decimal(odds) - 1)
-                else:
-                    res = 'LOSS'
-                    net = -units
-                    
-                row['Result'] = res
-                row['Net Units'] = f"{net:.2f}"
-                print(f"Graded: {player} {side.upper()} {line} {market} -> Actual: {actual} ({res})")
+        t0, t1 = comps[0].get("team", {}), comps[1].get("team", {})
+        pairs = [(_team_score(away, t0), _team_score(home, t1)),
+                 (_team_score(away, t1), _team_score(home, t0))]
+        a, h = max(pairs, key=lambda x: x[0] + x[1])
+        if min(a, h) < 0.75:
+            continue
+        start = parse_iso(ev.get("date"))
+        if start is None:
+            continue
+        if exact_start:
+            gap = abs((start - anchor).total_seconds())
+            if gap > 6 * 3600:
+                continue
+        else:  # old rows: bet logged before the game, game within ~36h
+            if not (anchor - timedelta(hours=2) <= start <= anchor + timedelta(hours=36)):
+                continue
+            gap = (start - anchor).total_seconds()
+        key = (-(a + h), abs(gap))
+        if best_key is None or key < best_key:
+            best, best_key = ev, key
+    return best
+
+
+# ------------------------------------------------------------------ stats
+def index_players(box):
+    idx = {}
+    for team in box.get("players", []):
+        for grp in team.get("statistics", []):
+            gname = (grp.get("name") or "").lower()
+            labels = grp.get("labels") or []
+            for ath in grp.get("athletes", []):
+                name = (ath.get("athlete") or {}).get("displayName")
+                if not name:
+                    continue
+                entry = idx.setdefault(name, {"groups": [], "played": False})
+                stats = ath.get("stats") or []
+                if stats and not ath.get("didNotPlay"):
+                    entry["played"] = True
+                    entry["groups"].append((gname, labels, stats))
+    return idx
+
+
+def parse_value(label, raw):
+    if raw in (None, "", "--", "-"):
+        return 0.0
+    s = str(raw).strip()
+    if label in ("3PT", "C/ATT") and re.search(r"\d[-/]\d", s):
+        parts = re.split(r"[-/]", s)
+        return safe_float(parts[0] if label == "3PT" else parts[1])
+    return safe_float(s)
+
+
+def find_component(groups, table, labels):
+    """-> ('ok', value) | ('no_table', None) | ('no_label', None)"""
+    table_seen = False
+    for gname, labs, stats in groups:
+        if table and gname != table:
+            continue
+        table_seen = True
+        for lab in labels:
+            if lab in labs:
+                i = labs.index(lab)
+                if i < len(stats):
+                    val = parse_value(lab, stats[i])
+                    if val is not None:
+                        return "ok", val
+    return ("no_label" if table_seen else "no_table"), None
+
+
+def stat_total(entry, recipes, is_football):
+    for recipe in recipes:
+        total, ok = 0.0, True
+        for table, labels in recipe:
+            status, val = find_component(entry["groups"], table, labels)
+            if status == "no_table" and is_football and table:
+                val = 0.0   # e.g. QB with no rushing attempts isn't in the rushing table
+            elif status != "ok":
+                ok = False
+                break
+            total += val
+        if ok:
+            return total
+    return None
+
+
+# ------------------------------------------------------------------ grading
+def grade_row(row):
+    """-> ('STAT', value, note) | ('VOID', None, reason) | None (not ready)"""
+    market = row["Market"]
+    leagues = [ESPN_LEAGUES[row["Sport"]]] if row["Sport"] in ESPN_LEAGUES \
+        else MARKET_FALLBACK_LEAGUES.get(market, [])
+    commence = parse_iso(row["Commence Time"])
+    anchor = commence or parse_iso(row["Timestamp"])
+    if anchor is None:
+        return None
+
+    d = anchor.astimezone(ET).date()
+    offsets = (-1, 0, 1) if commence else (0, 1)
+    dates = [(d + timedelta(days=o)).strftime("%Y%m%d") for o in offsets]
+
+    for sport, league in leagues:
+        recipes = STAT_MAP[sport].get(market)
+        if not recipes:
+            continue
+        events = [ev for ymd in dates for ev in scoreboard(sport, league, ymd)]
+        ev = find_game(row["Game"], events, anchor, exact_start=commence is not None)
+        if ev is None:
+            continue
+        status = ev.get("status", {}).get("type", {})
+        if status.get("name") in ("STATUS_POSTPONED", "STATUS_CANCELED", "STATUS_CANCELLED"):
+            return "VOID", None, "postponed"
+        if not status.get("completed"):
+            return None
+        box = boxscore(sport, league, ev["id"])
+        if not box:
+            return None
+        idx = index_players(box)
+        name = match_name(row["Player"], list(idx))
+        if name is None:
+            return "VOID", None, "not in box score"
+        if not idx[name]["played"]:
+            return "VOID", None, "DNP"
+        total = stat_total(idx[name], recipes, sport == "football")
+        if total is None:
+            print(f"  ! stat labels not found for {row['Player']} {market} — check ESPN labels")
+            return None
+        return "STAT", total, ""
+    return None
+
+
+# ------------------------------------------------------------------ reporting
+TIERS = [(0.0, 3.5, "2–3.5% edge"), (3.5, 5.0, "3.5–5% edge"), (5.0, float("inf"), "5%+ edge")]
+
+
+def tier_of(row):
+    e = safe_float(row["Edge %"], 0.0)
+    for i, (lo, hi, _) in enumerate(TIERS):
+        if lo <= e < hi:
+            return i
+    return 0
+
+
+def new_bucket():
+    return {"W": 0, "L": 0, "P": 0, "V": 0, "units": 0.0, "staked": 0.0, "clv": 0.0, "clv_n": 0, "beat": 0}
+
+
+def add(b, row):
+    res = row["Result"]
+    b[{"WIN": "W", "LOSS": "L", "PUSH": "P", "VOID": "V"}[res]] += 1
+    units = safe_float(row["Kelly Units"], 0.0)
+    if res in ("WIN", "LOSS"):
+        b["staked"] += units
+    b["units"] += safe_float(row["Net Units"], 0.0)
+    clv = safe_float(row["CLV %"])
+    if clv is not None and res != "VOID":
+        b["clv"] += clv
+        b["clv_n"] += 1
+        b["beat"] += clv > 0
+
+
+def fmt(b, show_clv=True):
+    decided = b["W"] + b["L"]
+    win = f" ({b['W'] / decided * 100:.1f}%)" if decided else ""
+    roi = b["units"] / b["staked"] * 100 if b["staked"] else 0.0
+    s = f"{b['W']}-{b['L']}-{b['P']}{win} | {b['units']:+.2f}u ({roi:+.1f}%)"
+    if show_clv and b["clv_n"]:
+        s += f" | CLV {b['clv'] / b['clv_n']:+.1f}% (beat {b['beat'] / b['clv_n'] * 100:.0f}%, n={b['clv_n']})"
+    return s
+
+
+def build_report(batch, all_rows):
+    graded = [r for r in all_rows if r["Result"] in GRADED]
+    tiers_b = [new_bucket() for _ in TIERS]
+    tiers_l = [new_bucket() for _ in TIERS]
+    sides, books = defaultdict(new_bucket), defaultdict(new_bucket)
+    total_b, total_l = new_bucket(), new_bucket()
+
+    for r in batch:
+        add(tiers_b[tier_of(r)], r)
+        add(total_b, r)
+    for r in graded:
+        add(tiers_l[tier_of(r)], r)
+        add(total_l, r)
+        add(sides[r["Side"].strip().title()], r)
+        add(books[r["Bookmaker"]], r)
+
+    lines = []
+    for i, (_, _, label) in enumerate(TIERS):
+        lines.append(f"**{label}**")
+        lines.append(f"Batch: {fmt(tiers_b[i], show_clv=False)}")
+        lines.append(f"Life: {fmt(tiers_l[i])}")
+        lines.append("")
+    lines.append("**Sides (lifetime)**")
+    for side, icon in (("Over", "🔼"), ("Under", "🔽")):
+        if side in sides:
+            lines.append(f"{icon} {side}: {fmt(sides[side])}")
+    lines.append("")
+    lines.append("**Books (lifetime)**")
+    for book, b in sorted(books.items(), key=lambda kv: -kv[1]["units"]):
+        lines.append(f"• {book}: {fmt(b)}")
+    lines.append("")
+    lines.append(f"💰 **Batch:** {total_b['units']:+.2f}u (${total_b['units'] * UNIT_SIZE:+.2f})")
+    lines.append(f"🏦 **Lifetime:** {fmt(total_l)} (${total_l['units'] * UNIT_SIZE:+.2f})")
+    voids = total_b["V"]
+    if voids:
+        lines.append(f"⚪ {voids} voided this batch (DNP / postponed / not in box)")
+    return "\n".join(lines)
+
+
+def send_report(text, n, regrade):
+    print("\n" + text)
+    if not DISCORD_WEBHOOK_URL:
+        return
+    title = f"📊 EV Auto-Grader ({n} settled{', FULL REGRADE' if regrade else ''})"
+    try:
+        SESSION.post(DISCORD_WEBHOOK_URL, json={"embeds": [{
+            "title": title, "description": text[:4000], "color": 3447003}]}, timeout=10)
+    except requests.RequestException:
+        pass
+
+
+# ------------------------------------------------------------------ main
+def run():
+    regrade = "--regrade" in sys.argv or os.environ.get("REGRADE") == "1"
+    rows = load_rows()
+    if not rows:
+        print("No plays to grade.")
+        return
+
+    if regrade:
+        print("REGRADE: resetting all graded plays to PENDING")
+        for r in rows:
+            if r["Result"] in GRADED:
+                r["Result"], r["Net Units"], r["Actual"] = "PENDING", "0.00", ""
+
+    now = datetime.now(timezone.utc)
+    batch = []
+    for row in rows:
+        if row["Result"] != "PENDING":
+            continue
+        anchor = parse_iso(row["Commence Time"]) or parse_iso(row["Timestamp"])
+        if anchor and anchor > now:
+            continue
+        if not regrade and anchor and now - anchor > timedelta(days=MAX_AGE_DAYS):
+            continue
+
+        out = grade_row(row)
+        if out is None:
+            continue
+        kind, val, note = out
+        units = safe_float(row["Kelly Units"], 0.0)
+        line = float(row["Line"])
+        dec = american_to_decimal(parse_american(row["Odds"]))
+        side = row["Side"].strip().lower()
+
+        if kind == "VOID":
+            res, net = "VOID", 0.0
+            row["Actual"] = note
+        else:
+            row["Actual"] = f"{val:g}"
+            if val == line:
+                res, net = "PUSH", 0.0
+            elif (side == "over" and val > line) or (side == "under" and val < line):
+                res, net = "WIN", units * (dec - 1)
             else:
-                row['Result'] = 'PENDING'
-                row['Net Units'] = '0.00'
+                res, net = "LOSS", -units
+        row["Result"], row["Net Units"] = res, f"{net:.2f}"
+        batch.append(row)
+        print(f"Graded: {row['Player']} {side.upper()} {row['Line']} {row['Market']} -> {row['Actual']} ({res})")
 
-        if row.get('Result') in ['WIN', 'LOSS', 'PUSH']:
-            res = row['Result']
-            try:
-                net = float(row.get('Net Units', 0))
-            except (ValueError, TypeError):
-                net = 0.0
-                
-            try:
-                staked = float(row.get('Kelly Units', 0))
-            except (ValueError, TypeError):
-                staked = 0.0
-            
-            all_time_buckets[side][b_idx][res[0]] += 1
-            all_time_buckets[side][b_idx]['Units'] += net
-            all_time_buckets[side][b_idx]['Staked'] += staked
-            
-            if just_graded_now:
-                daily_buckets[side][b_idx][res[0]] += 1
-                daily_buckets[side][b_idx]['Units'] += net
-                daily_buckets[side][b_idx]['Staked'] += staked
+    if not batch:
+        print("No pending plays were ready to grade.")
+        return
+    save_rows(rows)
+    send_report(build_report(batch, rows), len(batch), regrade)
 
-    if newly_graded > 0:
-        fieldnames = list(rows[0].keys())
-        if 'Result' not in fieldnames:
-            fieldnames.extend(['Result', 'Net Units'])
-            
-        with open(CSV_FILENAME, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerows(rows)
-            
-        send_digest(daily_buckets, all_time_buckets, newly_graded)
-    else:
-        print("No new pending plays were ready to be graded.")
 
 if __name__ == "__main__":
-    run_grader()
+    run()
