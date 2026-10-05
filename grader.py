@@ -111,14 +111,14 @@ def extract_stat_value(stat_name, labels, stats):
 
 def get_player_stat(boxscores, player_name, market):
     market_map = {
-        'Points': [('PTS', None), ('P', 'skaters')],
+        'Points': [('PTS', None), ('P', None)],
         'Rebounds': [('REB', None)],
-        'Assists': [('AST', None), ('A', 'skaters')],
+        'Assists': [('AST', None), ('A', None)],
         'Points Rebounds': [('PTS', None), ('REB', None)],
         'Points Rebounds Assists': [('PTS', None), ('REB', None), ('AST', None)],
         'Threes': [('3PT Made', None)],
-        'Shots On Goal': [('SOG', 'skaters'), ('S', 'skaters')],
-        'Total Saves': [('SV', 'goalies'), ('SAVES', 'goalies')],
+        'Shots On Goal': [('SOG', None), ('S', None)],
+        'Total Saves': [('SV', None), ('SAVES', None)],
         'Pass Yds': [('YDS', 'passing')],
         'Pass Attempts': [('Pass Attempts', 'passing')],
         'Rush Yds': [('YDS', 'rushing')],
@@ -215,7 +215,6 @@ def run_grader():
         rows = list(csv.DictReader(f))
         
     newly_graded = 0
-    # Added 'Staked' tracking for ROI calculations
     daily_buckets = [{'W': 0, 'L': 0, 'P': 0, 'Units': 0.0, 'Staked': 0.0} for _ in range(3)]
     all_time_buckets = [{'W': 0, 'L': 0, 'P': 0, 'Units': 0.0, 'Staked': 0.0} for _ in range(3)]
     
