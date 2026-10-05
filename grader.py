@@ -334,42 +334,61 @@ def fmt(b, show_clv=True):
     return s
 
 
+def is_new_scanner(row):
+    # Only the new consensus scanner writes an Event ID; legacy FanDuel rows have none.
+    return bool(row["Event ID"])
+
+
 def build_report(batch, all_rows):
     graded = [r for r in all_rows if r["Result"] in GRADED]
-    tiers_b = [new_bucket() for _ in TIERS]
-    tiers_l = [new_bucket() for _ in TIERS]
-    sides, books = defaultdict(new_bucket), defaultdict(new_bucket)
-    total_b, total_l = new_bucket(), new_bucket()
+    new_life = [r for r in graded if is_new_scanner(r)]
+    old_life = [r for r in graded if not is_new_scanner(r)]
+    new_batch = [r for r in batch if is_new_scanner(r)]
 
-    for r in batch:
-        add(tiers_b[tier_of(r)], r)
-        add(total_b, r)
-    for r in graded:
-        add(tiers_l[tier_of(r)], r)
-        add(total_l, r)
-        add(sides[r["Side"].strip().title()], r)
-        add(books[r["Bookmaker"]], r)
-
-    lines = []
-    for i, (_, _, label) in enumerate(TIERS):
-        lines.append(f"**{label}**")
-        lines.append(f"Batch: {fmt(tiers_b[i], show_clv=False)}")
-        lines.append(f"Life: {fmt(tiers_l[i])}")
+    lines = ["🆕 **NEW SCANNER (consensus devig)**"]
+    if not new_life:
+        lines.append("No graded plays yet.")
+    else:
+        tiers_b = [new_bucket() for _ in TIERS]
+        tiers_l = [new_bucket() for _ in TIERS]
+        sides, books = defaultdict(new_bucket), defaultdict(new_bucket)
+        total_new = new_bucket()
+        for r in new_batch:
+            add(tiers_b[tier_of(r)], r)
+        for r in new_life:
+            add(tiers_l[tier_of(r)], r)
+            add(total_new, r)
+            add(sides[r["Side"].strip().title()], r)
+            add(books[r["Bookmaker"]], r)
+        for i, (_, _, label) in enumerate(TIERS):
+            lines.append(f"**{label}**")
+            lines.append(f"Batch: {fmt(tiers_b[i], show_clv=False)}")
+            lines.append(f"Life: {fmt(tiers_l[i])}")
         lines.append("")
-    lines.append("**Sides (lifetime)**")
-    for side, icon in (("Over", "🔼"), ("Under", "🔽")):
-        if side in sides:
-            lines.append(f"{icon} {side}: {fmt(sides[side])}")
+        for side, icon in (("Over", "🔼"), ("Under", "🔽")):
+            if side in sides:
+                lines.append(f"{icon} {side}: {fmt(sides[side])}")
+        for book, b in sorted(books.items(), key=lambda kv: -kv[1]["units"]):
+            lines.append(f"• {book}: {fmt(b)}")
+        lines.append(f"📊 **New scanner total:** {fmt(total_new)} (${total_new['units'] * UNIT_SIZE:+.2f})")
+
     lines.append("")
-    lines.append("**Books (lifetime)**")
-    for book, b in sorted(books.items(), key=lambda kv: -kv[1]["units"]):
-        lines.append(f"• {book}: {fmt(b)}")
+    lines.append("📜 **LEGACY FANDUEL SCANNER (frozen)**")
+    old_total = new_bucket()
+    for r in old_life:
+        add(old_total, r)
+    lines.append(fmt(old_total, show_clv=False) if old_life else "No graded plays.")
+
+    batch_total, all_total = new_bucket(), new_bucket()
+    for r in batch:
+        add(batch_total, r)
+    for r in graded:
+        add(all_total, r)
     lines.append("")
-    lines.append(f"💰 **Batch:** {total_b['units']:+.2f}u (${total_b['units'] * UNIT_SIZE:+.2f})")
-    lines.append(f"🏦 **Lifetime:** {fmt(total_l)} (${total_l['units'] * UNIT_SIZE:+.2f})")
-    voids = total_b["V"]
-    if voids:
-        lines.append(f"⚪ {voids} voided this batch (DNP / postponed / not in box)")
+    lines.append(f"💰 **Batch:** {batch_total['units']:+.2f}u (${batch_total['units'] * UNIT_SIZE:+.2f})")
+    lines.append(f"🏦 **All-time combined:** {fmt(all_total, show_clv=False)}")
+    if batch_total["V"]:
+        lines.append(f"⚪ {batch_total['V']} voided this batch (DNP / postponed / not in box)")
     return "\n".join(lines)
 
 
