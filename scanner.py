@@ -41,7 +41,7 @@ BOOK_WEIGHTS = {
 ANCHOR_BOOKS = {"novig", "fanduel"}
 KS_BOOKS = ",".join(BOOK_WEIGHTS)
 
-MIN_FAIR_BOOKS = 2        # two-way books (excluding target) needed for a fair line
+MIN_FAIR_BOOKS = 3        # two-way books (excluding target) needed for a fair line
 MAX_ANCHOR_GAP = 0.04     # skip line if Novig and FanDuel disagree by > 4 pts of prob
 STALE_MINUTES = 10        # ignore quotes not refreshed within this window
 MIN_EDGE = 0.02
@@ -232,6 +232,14 @@ def update_closing_lines(pending_rows, lines):
 
 
 # ------------------------------------------------------------------ discord
+def fmt_start(commence):
+    dt = parse_iso(commence)
+    if dt is None:
+        return ""
+    ct = dt.astimezone(CT)
+    return f"{ct.strftime('%a')} {ct.strftime('%I:%M %p').lstrip('0')} CT"
+
+
 def send_discord_digest(new_rows, run_ts):
     if not DISCORD_WEBHOOK_URL or not new_rows:
         return
@@ -245,7 +253,7 @@ def send_discord_digest(new_rows, run_ts):
             out.append(
                 f"{icon} **+{r['Edge %']}%** | **{r['Player']}** {r['Side']} {r['Line']} {r['Market']}\n"
                 f"↳ **{r['Odds']}** @ {r['Bookmaker']} • **{r['Kelly Units']}u** (${r['Bet Amount']}) • *{r['_fair']}*\n"
-                f"  *{r['Game']}*"
+                f"  *{r['Game']}* • 🕒 {fmt_start(r['Commence Time'])}"
             )
         part = f" (Part {i // chunk_size + 1}/{total_chunks})" if total_chunks > 1 else ""
         embed = {
@@ -269,12 +277,11 @@ def run():
     rows = load_rows()
     seen = {play_key(r["Game"], r["Market"], r["Player"], r["Side"], r["Line"]) for r in rows}
     exposure = defaultdict(float)
-    sides_logged = defaultdict(set)   # (game, market, player) -> {"over","under"}
+    directions = defaultdict(set)   # (game, player) -> {"over","under"} across ALL markets
     pending_by_event = defaultdict(list)
     for r in rows:
         exposure[(r["Game"].strip().lower(), normalize_name(r["Player"]))] += safe_float(r["Kelly Units"], 0.0)
-        k = play_key(r["Game"], r["Market"], r["Player"], r["Side"], r["Line"])
-        sides_logged[k[:3]].add(k[3])
+        directions[(r["Game"].strip().lower(), normalize_name(r["Player"]))].add(r["Side"].strip().lower())
         if r["Result"] == "PENDING" and r["Event ID"]:
             pending_by_event[r["Event ID"]].append(r)
 
@@ -318,15 +325,15 @@ def run():
                 key = play_key(game, market, c["player"], c["side"], c["pt"])
                 if key in seen:
                     continue  # also keeps only the best-priced book per play
-                if sides_logged[key[:3]] - {key[3]}:
-                    continue  # already holding the opposite side of this prop
                 ek = (game.lower(), normalize_name(c["player"]))
+                if directions[ek] - {c["side"].lower()}:
+                    continue  # same player, same game: every bet must point the same direction
                 units = min(kelly_units(c["p"], c["dec"]), MAX_UNITS_PER_PLAY,
                             MAX_UNITS_PER_PLAYER_GAME - exposure[ek])
                 if units < MIN_UNITS:
                     continue
                 seen.add(key)
-                sides_logged[key[:3]].add(key[3])
+                directions[ek].add(c["side"].lower())
                 exposure[ek] += units
                 row = {
                     "Timestamp": run_ts, "Sport": sport, "Event ID": ev["id"],
