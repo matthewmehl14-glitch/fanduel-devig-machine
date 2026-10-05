@@ -754,3 +754,5 @@ Timestamp,Game,Market,Player,Side,Line,Bookmaker,Odds,True Prob %,Edge %,Kelly U
 2026-10-05 00:09:04,Vegas Golden Knights @ Vancouver Canucks,Shots On Goal,Rasmus Andersson,Over,1.5,Novig,-135,57.7,0.51,0.17,4.27
 2026-10-05 00:09:05,Detroit Lions @ Carolina Panthers,Receptions,Jameson Williams,Over,3.5,Novig,+108,48.6,1.05,0.24,6.08
 2026-10-05 00:09:05,Detroit Lions @ Carolina Panthers,Rush Yds,Bryce Young,Over,12.5,Novig,+102,50.0,1.00,0.25,6.13
+---,=== RUN: 2026-10-05 00:51:03 (1 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
+2026-10-05 00:51:04,Vegas Golden Knights @ Vancouver Canucks,Shots On Goal,Filip Hronek,Over,1.5,Novig,-113,54.0,1.71,0.48,12.06
