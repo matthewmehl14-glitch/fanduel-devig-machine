@@ -394,19 +394,19 @@ Timestamp,Game,Market,Player,Side,Line,Bookmaker,Odds,True Prob %,Edge %,Kelly U
 2026-10-04 00:35:32,Los Angeles Kings @ San Jose Sharks,Shots On Goal,Adrian Kempe,Under,2.5,theScore Bet,+150,40.4,1.08,0.18,4.50,PENDING,0.00
 2026-10-04 00:35:32,Los Angeles Kings @ San Jose Sharks,Shots On Goal,Trevor Moore,Under,1.5,theScore Bet,+130,43.9,1.01,0.19,4.84,PENDING,0.00
 ---,=== RUN: 2026-10-04 12:27:32 (189 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---,,
-2026-10-04 12:27:32,New York Liberty @ Atlanta Dream,Assists,Allisha Gray,Under,2.5,Novig,-111,53.8,2.25,0.62,15.62,PENDING,0.00
-2026-10-04 12:27:32,New York Liberty @ Atlanta Dream,Points,Pauline Astier,Under,7.5,Novig,+117,49.2,6.72,1.44,35.90,PENDING,0.00
-2026-10-04 12:27:32,New York Liberty @ Atlanta Dream,Rebounds,Angel Reese,Over,12.5,Novig,+104,50.0,2.00,0.48,12.02,PENDING,0.00
-2026-10-04 12:27:32,New York Liberty @ Atlanta Dream,Rebounds,Sabrina Ionescu,Under,3.5,DraftKings,+103,50.0,1.50,0.36,9.10,PENDING,0.00
-2026-10-04 12:27:32,New York Liberty @ Atlanta Dream,Threes,Allisha Gray,Under,1.5,Novig,-117,55.1,2.21,0.65,16.14,PENDING,0.00
-2026-10-04 12:27:32,New York Liberty @ Atlanta Dream,Threes,Leonie Fiebich,Over,1.5,Novig,+104,50.6,3.24,0.78,19.46,PENDING,0.00
-2026-10-04 12:27:32,New York Liberty @ Atlanta Dream,Points Rebounds Assists,Pauline Astier,Under,14.5,DraftKings,-101,52.8,5.11,1.29,32.25,PENDING,0.00
+2026-10-04 12:27:32,New York Liberty @ Atlanta Dream,Assists,Allisha Gray,Under,2.5,Novig,-111,53.8,2.25,0.62,15.62,WIN,0.56
+2026-10-04 12:27:32,New York Liberty @ Atlanta Dream,Points,Pauline Astier,Under,7.5,Novig,+117,49.2,6.72,1.44,35.90,LOSS,-1.44
+2026-10-04 12:27:32,New York Liberty @ Atlanta Dream,Rebounds,Angel Reese,Over,12.5,Novig,+104,50.0,2.00,0.48,12.02,LOSS,-0.48
+2026-10-04 12:27:32,New York Liberty @ Atlanta Dream,Rebounds,Sabrina Ionescu,Under,3.5,DraftKings,+103,50.0,1.50,0.36,9.10,LOSS,-0.36
+2026-10-04 12:27:32,New York Liberty @ Atlanta Dream,Threes,Allisha Gray,Under,1.5,Novig,-117,55.1,2.21,0.65,16.14,WIN,0.56
+2026-10-04 12:27:32,New York Liberty @ Atlanta Dream,Threes,Leonie Fiebich,Over,1.5,Novig,+104,50.6,3.24,0.78,19.46,WIN,0.81
+2026-10-04 12:27:32,New York Liberty @ Atlanta Dream,Points Rebounds Assists,Pauline Astier,Under,14.5,DraftKings,-101,52.8,5.11,1.29,32.25,WIN,1.28
 2026-10-04 12:27:32,Las Vegas Aces @ Golden State Valkyries,Assists,Veronica Burton,Under,5.5,theScore Bet,-115,55.5,3.73,1.07,26.81,LOSS,-1.07
 2026-10-04 12:27:32,Las Vegas Aces @ Golden State Valkyries,Points Rebounds Assists,Janelle Salaun,Under,14.5,Novig,+108,50.6,5.26,1.22,30.45,WIN,1.32
 2026-10-04 12:27:32,Las Vegas Aces @ Golden State Valkyries,Points Rebounds Assists,Stephanie Talbot,Under,9.5,DraftKings,+102,52.8,6.69,1.64,40.98,PENDING,0.00
 2026-10-04 12:27:32,Las Vegas Aces @ Golden State Valkyries,Rebounds,Kayla Thornton,Under,4.5,DraftKings,-116,53.8,0.16,0.05,1.17,WIN,0.04
 2026-10-04 12:27:32,Las Vegas Aces @ Golden State Valkyries,Threes,Janelle Salaun,Under,1.5,theScore Bet,+100,50.6,1.21,0.30,7.59,WIN,0.30
-2026-10-04 12:27:32,Las Vegas Aces @ Golden State Valkyries,Threes,A'ja Wilson,Under,0.5,Novig,+120,46.8,2.90,0.60,15.12,PENDING,0.00
+2026-10-04 12:27:32,Las Vegas Aces @ Golden State Valkyries,Threes,A'ja Wilson,Under,0.5,Novig,+120,46.8,2.90,0.60,15.12,WIN,0.72
 2026-10-04 12:27:33,Winnipeg Jets @ Detroit Red Wings,Shots On Goal,Kyle Connor,Over,3.5,theScore Bet,+135,43.4,2.05,0.38,9.48,PENDING,0.00
 2026-10-04 12:27:33,Winnipeg Jets @ Detroit Red Wings,Shots On Goal,Cole Perfetti,Over,2.5,Novig,+156,40.4,3.51,0.56,14.05,PENDING,0.00
 2026-10-04 12:27:33,Winnipeg Jets @ Detroit Red Wings,Shots On Goal,Josh Morrissey,Over,2.5,Novig,+178,39.1,8.81,1.24,30.93,PENDING,0.00
@@ -428,190 +428,190 @@ Timestamp,Game,Market,Player,Side,Line,Bookmaker,Odds,True Prob %,Edge %,Kelly U
 2026-10-04 12:27:34,Indianapolis Colts @ Washington Commanders,Rush Yds,Marcus Mariota,Over,26.5,Novig,+102,50.0,1.00,0.25,6.13,WIN,0.26
 2026-10-04 12:27:34,Indianapolis Colts @ Washington Commanders,Rush Yds,Jonathan Taylor,Over,89.5,Novig,+102,50.0,1.00,0.25,6.13,WIN,0.26
 2026-10-04 12:27:34,Indianapolis Colts @ Washington Commanders,Pass Yds,Daniel Jones,Under,219.5,Novig,+102,50.0,1.00,0.25,6.13,WIN,0.26
-2026-10-04 12:27:34,Arizona Cardinals @ New York Giants,Pass Yds,Jameis Winston,Over,208.5,Novig,+106,50.0,3.00,0.71,17.69,PENDING,0.00
-2026-10-04 12:27:34,Arizona Cardinals @ New York Giants,Reception Yds,Marvin Harrison Jr.,Under,34.5,Novig,+102,50.0,1.00,0.25,6.13,PENDING,0.00
-2026-10-04 12:27:34,Arizona Cardinals @ New York Giants,Reception Yds,Elijah Higgins,Over,4.5,Novig,+108,50.0,4.00,0.93,23.15,PENDING,0.00
-2026-10-04 12:27:34,Arizona Cardinals @ New York Giants,Reception Yds,Malachi Fields,Under,23.5,Novig,+104,50.0,2.00,0.48,12.02,PENDING,0.00
-2026-10-04 12:27:34,Arizona Cardinals @ New York Giants,Reception Yds,Isaiah Likely,Under,41.5,Novig,+102,50.0,1.00,0.25,6.13,PENDING,0.00
-2026-10-04 12:27:34,Arizona Cardinals @ New York Giants,Reception Yds,Jeremiyah Love,Under,16.5,Novig,+108,50.0,4.00,0.93,23.15,PENDING,0.00
-2026-10-04 12:27:34,Arizona Cardinals @ New York Giants,Reception Yds,Malik Nabers,Under,54.5,Novig,+106,50.0,3.00,0.71,17.69,PENDING,0.00
-2026-10-04 12:27:34,Arizona Cardinals @ New York Giants,Receptions,Malik Nabers,Under,4.5,BetMGM,+120,47.2,3.81,0.79,19.82,PENDING,0.00
-2026-10-04 12:27:34,Arizona Cardinals @ New York Giants,Receptions,Jeremiyah Love,Over,3.5,Novig,+153,39.6,0.27,0.04,1.11,PENDING,0.00
+2026-10-04 12:27:34,Arizona Cardinals @ New York Giants,Pass Yds,Jameis Winston,Over,208.5,Novig,+106,50.0,3.00,0.71,17.69,WIN,0.75
+2026-10-04 12:27:34,Arizona Cardinals @ New York Giants,Reception Yds,Marvin Harrison Jr.,Under,34.5,Novig,+102,50.0,1.00,0.25,6.13,WIN,0.26
+2026-10-04 12:27:34,Arizona Cardinals @ New York Giants,Reception Yds,Elijah Higgins,Over,4.5,Novig,+108,50.0,4.00,0.93,23.15,WIN,1.00
+2026-10-04 12:27:34,Arizona Cardinals @ New York Giants,Reception Yds,Malachi Fields,Under,23.5,Novig,+104,50.0,2.00,0.48,12.02,LOSS,-0.48
+2026-10-04 12:27:34,Arizona Cardinals @ New York Giants,Reception Yds,Isaiah Likely,Under,41.5,Novig,+102,50.0,1.00,0.25,6.13,LOSS,-0.25
+2026-10-04 12:27:34,Arizona Cardinals @ New York Giants,Reception Yds,Jeremiyah Love,Under,16.5,Novig,+108,50.0,4.00,0.93,23.15,WIN,1.00
+2026-10-04 12:27:34,Arizona Cardinals @ New York Giants,Reception Yds,Malik Nabers,Under,54.5,Novig,+106,50.0,3.00,0.71,17.69,LOSS,-0.71
+2026-10-04 12:27:34,Arizona Cardinals @ New York Giants,Receptions,Malik Nabers,Under,4.5,BetMGM,+120,47.2,3.81,0.79,19.82,LOSS,-0.79
+2026-10-04 12:27:34,Arizona Cardinals @ New York Giants,Receptions,Jeremiyah Love,Over,3.5,Novig,+153,39.6,0.27,0.04,1.11,LOSS,-0.04
 2026-10-04 12:27:34,Arizona Cardinals @ New York Giants,Receptions,Kendrick Bourne,Under,2.5,Novig,-147,60.1,0.93,0.34,8.56,PENDING,0.00
-2026-10-04 12:27:34,Arizona Cardinals @ New York Giants,Receptions,Malachi Fields,Under,1.5,BetMGM,+150,41.0,2.38,0.40,9.94,PENDING,0.00
-2026-10-04 12:27:34,Arizona Cardinals @ New York Giants,Receptions,Michael Wilson,Over,5.5,Novig,+147,42.5,4.93,0.84,20.98,PENDING,0.00
-2026-10-04 12:27:34,Arizona Cardinals @ New York Giants,Receptions,Trey McBride,Over,7.5,Novig,+163,41.7,9.68,1.48,37.11,PENDING,0.00
-2026-10-04 12:27:34,Arizona Cardinals @ New York Giants,Rush Yds,Jeremiyah Love,Under,66.5,Novig,+111,50.0,5.50,1.24,30.97,PENDING,0.00
-2026-10-04 12:27:34,Tennessee Titans @ Baltimore Ravens,Reception Yds,Derrick Henry,Over,7.5,Novig,+106,50.0,3.00,0.71,17.69,PENDING,0.00
-2026-10-04 12:27:34,Tennessee Titans @ Baltimore Ravens,Reception Yds,Mark Andrews,Over,37.5,Novig,+104,50.0,2.00,0.48,12.02,PENDING,0.00
-2026-10-04 12:27:34,Tennessee Titans @ Baltimore Ravens,Receptions,Zay Flowers,Over,5.5,Novig,+138,44.1,5.07,0.92,22.96,PENDING,0.00
-2026-10-04 12:27:34,Tennessee Titans @ Baltimore Ravens,Receptions,Carnell Tate,Over,4.5,Novig,+117,46.2,0.27,0.06,1.46,PENDING,0.00
-2026-10-04 12:27:34,Tennessee Titans @ Baltimore Ravens,Receptions,Mark Andrews,Over,3.5,Novig,-127,58.3,4.20,1.33,33.34,PENDING,0.00
-2026-10-04 12:27:34,Tennessee Titans @ Baltimore Ravens,Receptions,Gunnar Helm,Over,2.5,Novig,-122,55.9,1.63,0.50,12.46,PENDING,0.00
-2026-10-04 12:27:34,Tennessee Titans @ Baltimore Ravens,Receptions,Tony Pollard,Over,1.5,Novig,-127,57.2,2.19,0.70,17.41,PENDING,0.00
-2026-10-04 12:27:34,Tennessee Titans @ Baltimore Ravens,Receptions,Elic Ayomanor,Over,1.5,Novig,-127,56.7,1.35,0.43,10.72,PENDING,0.00
-2026-10-04 12:27:34,Tennessee Titans @ Baltimore Ravens,Receptions,Justice Hill,Under,1.5,DraftKings,+106,48.6,0.08,0.02,0.46,PENDING,0.00
-2026-10-04 12:27:34,Tennessee Titans @ Baltimore Ravens,Receptions,Calvin Ridley,Over,1.5,Novig,+223,33.2,7.16,0.80,20.06,PENDING,0.00
-2026-10-04 12:27:34,Tennessee Titans @ Baltimore Ravens,Rush Yds,Justice Hill,Over,16.5,Novig,+104,50.0,2.00,0.48,12.02,PENDING,0.00
-2026-10-04 12:27:34,Tennessee Titans @ Baltimore Ravens,Pass Yds,Cam Ward,Over,187.5,Novig,+106,50.0,3.00,0.71,17.69,PENDING,0.00
-2026-10-04 12:27:34,New England Patriots @ Buffalo Bills,Pass Yds,Drake Maye,Over,231.5,Novig,+108,50.0,4.00,0.93,23.15,PENDING,0.00
-2026-10-04 12:27:34,New England Patriots @ Buffalo Bills,Reception Yds,James Cook,Under,7.5,Novig,+106,50.0,3.00,0.71,17.69,PENDING,0.00
-2026-10-04 12:27:34,New England Patriots @ Buffalo Bills,Reception Yds,Romeo Doubs,Under,39.5,Novig,+104,50.0,2.00,0.48,12.02,PENDING,0.00
+2026-10-04 12:27:34,Arizona Cardinals @ New York Giants,Receptions,Malachi Fields,Under,1.5,BetMGM,+150,41.0,2.38,0.40,9.94,LOSS,-0.40
+2026-10-04 12:27:34,Arizona Cardinals @ New York Giants,Receptions,Michael Wilson,Over,5.5,Novig,+147,42.5,4.93,0.84,20.98,WIN,1.23
+2026-10-04 12:27:34,Arizona Cardinals @ New York Giants,Receptions,Trey McBride,Over,7.5,Novig,+163,41.7,9.68,1.48,37.11,LOSS,-1.48
+2026-10-04 12:27:34,Arizona Cardinals @ New York Giants,Rush Yds,Jeremiyah Love,Under,66.5,Novig,+111,50.0,5.50,1.24,30.97,WIN,1.38
+2026-10-04 12:27:34,Tennessee Titans @ Baltimore Ravens,Reception Yds,Derrick Henry,Over,7.5,Novig,+106,50.0,3.00,0.71,17.69,LOSS,-0.71
+2026-10-04 12:27:34,Tennessee Titans @ Baltimore Ravens,Reception Yds,Mark Andrews,Over,37.5,Novig,+104,50.0,2.00,0.48,12.02,LOSS,-0.48
+2026-10-04 12:27:34,Tennessee Titans @ Baltimore Ravens,Receptions,Zay Flowers,Over,5.5,Novig,+138,44.1,5.07,0.92,22.96,WIN,1.27
+2026-10-04 12:27:34,Tennessee Titans @ Baltimore Ravens,Receptions,Carnell Tate,Over,4.5,Novig,+117,46.2,0.27,0.06,1.46,WIN,0.07
+2026-10-04 12:27:34,Tennessee Titans @ Baltimore Ravens,Receptions,Mark Andrews,Over,3.5,Novig,-127,58.3,4.20,1.33,33.34,WIN,1.05
+2026-10-04 12:27:34,Tennessee Titans @ Baltimore Ravens,Receptions,Gunnar Helm,Over,2.5,Novig,-122,55.9,1.63,0.50,12.46,LOSS,-0.50
+2026-10-04 12:27:34,Tennessee Titans @ Baltimore Ravens,Receptions,Tony Pollard,Over,1.5,Novig,-127,57.2,2.19,0.70,17.41,WIN,0.55
+2026-10-04 12:27:34,Tennessee Titans @ Baltimore Ravens,Receptions,Elic Ayomanor,Over,1.5,Novig,-127,56.7,1.35,0.43,10.72,LOSS,-0.43
+2026-10-04 12:27:34,Tennessee Titans @ Baltimore Ravens,Receptions,Justice Hill,Under,1.5,DraftKings,+106,48.6,0.08,0.02,0.46,LOSS,-0.02
+2026-10-04 12:27:34,Tennessee Titans @ Baltimore Ravens,Receptions,Calvin Ridley,Over,1.5,Novig,+223,33.2,7.16,0.80,20.06,LOSS,-0.80
+2026-10-04 12:27:34,Tennessee Titans @ Baltimore Ravens,Rush Yds,Justice Hill,Over,16.5,Novig,+104,50.0,2.00,0.48,12.02,LOSS,-0.48
+2026-10-04 12:27:34,Tennessee Titans @ Baltimore Ravens,Pass Yds,Cam Ward,Over,187.5,Novig,+106,50.0,3.00,0.71,17.69,WIN,0.75
+2026-10-04 12:27:34,New England Patriots @ Buffalo Bills,Pass Yds,Drake Maye,Over,231.5,Novig,+108,50.0,4.00,0.93,23.15,WIN,1.00
+2026-10-04 12:27:34,New England Patriots @ Buffalo Bills,Reception Yds,James Cook,Under,7.5,Novig,+106,50.0,3.00,0.71,17.69,LOSS,-0.71
+2026-10-04 12:27:34,New England Patriots @ Buffalo Bills,Reception Yds,Romeo Doubs,Under,39.5,Novig,+104,50.0,2.00,0.48,12.02,LOSS,-0.48
 2026-10-04 12:27:34,New England Patriots @ Buffalo Bills,Reception Yds,DJ Moore,Under,49.5,Novig,+106,50.0,3.00,0.71,17.69,WIN,0.75
-2026-10-04 12:27:34,New England Patriots @ Buffalo Bills,Receptions,Dalton Kincaid,Over,4.5,DraftKings,+127,44.1,0.21,0.04,1.05,PENDING,0.00
+2026-10-04 12:27:34,New England Patriots @ Buffalo Bills,Receptions,Dalton Kincaid,Over,4.5,DraftKings,+127,44.1,0.21,0.04,1.05,LOSS,-0.04
 2026-10-04 12:27:34,New England Patriots @ Buffalo Bills,Receptions,DJ Moore,Under,3.5,Novig,+135,42.8,0.64,0.12,2.97,LOSS,-0.12
-2026-10-04 12:27:34,New England Patriots @ Buffalo Bills,Receptions,Khalil Shakir,Over,3.5,Novig,-130,56.7,0.32,0.10,2.60,PENDING,0.00
-2026-10-04 12:27:34,New England Patriots @ Buffalo Bills,Receptions,Mack Hollins,Over,3.5,Novig,-106,51.6,0.36,0.10,2.42,PENDING,0.00
-2026-10-04 12:27:34,New England Patriots @ Buffalo Bills,Receptions,Hunter Henry,Under,3.5,Novig,-125,55.9,0.54,0.17,4.18,PENDING,0.00
-2026-10-04 12:27:34,New England Patriots @ Buffalo Bills,Receptions,DeMario Douglas,Under,2.5,Novig,+133,44.1,2.86,0.54,13.45,PENDING,0.00
-2026-10-04 12:27:34,New England Patriots @ Buffalo Bills,Receptions,Rhamondre Stevenson,Over,2.5,DraftKings,-102,50.6,0.22,0.06,1.41,PENDING,0.00
+2026-10-04 12:27:34,New England Patriots @ Buffalo Bills,Receptions,Khalil Shakir,Over,3.5,Novig,-130,56.7,0.32,0.10,2.60,WIN,0.08
+2026-10-04 12:27:34,New England Patriots @ Buffalo Bills,Receptions,Mack Hollins,Over,3.5,Novig,-106,51.6,0.36,0.10,2.42,LOSS,-0.10
+2026-10-04 12:27:34,New England Patriots @ Buffalo Bills,Receptions,Hunter Henry,Under,3.5,Novig,-125,55.9,0.54,0.17,4.18,LOSS,-0.17
+2026-10-04 12:27:34,New England Patriots @ Buffalo Bills,Receptions,DeMario Douglas,Under,2.5,Novig,+133,44.1,2.86,0.54,13.45,WIN,0.72
+2026-10-04 12:27:34,New England Patriots @ Buffalo Bills,Receptions,Rhamondre Stevenson,Over,2.5,DraftKings,-102,50.6,0.22,0.06,1.41,WIN,0.06
 2026-10-04 12:27:34,New England Patriots @ Buffalo Bills,Receptions,Ty Johnson,Over,1.5,Novig,-113,53.8,1.39,0.39,9.84,WIN,0.35
-2026-10-04 12:27:34,New England Patriots @ Buffalo Bills,Receptions,James Cook,Under,1.5,Novig,+100,51.4,2.84,0.71,17.73,PENDING,0.00
-2026-10-04 12:27:34,New England Patriots @ Buffalo Bills,Receptions,Kyle Williams,Under,0.5,DraftKings,+172,37.1,0.97,0.14,3.54,PENDING,0.00
-2026-10-04 12:27:34,New York Jets @ Chicago Bears,Pass Yds,Geno Smith,Over,227.5,Novig,+104,50.0,2.00,0.48,12.02,PENDING,0.00
-2026-10-04 12:27:34,New York Jets @ Chicago Bears,Pass Yds,Tyson Bagent,Under,199.5,Novig,+102,50.0,1.00,0.25,6.13,PENDING,0.00
-2026-10-04 12:27:34,New York Jets @ Chicago Bears,Reception Yds,Luther Burden III,Under,46.5,Novig,+106,50.0,3.00,0.71,17.69,PENDING,0.00
-2026-10-04 12:27:34,New York Jets @ Chicago Bears,Reception Yds,Rome Odunze,Under,32.5,Novig,+108,50.0,4.00,0.93,23.15,PENDING,0.00
-2026-10-04 12:27:34,New York Jets @ Chicago Bears,Reception Yds,Isaiah Williams,Under,22.5,Novig,+113,50.0,6.50,1.44,35.95,PENDING,0.00
-2026-10-04 12:27:34,New York Jets @ Chicago Bears,Reception Yds,D'Andre Swift,Over,14.5,Novig,+104,50.0,2.00,0.48,12.02,PENDING,0.00
-2026-10-04 12:27:34,New York Jets @ Chicago Bears,Reception Yds,Kyle Monangai,Over,5.5,Novig,+106,50.0,3.00,0.71,17.69,PENDING,0.00
-2026-10-04 12:27:34,New York Jets @ Chicago Bears,Reception Yds,Kenyon Sadiq,Under,41.5,Novig,+104,50.0,2.00,0.48,12.02,PENDING,0.00
-2026-10-04 12:27:34,New York Jets @ Chicago Bears,Reception Yds,Colston Loveland,Under,33.5,Novig,+111,50.0,5.50,1.24,30.97,PENDING,0.00
-2026-10-04 12:27:34,New York Jets @ Chicago Bears,Reception Yds,Kalif Raymond,Under,31.5,Novig,+102,50.0,1.00,0.25,6.13,PENDING,0.00
+2026-10-04 12:27:34,New England Patriots @ Buffalo Bills,Receptions,James Cook,Under,1.5,Novig,+100,51.4,2.84,0.71,17.73,LOSS,-0.71
+2026-10-04 12:27:34,New England Patriots @ Buffalo Bills,Receptions,Kyle Williams,Under,0.5,DraftKings,+172,37.1,0.97,0.14,3.54,WIN,0.24
+2026-10-04 12:27:34,New York Jets @ Chicago Bears,Pass Yds,Geno Smith,Over,227.5,Novig,+104,50.0,2.00,0.48,12.02,LOSS,-0.48
+2026-10-04 12:27:34,New York Jets @ Chicago Bears,Pass Yds,Tyson Bagent,Under,199.5,Novig,+102,50.0,1.00,0.25,6.13,LOSS,-0.25
+2026-10-04 12:27:34,New York Jets @ Chicago Bears,Reception Yds,Luther Burden III,Under,46.5,Novig,+106,50.0,3.00,0.71,17.69,LOSS,-0.71
+2026-10-04 12:27:34,New York Jets @ Chicago Bears,Reception Yds,Rome Odunze,Under,32.5,Novig,+108,50.0,4.00,0.93,23.15,LOSS,-0.93
+2026-10-04 12:27:34,New York Jets @ Chicago Bears,Reception Yds,Isaiah Williams,Under,22.5,Novig,+113,50.0,6.50,1.44,35.95,LOSS,-1.44
+2026-10-04 12:27:34,New York Jets @ Chicago Bears,Reception Yds,D'Andre Swift,Over,14.5,Novig,+104,50.0,2.00,0.48,12.02,WIN,0.50
+2026-10-04 12:27:34,New York Jets @ Chicago Bears,Reception Yds,Kyle Monangai,Over,5.5,Novig,+106,50.0,3.00,0.71,17.69,LOSS,-0.71
+2026-10-04 12:27:34,New York Jets @ Chicago Bears,Reception Yds,Kenyon Sadiq,Under,41.5,Novig,+104,50.0,2.00,0.48,12.02,WIN,0.50
+2026-10-04 12:27:34,New York Jets @ Chicago Bears,Reception Yds,Colston Loveland,Under,33.5,Novig,+111,50.0,5.50,1.24,30.97,LOSS,-1.24
+2026-10-04 12:27:34,New York Jets @ Chicago Bears,Reception Yds,Kalif Raymond,Under,31.5,Novig,+102,50.0,1.00,0.25,6.13,WIN,0.26
 2026-10-04 12:27:34,New York Jets @ Chicago Bears,Reception Yds,Jeremy Ruckert,Over,16.5,Novig,+106,50.0,3.00,0.71,17.69,PENDING,0.00
-2026-10-04 12:27:34,New York Jets @ Chicago Bears,Receptions,Kalif Raymond,Over,3.5,Novig,+130,43.7,0.40,0.08,1.93,PENDING,0.00
+2026-10-04 12:27:34,New York Jets @ Chicago Bears,Receptions,Kalif Raymond,Over,3.5,Novig,+130,43.7,0.40,0.08,1.93,LOSS,-0.08
 2026-10-04 12:27:34,New York Jets @ Chicago Bears,Receptions,Jeremy Ruckert,Over,2.5,Novig,+141,44.1,6.39,1.13,28.34,PENDING,0.00
-2026-10-04 12:27:34,New York Jets @ Chicago Bears,Receptions,Braelon Allen,Under,1.5,Novig,+133,44.1,2.86,0.54,13.45,PENDING,0.00
-2026-10-04 12:27:34,New York Jets @ Chicago Bears,Receptions,Kyle Monangai,Over,0.5,Novig,-178,64.6,0.95,0.42,10.54,PENDING,0.00
+2026-10-04 12:27:34,New York Jets @ Chicago Bears,Receptions,Braelon Allen,Under,1.5,Novig,+133,44.1,2.86,0.54,13.45,LOSS,-0.54
+2026-10-04 12:27:34,New York Jets @ Chicago Bears,Receptions,Kyle Monangai,Over,0.5,Novig,-178,64.6,0.95,0.42,10.54,WIN,0.24
 2026-10-04 12:27:34,New York Jets @ Chicago Bears,Rush Yds,Isaiah Davis,Over,21.5,Novig,+102,50.0,1.00,0.25,6.13,PENDING,0.00
-2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Reception Yds,Josh Cameron,Over,9.5,Novig,+108,50.0,4.00,0.93,23.15,PENDING,0.00
-2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Reception Yds,Brenton Strange,Over,36.5,Novig,+106,50.0,3.00,0.71,17.69,PENDING,0.00
+2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Reception Yds,Josh Cameron,Over,9.5,Novig,+108,50.0,4.00,0.93,23.15,WIN,1.00
+2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Reception Yds,Brenton Strange,Over,36.5,Novig,+106,50.0,3.00,0.71,17.69,WIN,0.75
 2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Reception Yds,Travis Hunter,Under,4.5,Novig,-156,62.9,3.17,1.24,30.94,PENDING,0.00
-2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Reception Yds,Ja'Marr Chase,Under,81.5,Novig,+111,50.0,5.50,1.24,30.97,PENDING,0.00
-2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Reception Yds,Jakobi Meyers,Under,39.5,Novig,+104,50.0,2.00,0.48,12.02,PENDING,0.00
-2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Receptions,Tee Higgins,Under,4.5,Novig,+102,51.9,4.87,1.19,29.83,PENDING,0.00
-2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Receptions,Jakobi Meyers,Under,3.5,DraftKings,+110,48.6,2.02,0.46,11.49,PENDING,0.00
-2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Receptions,Brenton Strange,Over,3.5,Novig,+117,46.2,0.27,0.06,1.46,PENDING,0.00
-2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Receptions,Chase Brown,Under,3.5,Novig,-122,55.5,0.96,0.29,7.33,PENDING,0.00
-2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Receptions,Mike Gesicki,Over,2.5,Novig,-106,52.8,2.64,0.70,17.50,PENDING,0.00
-2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Receptions,Dohnte Meyers,Over,2.5,Novig,+174,38.3,4.98,0.72,17.88,PENDING,0.00
-2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Receptions,Bhayshul Tuten,Over,1.5,Novig,-120,55.1,1.03,0.31,7.73,PENDING,0.00
+2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Reception Yds,Ja'Marr Chase,Under,81.5,Novig,+111,50.0,5.50,1.24,30.97,WIN,1.38
+2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Reception Yds,Jakobi Meyers,Under,39.5,Novig,+104,50.0,2.00,0.48,12.02,WIN,0.50
+2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Receptions,Tee Higgins,Under,4.5,Novig,+102,51.9,4.87,1.19,29.83,LOSS,-1.19
+2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Receptions,Jakobi Meyers,Under,3.5,DraftKings,+110,48.6,2.02,0.46,11.49,WIN,0.51
+2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Receptions,Brenton Strange,Over,3.5,Novig,+117,46.2,0.27,0.06,1.46,WIN,0.07
+2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Receptions,Chase Brown,Under,3.5,Novig,-122,55.5,0.96,0.29,7.33,LOSS,-0.29
+2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Receptions,Mike Gesicki,Over,2.5,Novig,-106,52.8,2.64,0.70,17.50,WIN,0.66
+2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Receptions,Dohnte Meyers,Over,2.5,Novig,+174,38.3,4.98,0.72,17.88,WIN,1.25
+2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Receptions,Bhayshul Tuten,Over,1.5,Novig,-120,55.1,1.03,0.31,7.73,WIN,0.26
 2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Receptions,Drew Sample,Over,1.5,Novig,+144,41.7,1.76,0.30,7.62,PENDING,0.00
-2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Receptions,Josh Cameron,Over,1.5,Novig,+186,35.7,2.10,0.28,7.05,PENDING,0.00
-2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Rush Yds,Chris Rodriguez Jr.,Over,20.5,Novig,+113,50.0,6.50,1.44,35.95,PENDING,0.00
-2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Pass Yds,Joe Burrow,Over,269.5,Novig,+106,50.0,3.00,0.71,17.69,PENDING,0.00
-2026-10-04 12:27:35,Dallas Cowboys @ Houston Texans,Pass Yds,C.J. Stroud,Under,244.5,Novig,+108,50.0,4.00,0.93,23.15,PENDING,0.00
-2026-10-04 12:27:35,Dallas Cowboys @ Houston Texans,Reception Yds,Kayshon Boutte,Under,23.5,Novig,+106,50.0,3.00,0.71,17.69,PENDING,0.00
-2026-10-04 12:27:35,Dallas Cowboys @ Houston Texans,Receptions,Nico Collins,Under,5.5,DraftKings,-116,53.8,0.16,0.05,1.17,PENDING,0.00
-2026-10-04 12:27:35,Dallas Cowboys @ Houston Texans,Receptions,George Pickens,Under,4.5,Novig,+127,44.9,1.91,0.38,9.38,PENDING,0.00
-2026-10-04 12:27:35,Dallas Cowboys @ Houston Texans,Receptions,Dalton Schultz,Over,4.5,Novig,+115,49.0,5.32,1.16,28.93,PENDING,0.00
+2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Receptions,Josh Cameron,Over,1.5,Novig,+186,35.7,2.10,0.28,7.05,WIN,0.52
+2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Rush Yds,Chris Rodriguez Jr.,Over,20.5,Novig,+113,50.0,6.50,1.44,35.95,WIN,1.63
+2026-10-04 12:27:34,Jacksonville Jaguars @ Cincinnati Bengals,Pass Yds,Joe Burrow,Over,269.5,Novig,+106,50.0,3.00,0.71,17.69,WIN,0.75
+2026-10-04 12:27:35,Dallas Cowboys @ Houston Texans,Pass Yds,C.J. Stroud,Under,244.5,Novig,+108,50.0,4.00,0.93,23.15,LOSS,-0.93
+2026-10-04 12:27:35,Dallas Cowboys @ Houston Texans,Reception Yds,Kayshon Boutte,Under,23.5,Novig,+106,50.0,3.00,0.71,17.69,LOSS,-0.71
+2026-10-04 12:27:35,Dallas Cowboys @ Houston Texans,Receptions,Nico Collins,Under,5.5,DraftKings,-116,53.8,0.16,0.05,1.17,LOSS,-0.05
+2026-10-04 12:27:35,Dallas Cowboys @ Houston Texans,Receptions,George Pickens,Under,4.5,Novig,+127,44.9,1.91,0.38,9.38,WIN,0.48
+2026-10-04 12:27:35,Dallas Cowboys @ Houston Texans,Receptions,Dalton Schultz,Over,4.5,Novig,+115,49.0,5.32,1.16,28.93,LOSS,-1.16
 2026-10-04 12:27:35,Dallas Cowboys @ Houston Texans,Receptions,Jake Ferguson,Over,3.5,Novig,+117,46.8,1.50,0.32,8.01,LOSS,-0.32
-2026-10-04 12:27:35,Dallas Cowboys @ Houston Texans,Receptions,Ryan Flournoy,Over,3.5,Novig,+117,46.2,0.27,0.06,1.46,PENDING,0.00
-2026-10-04 12:27:35,Dallas Cowboys @ Houston Texans,Receptions,Javonte Williams,Over,2.5,Novig,-102,52.8,4.60,1.17,29.30,PENDING,0.00
-2026-10-04 12:27:35,Dallas Cowboys @ Houston Texans,Receptions,Kayshon Boutte,Under,2.5,Novig,-167,63.2,1.11,0.47,11.63,PENDING,0.00
-2026-10-04 12:27:35,Dallas Cowboys @ Houston Texans,Receptions,David Montgomery,Under,1.5,Novig,+113,47.6,1.37,0.30,7.58,PENDING,0.00
-2026-10-04 12:27:35,Dallas Cowboys @ Houston Texans,Receptions,Foster Moreau,Over,1.5,BetMGM,+180,36.8,2.92,0.41,10.13,PENDING,0.00
-2026-10-04 12:27:35,Dallas Cowboys @ Houston Texans,Rush Yds,C.J. Stroud,Under,11.5,Novig,+106,50.0,3.00,0.71,17.69,PENDING,0.00
-2026-10-04 12:27:35,Dallas Cowboys @ Houston Texans,Rush Yds,Dak Prescott,Under,9.5,Novig,+108,50.0,4.00,0.93,23.15,PENDING,0.00
-2026-10-04 12:27:35,Green Bay Packers @ Tampa Bay Buccaneers,Reception Yds,Tucker Kraft,Under,40.5,Novig,+102,50.0,1.00,0.25,6.13,PENDING,0.00
-2026-10-04 12:27:35,Green Bay Packers @ Tampa Bay Buccaneers,Reception Yds,Skyy Moore,Over,17.5,Novig,+108,50.0,4.00,0.93,23.15,PENDING,0.00
-2026-10-04 12:27:35,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,Christian Watson,Over,4.5,Novig,-122,56.7,3.18,0.97,24.25,PENDING,0.00
-2026-10-04 12:27:35,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,Tucker Kraft,Over,3.5,BetMGM,-130,57.2,1.15,0.38,9.38,PENDING,0.00
-2026-10-04 12:27:35,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,Cade Otton,Under,2.5,Novig,+138,42.5,1.11,0.20,5.03,PENDING,0.00
-2026-10-04 12:27:35,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,Chris Godwin,Under,2.5,DraftKings,+110,50.0,5.00,1.14,28.41,PENDING,0.00
+2026-10-04 12:27:35,Dallas Cowboys @ Houston Texans,Receptions,Ryan Flournoy,Over,3.5,Novig,+117,46.2,0.27,0.06,1.46,WIN,0.07
+2026-10-04 12:27:35,Dallas Cowboys @ Houston Texans,Receptions,Javonte Williams,Over,2.5,Novig,-102,52.8,4.60,1.17,29.30,WIN,1.15
+2026-10-04 12:27:35,Dallas Cowboys @ Houston Texans,Receptions,Kayshon Boutte,Under,2.5,Novig,-167,63.2,1.11,0.47,11.63,LOSS,-0.47
+2026-10-04 12:27:35,Dallas Cowboys @ Houston Texans,Receptions,David Montgomery,Under,1.5,Novig,+113,47.6,1.37,0.30,7.58,WIN,0.34
+2026-10-04 12:27:35,Dallas Cowboys @ Houston Texans,Receptions,Foster Moreau,Over,1.5,BetMGM,+180,36.8,2.92,0.41,10.13,LOSS,-0.41
+2026-10-04 12:27:35,Dallas Cowboys @ Houston Texans,Rush Yds,C.J. Stroud,Under,11.5,Novig,+106,50.0,3.00,0.71,17.69,LOSS,-0.71
+2026-10-04 12:27:35,Dallas Cowboys @ Houston Texans,Rush Yds,Dak Prescott,Under,9.5,Novig,+108,50.0,4.00,0.93,23.15,WIN,1.00
+2026-10-04 12:27:35,Green Bay Packers @ Tampa Bay Buccaneers,Reception Yds,Tucker Kraft,Under,40.5,Novig,+102,50.0,1.00,0.25,6.13,LOSS,-0.25
+2026-10-04 12:27:35,Green Bay Packers @ Tampa Bay Buccaneers,Reception Yds,Skyy Moore,Over,17.5,Novig,+108,50.0,4.00,0.93,23.15,LOSS,-0.93
+2026-10-04 12:27:35,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,Christian Watson,Over,4.5,Novig,-122,56.7,3.18,0.97,24.25,LOSS,-0.97
+2026-10-04 12:27:35,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,Tucker Kraft,Over,3.5,BetMGM,-130,57.2,1.15,0.38,9.38,WIN,0.29
+2026-10-04 12:27:35,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,Cade Otton,Under,2.5,Novig,+138,42.5,1.11,0.20,5.03,LOSS,-0.20
+2026-10-04 12:27:35,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,Chris Godwin,Under,2.5,DraftKings,+110,50.0,5.00,1.14,28.41,LOSS,-1.14
 2026-10-04 12:27:35,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,Bucky Irving,Under,2.5,DraftKings,+106,50.0,3.00,0.71,17.69,PENDING,0.00
-2026-10-04 12:27:35,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,Skyy Moore,Under,1.5,BetMGM,+115,47.2,1.45,0.31,7.86,PENDING,0.00
-2026-10-04 12:27:35,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,MarShawn Lloyd,Over,1.5,Novig,+167,38.3,2.30,0.34,8.59,PENDING,0.00
-2026-10-04 12:27:35,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,Kenny Gainwell,Over,2.5,Novig,+170,38.3,3.45,0.51,12.67,PENDING,0.00
-2026-10-04 12:27:35,Green Bay Packers @ Tampa Bay Buccaneers,Rush Yds,Kaleb Johnson,Over,31.5,Novig,+102,50.0,1.00,0.25,6.13,PENDING,0.00
-2026-10-04 12:27:35,Green Bay Packers @ Tampa Bay Buccaneers,Rush Yds,MarShawn Lloyd,Over,23.5,Novig,+108,50.0,4.00,0.93,23.15,PENDING,0.00
+2026-10-04 12:27:35,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,Skyy Moore,Under,1.5,BetMGM,+115,47.2,1.45,0.31,7.86,WIN,0.36
+2026-10-04 12:27:35,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,MarShawn Lloyd,Over,1.5,Novig,+167,38.3,2.30,0.34,8.59,WIN,0.57
+2026-10-04 12:27:35,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,Kenny Gainwell,Over,2.5,Novig,+170,38.3,3.45,0.51,12.67,LOSS,-0.51
+2026-10-04 12:27:35,Green Bay Packers @ Tampa Bay Buccaneers,Rush Yds,Kaleb Johnson,Over,31.5,Novig,+102,50.0,1.00,0.25,6.13,WIN,0.26
+2026-10-04 12:27:35,Green Bay Packers @ Tampa Bay Buccaneers,Rush Yds,MarShawn Lloyd,Over,23.5,Novig,+108,50.0,4.00,0.93,23.15,LOSS,-0.93
 2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Reception Yds,Kyren Williams,Over,13.5,Novig,+108,50.0,4.00,0.93,23.15,LOSS,-0.93
-2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Reception Yds,Dontayvion Wicks,Over,56.5,Novig,+111,50.0,5.50,1.24,30.97,PENDING,0.00
-2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Receptions,Puka Nacua,Over,6.5,BetMGM,+105,51.4,5.41,1.29,32.19,PENDING,0.00
-2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Receptions,Makai Lemon,Under,3.5,Novig,+111,51.0,7.64,1.72,42.99,PENDING,0.00
-2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Receptions,Tyler Higbee,Over,3.5,BetMGM,+130,44.1,1.54,0.30,7.39,PENDING,0.00
-2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Receptions,Zach Ertz,Under,2.5,Novig,-108,54.6,5.12,1.38,34.54,PENDING,0.00
-2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Receptions,Saquon Barkley,Under,2.5,Novig,-138,58.3,0.54,0.19,4.66,PENDING,0.00
+2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Reception Yds,Dontayvion Wicks,Over,56.5,Novig,+111,50.0,5.50,1.24,30.97,LOSS,-1.24
+2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Receptions,Puka Nacua,Over,6.5,BetMGM,+105,51.4,5.41,1.29,32.19,WIN,1.35
+2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Receptions,Makai Lemon,Under,3.5,Novig,+111,51.0,7.64,1.72,42.99,WIN,1.91
+2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Receptions,Tyler Higbee,Over,3.5,BetMGM,+130,44.1,1.54,0.30,7.39,WIN,0.39
+2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Receptions,Zach Ertz,Under,2.5,Novig,-108,54.6,5.12,1.38,34.54,WIN,1.28
+2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Receptions,Saquon Barkley,Under,2.5,Novig,-138,58.3,0.54,0.19,4.66,WIN,0.14
 2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Receptions,Kyren Williams,Over,2.5,Novig,+138,42.8,1.93,0.35,8.72,LOSS,-0.35
-2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Receptions,Darius Cooper,Over,2.5,Novig,+163,40.2,5.82,0.89,22.30,PENDING,0.00
-2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Rush Yds,Tank Bigsby,Over,8.5,Novig,+104,50.0,2.00,0.48,12.02,PENDING,0.00
-2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Rush Yds,Matthew Stafford,Over,1.5,Novig,+141,44.1,6.16,1.09,27.32,PENDING,0.00
+2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Receptions,Darius Cooper,Over,2.5,Novig,+163,40.2,5.82,0.89,22.30,WIN,1.45
+2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Rush Yds,Tank Bigsby,Over,8.5,Novig,+104,50.0,2.00,0.48,12.02,WIN,0.50
+2026-10-04 12:27:35,Los Angeles Rams @ Philadelphia Eagles,Rush Yds,Matthew Stafford,Over,1.5,Novig,+141,44.1,6.16,1.09,27.32,WIN,1.54
 2026-10-04 12:27:35,Miami Dolphins @ Minnesota Vikings,Reception Yds,Jordan Addison,Under,62.5,Novig,+102,50.0,1.00,0.25,6.13,LOSS,-0.25
-2026-10-04 12:27:35,Miami Dolphins @ Minnesota Vikings,Reception Yds,Chris Bell,Over,34.5,Novig,+108,50.0,4.00,0.93,23.15,PENDING,0.00
-2026-10-04 12:27:35,Miami Dolphins @ Minnesota Vikings,Reception Yds,Tai Felton,Under,15.5,Novig,+102,50.0,1.00,0.25,6.13,PENDING,0.00
-2026-10-04 12:27:35,Miami Dolphins @ Minnesota Vikings,Reception Yds,Jauan Jennings,Under,26.5,Novig,+102,50.0,1.00,0.25,6.13,PENDING,0.00
+2026-10-04 12:27:35,Miami Dolphins @ Minnesota Vikings,Reception Yds,Chris Bell,Over,34.5,Novig,+108,50.0,4.00,0.93,23.15,LOSS,-0.93
+2026-10-04 12:27:35,Miami Dolphins @ Minnesota Vikings,Reception Yds,Tai Felton,Under,15.5,Novig,+102,50.0,1.00,0.25,6.13,WIN,0.26
+2026-10-04 12:27:35,Miami Dolphins @ Minnesota Vikings,Reception Yds,Jauan Jennings,Under,26.5,Novig,+102,50.0,1.00,0.25,6.13,WIN,0.26
 2026-10-04 12:27:35,Miami Dolphins @ Minnesota Vikings,Reception Yds,Ryan Miller,Over,6.5,Novig,+120,46.7,2.72,0.57,14.17,PENDING,0.00
 2026-10-04 12:27:35,Miami Dolphins @ Minnesota Vikings,Reception Yds,Greg Dulcich,Over,29.5,Novig,+108,50.0,4.00,0.93,23.15,PENDING,0.00
-2026-10-04 12:27:35,Miami Dolphins @ Minnesota Vikings,Receptions,T.J. Hockenson,Over,4.5,Novig,+113,47.2,0.50,0.11,2.78,PENDING,0.00
-2026-10-04 12:27:35,Miami Dolphins @ Minnesota Vikings,Receptions,Aaron Jones,Over,3.5,Novig,+138,43.3,3.05,0.55,13.80,PENDING,0.00
-2026-10-04 12:27:35,Miami Dolphins @ Minnesota Vikings,Receptions,Ollie Gordon II,Over,1.5,BetMGM,+175,36.8,1.08,0.15,3.85,PENDING,0.00
-2026-10-04 12:27:35,Miami Dolphins @ Minnesota Vikings,Receptions,Malik Washington,Under,3.5,Novig,+174,38.0,4.00,0.58,14.38,PENDING,0.00
-2026-10-04 12:27:35,Miami Dolphins @ Minnesota Vikings,Pass Yds,Malik Willis,Under,169.5,Novig,+102,50.0,1.00,0.25,6.13,PENDING,0.00
-2026-10-04 12:27:35,Miami Dolphins @ Minnesota Vikings,Rush Yds,Malik Willis,Under,29.5,Novig,+104,50.0,2.00,0.48,12.02,PENDING,0.00
-2026-10-04 12:27:35,Denver Broncos @ San Francisco 49ers,Reception Yds,Courtland Sutton,Under,38.5,Novig,+106,50.0,3.00,0.71,17.69,PENDING,0.00
-2026-10-04 12:27:35,Denver Broncos @ San Francisco 49ers,Reception Yds,George Kittle,Over,64.5,Novig,+108,50.0,4.00,0.93,23.15,PENDING,0.00
-2026-10-04 12:27:35,Denver Broncos @ San Francisco 49ers,Reception Yds,Christian McCaffrey,Under,39.5,Novig,+108,50.0,4.00,0.93,23.15,PENDING,0.00
-2026-10-04 12:27:35,Denver Broncos @ San Francisco 49ers,Receptions,Christian McCaffrey,Under,4.5,Novig,+130,45.8,5.37,1.03,25.80,PENDING,0.00
-2026-10-04 12:27:35,Denver Broncos @ San Francisco 49ers,Receptions,Evan Engram,Over,2.5,Novig,+133,44.5,3.72,0.70,17.50,PENDING,0.00
+2026-10-04 12:27:35,Miami Dolphins @ Minnesota Vikings,Receptions,T.J. Hockenson,Over,4.5,Novig,+113,47.2,0.50,0.11,2.78,WIN,0.12
+2026-10-04 12:27:35,Miami Dolphins @ Minnesota Vikings,Receptions,Aaron Jones,Over,3.5,Novig,+138,43.3,3.05,0.55,13.80,WIN,0.76
+2026-10-04 12:27:35,Miami Dolphins @ Minnesota Vikings,Receptions,Ollie Gordon II,Over,1.5,BetMGM,+175,36.8,1.08,0.15,3.85,WIN,0.26
+2026-10-04 12:27:35,Miami Dolphins @ Minnesota Vikings,Receptions,Malik Washington,Under,3.5,Novig,+174,38.0,4.00,0.58,14.38,LOSS,-0.58
+2026-10-04 12:27:35,Miami Dolphins @ Minnesota Vikings,Pass Yds,Malik Willis,Under,169.5,Novig,+102,50.0,1.00,0.25,6.13,WIN,0.26
+2026-10-04 12:27:35,Miami Dolphins @ Minnesota Vikings,Rush Yds,Malik Willis,Under,29.5,Novig,+104,50.0,2.00,0.48,12.02,WIN,0.50
+2026-10-04 12:27:35,Denver Broncos @ San Francisco 49ers,Reception Yds,Courtland Sutton,Under,38.5,Novig,+106,50.0,3.00,0.71,17.69,WIN,0.75
+2026-10-04 12:27:35,Denver Broncos @ San Francisco 49ers,Reception Yds,George Kittle,Over,64.5,Novig,+108,50.0,4.00,0.93,23.15,WIN,1.00
+2026-10-04 12:27:35,Denver Broncos @ San Francisco 49ers,Reception Yds,Christian McCaffrey,Under,39.5,Novig,+108,50.0,4.00,0.93,23.15,WIN,1.00
+2026-10-04 12:27:35,Denver Broncos @ San Francisco 49ers,Receptions,Christian McCaffrey,Under,4.5,Novig,+130,45.8,5.37,1.03,25.80,WIN,1.34
+2026-10-04 12:27:35,Denver Broncos @ San Francisco 49ers,Receptions,Evan Engram,Over,2.5,Novig,+133,44.5,3.72,0.70,17.50,LOSS,-0.70
 2026-10-04 12:27:35,Denver Broncos @ San Francisco 49ers,Receptions,Troy Franklin,Over,0.5,Novig,-167,62.9,0.53,0.22,5.52,PENDING,0.00
-2026-10-04 12:27:35,Denver Broncos @ San Francisco 49ers,Rush Yds,J.K. Dobbins,Over,59.5,Novig,+104,50.0,2.00,0.48,12.02,PENDING,0.00
-2026-10-04 12:27:35,Denver Broncos @ San Francisco 49ers,Rush Yds,Bo Nix,Over,16.5,Novig,+104,50.0,2.00,0.48,12.02,PENDING,0.00
-2026-10-04 12:27:35,Denver Broncos @ San Francisco 49ers,Rush Yds,RJ Harvey,Over,15.5,Novig,+104,50.0,2.00,0.48,12.02,PENDING,0.00
+2026-10-04 12:27:35,Denver Broncos @ San Francisco 49ers,Rush Yds,J.K. Dobbins,Over,59.5,Novig,+104,50.0,2.00,0.48,12.02,LOSS,-0.48
+2026-10-04 12:27:35,Denver Broncos @ San Francisco 49ers,Rush Yds,Bo Nix,Over,16.5,Novig,+104,50.0,2.00,0.48,12.02,LOSS,-0.48
+2026-10-04 12:27:35,Denver Broncos @ San Francisco 49ers,Rush Yds,RJ Harvey,Over,15.5,Novig,+104,50.0,2.00,0.48,12.02,WIN,0.50
 2026-10-04 12:27:35,Kansas City Chiefs @ Las Vegas Raiders,Reception Yds,Jalen Nailor,Under,19.5,Novig,+104,50.0,2.00,0.48,12.02,PENDING,0.00
-2026-10-04 12:27:35,Kansas City Chiefs @ Las Vegas Raiders,Reception Yds,Emmett Johnson,Over,8.5,Novig,+104,50.0,2.00,0.48,12.02,PENDING,0.00
-2026-10-04 12:27:35,Kansas City Chiefs @ Las Vegas Raiders,Reception Yds,Brock Bowers,Under,72.5,Novig,+106,50.0,3.00,0.71,17.69,PENDING,0.00
-2026-10-04 12:27:35,Kansas City Chiefs @ Las Vegas Raiders,Reception Yds,Xavier Worthy,Under,33.5,Novig,+102,50.0,1.00,0.25,6.13,PENDING,0.00
+2026-10-04 12:27:35,Kansas City Chiefs @ Las Vegas Raiders,Reception Yds,Emmett Johnson,Over,8.5,Novig,+104,50.0,2.00,0.48,12.02,WIN,0.50
+2026-10-04 12:27:35,Kansas City Chiefs @ Las Vegas Raiders,Reception Yds,Brock Bowers,Under,72.5,Novig,+106,50.0,3.00,0.71,17.69,LOSS,-0.71
+2026-10-04 12:27:35,Kansas City Chiefs @ Las Vegas Raiders,Reception Yds,Xavier Worthy,Under,33.5,Novig,+102,50.0,1.00,0.25,6.13,LOSS,-0.25
 2026-10-04 12:27:35,Kansas City Chiefs @ Las Vegas Raiders,Reception Yds,Rashee Rice,Under,55.5,Novig,+106,50.0,3.00,0.71,17.69,PENDING,0.00
-2026-10-04 12:27:35,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Brock Bowers,Under,6.5,Novig,+125,45.8,3.08,0.62,15.38,PENDING,0.00
+2026-10-04 12:27:35,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Brock Bowers,Under,6.5,Novig,+125,45.8,3.08,0.62,15.38,WIN,0.78
 2026-10-04 12:27:35,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Rashee Rice,Under,4.5,Novig,+125,47.2,6.16,1.23,30.82,PENDING,0.00
-2026-10-04 12:27:35,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Travis Kelce,Over,4.5,Novig,+127,45.4,3.10,0.61,15.27,PENDING,0.00
-2026-10-04 12:27:35,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Ashton Jeanty,Under,3.5,Novig,-130,57.5,1.76,0.57,14.30,PENDING,0.00
-2026-10-04 12:27:35,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Tyquan Thornton,Under,1.5,Novig,-104,52.8,3.60,0.94,23.40,PENDING,0.00
-2026-10-04 12:27:35,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Cody White,Over,1.5,Novig,+178,37.7,4.77,0.67,16.76,PENDING,0.00
+2026-10-04 12:27:35,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Travis Kelce,Over,4.5,Novig,+127,45.4,3.10,0.61,15.27,LOSS,-0.61
+2026-10-04 12:27:35,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Ashton Jeanty,Under,3.5,Novig,-130,57.5,1.76,0.57,14.30,LOSS,-0.57
+2026-10-04 12:27:35,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Tyquan Thornton,Under,1.5,Novig,-104,52.8,3.60,0.94,23.40,LOSS,-0.94
+2026-10-04 12:27:35,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Cody White,Over,1.5,Novig,+178,37.7,4.77,0.67,16.76,WIN,1.19
 2026-10-04 12:27:35,Kansas City Chiefs @ Las Vegas Raiders,Rush Yds,Emmett Johnson,Over,17.5,Novig,+108,50.0,4.00,0.93,23.15,PENDING,0.00
-2026-10-04 12:27:35,Los Angeles Chargers @ Seattle Seahawks,Pass Yds,Justin Herbert,Under,199.5,Novig,+104,50.0,2.00,0.48,12.02,PENDING,0.00
-2026-10-04 12:27:35,Los Angeles Chargers @ Seattle Seahawks,Reception Yds,Tory Horton,Over,11.5,Novig,+102,50.0,1.00,0.25,6.13,PENDING,0.00
-2026-10-04 12:27:35,Los Angeles Chargers @ Seattle Seahawks,Reception Yds,George Holani,Under,9.5,Novig,+111,50.0,5.50,1.24,30.97,PENDING,0.00
-2026-10-04 12:27:35,Los Angeles Chargers @ Seattle Seahawks,Receptions,Cooper Kupp,Under,2.5,DraftKings,-132,57.2,0.49,0.16,4.03,PENDING,0.00
-2026-10-04 12:27:35,Los Angeles Chargers @ Seattle Seahawks,Receptions,Rashid Shaheed,Over,2.5,DraftKings,+148,41.7,3.42,0.58,14.46,PENDING,0.00
-2026-10-04 12:27:35,Los Angeles Chargers @ Seattle Seahawks,Receptions,George Holani,Under,1.5,DraftKings,+109,48.1,0.50,0.11,2.85,PENDING,0.00
-2026-10-04 12:27:35,Los Angeles Chargers @ Seattle Seahawks,Receptions,Keaton Mitchell,Under,1.5,Novig,+104,50.0,2.00,0.48,12.02,PENDING,0.00
-2026-10-04 12:27:35,Los Angeles Chargers @ Seattle Seahawks,Receptions,Tory Horton,Over,1.5,Novig,+186,37.7,7.79,1.05,26.17,PENDING,0.00
-2026-10-04 12:27:35,Detroit Lions @ Carolina Panthers,Reception Yds,Jahmyr Gibbs,Under,35.5,Novig,+108,50.0,4.00,0.93,23.15,PENDING,0.00
-2026-10-04 12:27:35,Detroit Lions @ Carolina Panthers,Receptions,Jahmyr Gibbs,Over,4.5,Novig,-102,52.8,4.60,1.17,29.30,PENDING,0.00
-2026-10-04 12:27:35,Detroit Lions @ Carolina Panthers,Receptions,Sam LaPorta,Over,4.5,Novig,+127,45.4,3.10,0.61,15.27,PENDING,0.00
-2026-10-04 12:27:35,Detroit Lions @ Carolina Panthers,Receptions,Isaac TeSlaa,Under,1.5,Novig,-117,54.6,1.23,0.36,8.99,PENDING,0.00
-2026-10-04 12:27:35,Detroit Lions @ Carolina Panthers,Rush Yds,Jahmyr Gibbs,Under,94.5,Novig,+104,50.0,2.00,0.48,12.02,PENDING,0.00
-2026-10-04 12:27:35,Detroit Lions @ Carolina Panthers,Rush Yds,Chuba Hubbard,Over,66.5,Novig,+104,50.0,2.00,0.48,12.02,PENDING,0.00
+2026-10-04 12:27:35,Los Angeles Chargers @ Seattle Seahawks,Pass Yds,Justin Herbert,Under,199.5,Novig,+104,50.0,2.00,0.48,12.02,WIN,0.50
+2026-10-04 12:27:35,Los Angeles Chargers @ Seattle Seahawks,Reception Yds,Tory Horton,Over,11.5,Novig,+102,50.0,1.00,0.25,6.13,LOSS,-0.25
+2026-10-04 12:27:35,Los Angeles Chargers @ Seattle Seahawks,Reception Yds,George Holani,Under,9.5,Novig,+111,50.0,5.50,1.24,30.97,WIN,1.38
+2026-10-04 12:27:35,Los Angeles Chargers @ Seattle Seahawks,Receptions,Cooper Kupp,Under,2.5,DraftKings,-132,57.2,0.49,0.16,4.03,WIN,0.12
+2026-10-04 12:27:35,Los Angeles Chargers @ Seattle Seahawks,Receptions,Rashid Shaheed,Over,2.5,DraftKings,+148,41.7,3.42,0.58,14.46,LOSS,-0.58
+2026-10-04 12:27:35,Los Angeles Chargers @ Seattle Seahawks,Receptions,George Holani,Under,1.5,DraftKings,+109,48.1,0.50,0.11,2.85,WIN,0.12
+2026-10-04 12:27:35,Los Angeles Chargers @ Seattle Seahawks,Receptions,Keaton Mitchell,Under,1.5,Novig,+104,50.0,2.00,0.48,12.02,LOSS,-0.48
+2026-10-04 12:27:35,Los Angeles Chargers @ Seattle Seahawks,Receptions,Tory Horton,Over,1.5,Novig,+186,37.7,7.79,1.05,26.17,LOSS,-1.05
+2026-10-04 12:27:35,Detroit Lions @ Carolina Panthers,Reception Yds,Jahmyr Gibbs,Under,35.5,Novig,+108,50.0,4.00,0.93,23.15,WIN,1.00
+2026-10-04 12:27:35,Detroit Lions @ Carolina Panthers,Receptions,Jahmyr Gibbs,Over,4.5,Novig,-102,52.8,4.60,1.17,29.30,LOSS,-1.17
+2026-10-04 12:27:35,Detroit Lions @ Carolina Panthers,Receptions,Sam LaPorta,Over,4.5,Novig,+127,45.4,3.10,0.61,15.27,WIN,0.77
+2026-10-04 12:27:35,Detroit Lions @ Carolina Panthers,Receptions,Isaac TeSlaa,Under,1.5,Novig,-117,54.6,1.23,0.36,8.99,LOSS,-0.36
+2026-10-04 12:27:35,Detroit Lions @ Carolina Panthers,Rush Yds,Jahmyr Gibbs,Under,94.5,Novig,+104,50.0,2.00,0.48,12.02,WIN,0.50
+2026-10-04 12:27:35,Detroit Lions @ Carolina Panthers,Rush Yds,Chuba Hubbard,Over,66.5,Novig,+104,50.0,2.00,0.48,12.02,WIN,0.50
 ---,=== RUN: 2026-10-04 13:08:25 (24 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---,,
-2026-10-04 13:08:26,New York Liberty @ Atlanta Dream,Assists,Jordin Canada,Under,7.5,Novig,-111,52.8,0.40,0.11,2.76,PENDING,0.00
-2026-10-04 13:08:26,New York Liberty @ Atlanta Dream,Rebounds,Allisha Gray,Under,3.5,DraftKings,-113,53.2,0.33,0.09,2.32,PENDING,0.00
+2026-10-04 13:08:26,New York Liberty @ Atlanta Dream,Assists,Jordin Canada,Under,7.5,Novig,-111,52.8,0.40,0.11,2.76,WIN,0.10
+2026-10-04 13:08:26,New York Liberty @ Atlanta Dream,Rebounds,Allisha Gray,Under,3.5,DraftKings,-113,53.2,0.33,0.09,2.32,WIN,0.08
 2026-10-04 13:08:28,Florida Panthers @ Anaheim Ducks,Shots On Goal,Jackson LaCombe,Under,1.5,Novig,+113,47.9,1.93,0.43,10.65,PENDING,0.00
 2026-10-04 13:08:28,Indianapolis Colts @ Washington Commanders,Receptions,Chig Okonkwo,Over,3.5,Novig,+122,45.4,0.83,0.17,4.27,LOSS,-0.17
 2026-10-04 13:08:28,Indianapolis Colts @ Washington Commanders,Receptions,Antonio Williams,Over,2.5,Novig,-117,57.2,6.04,1.77,44.17,WIN,1.51
-2026-10-04 13:08:29,Arizona Cardinals @ New York Giants,Receptions,Marvin Harrison Jr.,Over,2.5,Novig,+104,50.0,2.00,0.48,12.02,PENDING,0.00
-2026-10-04 13:08:29,Arizona Cardinals @ New York Giants,Receptions,Darnell Mooney,Over,1.5,Novig,-111,53.2,1.18,0.33,8.17,PENDING,0.00
-2026-10-04 13:08:29,Tennessee Titans @ Baltimore Ravens,Reception Yds,Justice Hill,Over,11.5,Novig,+106,50.0,3.00,0.71,17.69,PENDING,0.00
-2026-10-04 13:08:29,New England Patriots @ Buffalo Bills,Receptions,Dawson Knox,Under,1.5,Novig,-167,62.9,0.53,0.22,5.52,PENDING,0.00
-2026-10-04 13:08:29,New York Jets @ Chicago Bears,Receptions,Luther Burden III,Under,4.5,Novig,-120,54.6,0.06,0.02,0.47,PENDING,0.00
-2026-10-04 13:08:29,New York Jets @ Chicago Bears,Receptions,Cole Kmet,Over,1.5,BetMGM,+155,40.6,3.63,0.59,14.65,PENDING,0.00
-2026-10-04 13:08:29,New York Jets @ Chicago Bears,Rush Yds,Kyle Monangai,Under,39.5,Novig,+102,50.0,1.00,0.25,6.13,PENDING,0.00
-2026-10-04 13:08:29,Dallas Cowboys @ Houston Texans,Reception Yds,Dalton Schultz,Under,40.5,Novig,+102,50.0,1.00,0.25,6.13,PENDING,0.00
-2026-10-04 13:08:29,Dallas Cowboys @ Houston Texans,Receptions,Nico Collins,Over,5.5,Novig,+117,46.2,0.27,0.06,1.46,PENDING,0.00
-2026-10-04 13:08:29,Dallas Cowboys @ Houston Texans,Receptions,Xavier Hutchinson,Over,2.5,Novig,-102,52.8,4.60,1.17,29.30,PENDING,0.00
-2026-10-04 13:08:29,Dallas Cowboys @ Houston Texans,Receptions,Woody Marks,Under,1.5,Novig,+113,47.2,0.50,0.11,2.78,PENDING,0.00
-2026-10-04 13:08:30,Miami Dolphins @ Minnesota Vikings,Receptions,Jauan Jennings,Under,2.5,Novig,-113,53.2,0.33,0.09,2.32,PENDING,0.00
+2026-10-04 13:08:29,Arizona Cardinals @ New York Giants,Receptions,Marvin Harrison Jr.,Over,2.5,Novig,+104,50.0,2.00,0.48,12.02,LOSS,-0.48
+2026-10-04 13:08:29,Arizona Cardinals @ New York Giants,Receptions,Darnell Mooney,Over,1.5,Novig,-111,53.2,1.18,0.33,8.17,LOSS,-0.33
+2026-10-04 13:08:29,Tennessee Titans @ Baltimore Ravens,Reception Yds,Justice Hill,Over,11.5,Novig,+106,50.0,3.00,0.71,17.69,WIN,0.75
+2026-10-04 13:08:29,New England Patriots @ Buffalo Bills,Receptions,Dawson Knox,Under,1.5,Novig,-167,62.9,0.53,0.22,5.52,LOSS,-0.22
+2026-10-04 13:08:29,New York Jets @ Chicago Bears,Receptions,Luther Burden III,Under,4.5,Novig,-120,54.6,0.06,0.02,0.47,WIN,0.02
+2026-10-04 13:08:29,New York Jets @ Chicago Bears,Receptions,Cole Kmet,Over,1.5,BetMGM,+155,40.6,3.63,0.59,14.65,WIN,0.91
+2026-10-04 13:08:29,New York Jets @ Chicago Bears,Rush Yds,Kyle Monangai,Under,39.5,Novig,+102,50.0,1.00,0.25,6.13,LOSS,-0.25
+2026-10-04 13:08:29,Dallas Cowboys @ Houston Texans,Reception Yds,Dalton Schultz,Under,40.5,Novig,+102,50.0,1.00,0.25,6.13,WIN,0.26
+2026-10-04 13:08:29,Dallas Cowboys @ Houston Texans,Receptions,Nico Collins,Over,5.5,Novig,+117,46.2,0.27,0.06,1.46,WIN,0.07
+2026-10-04 13:08:29,Dallas Cowboys @ Houston Texans,Receptions,Xavier Hutchinson,Over,2.5,Novig,-102,52.8,4.60,1.17,29.30,WIN,1.15
+2026-10-04 13:08:29,Dallas Cowboys @ Houston Texans,Receptions,Woody Marks,Under,1.5,Novig,+113,47.2,0.50,0.11,2.78,WIN,0.12
+2026-10-04 13:08:30,Miami Dolphins @ Minnesota Vikings,Receptions,Jauan Jennings,Under,2.5,Novig,-113,53.2,0.33,0.09,2.32,WIN,0.08
 2026-10-04 13:08:30,Miami Dolphins @ Minnesota Vikings,Receptions,Ryan Miller,Under,0.5,Novig,+113,47.2,0.50,0.11,2.78,PENDING,0.00
-2026-10-04 13:08:30,Denver Broncos @ San Francisco 49ers,Receptions,Jaylen Waddle,Under,4.5,Novig,-106,51.9,0.89,0.24,5.91,PENDING,0.00
-2026-10-04 13:08:30,Denver Broncos @ San Francisco 49ers,Receptions,RJ Harvey,Over,3.5,Novig,+117,46.2,0.27,0.06,1.46,PENDING,0.00
-2026-10-04 13:08:30,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Kenneth Walker III,Under,2.5,Novig,+141,43.3,4.35,0.77,19.27,PENDING,0.00
-2026-10-04 13:08:30,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Michael Mayer,Under,2.5,Novig,+117,46.2,0.27,0.06,1.46,PENDING,0.00
+2026-10-04 13:08:30,Denver Broncos @ San Francisco 49ers,Receptions,Jaylen Waddle,Under,4.5,Novig,-106,51.9,0.89,0.24,5.91,LOSS,-0.24
+2026-10-04 13:08:30,Denver Broncos @ San Francisco 49ers,Receptions,RJ Harvey,Over,3.5,Novig,+117,46.2,0.27,0.06,1.46,WIN,0.07
+2026-10-04 13:08:30,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Kenneth Walker III,Under,2.5,Novig,+141,43.3,4.35,0.77,19.27,WIN,1.09
+2026-10-04 13:08:30,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Michael Mayer,Under,2.5,Novig,+117,46.2,0.27,0.06,1.46,LOSS,-0.06
 2026-10-04 13:08:30,Kansas City Chiefs @ Las Vegas Raiders,Rush Yds,Kirk Cousins,Under,0.5,Novig,-104,52.4,2.76,0.72,17.92,PENDING,0.00
-2026-10-04 13:08:30,Detroit Lions @ Carolina Panthers,Receptions,Darren Waller,Under,3.5,Novig,-144,59.4,0.58,0.21,5.23,PENDING,0.00
+2026-10-04 13:08:30,Detroit Lions @ Carolina Panthers,Receptions,Darren Waller,Under,3.5,Novig,-144,59.4,0.58,0.21,5.23,WIN,0.15
 ---,=== RUN: 2026-10-04 14:52:38 (50 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---,,
-2026-10-04 14:52:38,New York Liberty @ Atlanta Dream,Points,Jonquel Jones,Under,14.5,DraftKings,-116,54.2,0.90,0.26,6.54,PENDING,0.00
-2026-10-04 14:52:38,New York Liberty @ Atlanta Dream,Rebounds,Leonie Fiebich,Under,3.5,DraftKings,-108,52.4,0.93,0.25,6.31,PENDING,0.00
-2026-10-04 14:52:38,New York Liberty @ Atlanta Dream,Rebounds,Pauline Astier,Under,3.5,theScore Bet,-150,60.1,0.11,0.04,1.07,PENDING,0.00
+2026-10-04 14:52:38,New York Liberty @ Atlanta Dream,Points,Jonquel Jones,Under,14.5,DraftKings,-116,54.2,0.90,0.26,6.54,WIN,0.22
+2026-10-04 14:52:38,New York Liberty @ Atlanta Dream,Rebounds,Leonie Fiebich,Under,3.5,DraftKings,-108,52.4,0.93,0.25,6.31,LOSS,-0.25
+2026-10-04 14:52:38,New York Liberty @ Atlanta Dream,Rebounds,Pauline Astier,Under,3.5,theScore Bet,-150,60.1,0.11,0.04,1.07,LOSS,-0.04
 2026-10-04 14:52:39,Las Vegas Aces @ Golden State Valkyries,Points,Gabby Williams,Over,18.5,Novig,+102,50.0,1.00,0.25,6.13,WIN,0.26
 2026-10-04 14:52:39,Las Vegas Aces @ Golden State Valkyries,Rebounds,Gabby Williams,Under,3.5,Novig,+125,44.9,1.01,0.20,5.04,LOSS,-0.20
 2026-10-04 14:52:39,Winnipeg Jets @ Detroit Red Wings,Shots On Goal,Viktor Arvidsson,Over,2.5,BetMGM,+120,49.2,8.20,1.71,42.68,PENDING,0.00
@@ -622,137 +622,137 @@ Timestamp,Game,Market,Player,Side,Line,Bookmaker,Odds,True Prob %,Edge %,Kelly U
 2026-10-04 14:52:39,Florida Panthers @ Anaheim Ducks,Shots On Goal,Anton Lundell,Under,1.5,theScore Bet,+120,46.9,3.27,0.68,17.01,PENDING,0.00
 2026-10-04 14:52:39,Florida Panthers @ Anaheim Ducks,Shots On Goal,Alex Killorn,Over,1.5,DraftKings,+100,50.2,0.41,0.10,2.56,PENDING,0.00
 2026-10-04 14:52:40,Vegas Golden Knights @ Vancouver Canucks,Shots On Goal,Rasmus Andersson,Under,1.5,BetMGM,+135,44.3,4.06,0.75,18.82,PENDING,0.00
-2026-10-04 14:52:40,Arizona Cardinals @ New York Giants,Receptions,Elijah Higgins,Over,0.5,Novig,-130,58.6,3.72,1.21,30.18,PENDING,0.00
-2026-10-04 14:52:40,Tennessee Titans @ Baltimore Ravens,Reception Yds,Elic Ayomanor,Over,19.5,Novig,+102,50.0,1.00,0.25,6.13,PENDING,0.00
-2026-10-04 14:52:40,Tennessee Titans @ Baltimore Ravens,Receptions,Wan'Dale Robinson,Over,3.5,Novig,-144,59.0,0.05,0.02,0.45,PENDING,0.00
-2026-10-04 14:52:40,Tennessee Titans @ Baltimore Ravens,Receptions,Rashod Bateman,Under,2.5,Novig,-147,60.1,0.93,0.34,8.56,PENDING,0.00
+2026-10-04 14:52:40,Arizona Cardinals @ New York Giants,Receptions,Elijah Higgins,Over,0.5,Novig,-130,58.6,3.72,1.21,30.18,WIN,0.93
+2026-10-04 14:52:40,Tennessee Titans @ Baltimore Ravens,Reception Yds,Elic Ayomanor,Over,19.5,Novig,+102,50.0,1.00,0.25,6.13,WIN,0.26
+2026-10-04 14:52:40,Tennessee Titans @ Baltimore Ravens,Receptions,Wan'Dale Robinson,Over,3.5,Novig,-144,59.0,0.05,0.02,0.45,LOSS,-0.02
+2026-10-04 14:52:40,Tennessee Titans @ Baltimore Ravens,Receptions,Rashod Bateman,Under,2.5,Novig,-147,60.1,0.93,0.34,8.56,WIN,0.23
 2026-10-04 14:52:40,Tennessee Titans @ Baltimore Ravens,Receptions,Chris Moore,Under,0.5,Novig,+120,47.2,3.81,0.79,19.82,PENDING,0.00
-2026-10-04 14:52:40,New England Patriots @ Buffalo Bills,Reception Yds,Kyle Williams,Over,12.5,Novig,+102,50.0,1.00,0.25,6.13,PENDING,0.00
-2026-10-04 14:52:40,New England Patriots @ Buffalo Bills,Receptions,Romeo Doubs,Over,3.5,Novig,+135,44.1,3.75,0.69,17.34,PENDING,0.00
-2026-10-04 14:52:40,New England Patriots @ Buffalo Bills,Receptions,Keon Coleman,Over,1.5,DraftKings,+112,47.2,0.03,0.01,0.17,PENDING,0.00
-2026-10-04 14:52:40,New England Patriots @ Buffalo Bills,Receptions,TreVeyon Henderson,Under,1.5,Novig,-150,60.1,0.11,0.04,1.07,PENDING,0.00
+2026-10-04 14:52:40,New England Patriots @ Buffalo Bills,Reception Yds,Kyle Williams,Over,12.5,Novig,+102,50.0,1.00,0.25,6.13,LOSS,-0.25
+2026-10-04 14:52:40,New England Patriots @ Buffalo Bills,Receptions,Romeo Doubs,Over,3.5,Novig,+135,44.1,3.75,0.69,17.34,WIN,0.93
+2026-10-04 14:52:40,New England Patriots @ Buffalo Bills,Receptions,Keon Coleman,Over,1.5,DraftKings,+112,47.2,0.03,0.01,0.17,WIN,0.01
+2026-10-04 14:52:40,New England Patriots @ Buffalo Bills,Receptions,TreVeyon Henderson,Under,1.5,Novig,-150,60.1,0.11,0.04,1.07,WIN,0.03
 2026-10-04 14:52:40,New England Patriots @ Buffalo Bills,Rush Yds,Ty Johnson,Over,4.5,Novig,+102,50.0,1.00,0.25,6.13,LOSS,-0.25
-2026-10-04 14:52:40,New York Jets @ Chicago Bears,Receptions,Colston Loveland,Over,3.5,Novig,+125,46.2,3.97,0.79,19.85,PENDING,0.00
-2026-10-04 14:52:40,New York Jets @ Chicago Bears,Receptions,D'Andre Swift,Under,2.5,Novig,-163,62.0,0.10,0.04,1.07,PENDING,0.00
-2026-10-04 14:52:40,Jacksonville Jaguars @ Cincinnati Bengals,Reception Yds,Mike Gesicki,Under,27.5,Novig,+108,50.0,4.00,0.93,23.15,PENDING,0.00
-2026-10-04 14:52:40,Jacksonville Jaguars @ Cincinnati Bengals,Reception Yds,Bhayshul Tuten,Under,10.5,Novig,+102,50.0,1.00,0.25,6.13,PENDING,0.00
-2026-10-04 14:52:40,Jacksonville Jaguars @ Cincinnati Bengals,Receptions,Parker Washington,Over,5.5,Novig,+122,45.4,0.83,0.17,4.27,PENDING,0.00
-2026-10-04 14:52:40,Jacksonville Jaguars @ Cincinnati Bengals,Receptions,Brenton Strange,Under,3.5,Novig,-113,53.8,1.39,0.39,9.84,PENDING,0.00
-2026-10-04 14:52:40,Jacksonville Jaguars @ Cincinnati Bengals,Receptions,Samaje Perine,Under,1.5,Novig,-106,52.8,2.64,0.70,17.50,PENDING,0.00
-2026-10-04 14:52:40,Jacksonville Jaguars @ Cincinnati Bengals,Rush Yds,Chris Rodriguez Jr.,Over,17.5,Novig,+102,50.0,1.00,0.25,6.13,PENDING,0.00
+2026-10-04 14:52:40,New York Jets @ Chicago Bears,Receptions,Colston Loveland,Over,3.5,Novig,+125,46.2,3.97,0.79,19.85,WIN,0.99
+2026-10-04 14:52:40,New York Jets @ Chicago Bears,Receptions,D'Andre Swift,Under,2.5,Novig,-163,62.0,0.10,0.04,1.07,WIN,0.02
+2026-10-04 14:52:40,Jacksonville Jaguars @ Cincinnati Bengals,Reception Yds,Mike Gesicki,Under,27.5,Novig,+108,50.0,4.00,0.93,23.15,LOSS,-0.93
+2026-10-04 14:52:40,Jacksonville Jaguars @ Cincinnati Bengals,Reception Yds,Bhayshul Tuten,Under,10.5,Novig,+102,50.0,1.00,0.25,6.13,LOSS,-0.25
+2026-10-04 14:52:40,Jacksonville Jaguars @ Cincinnati Bengals,Receptions,Parker Washington,Over,5.5,Novig,+122,45.4,0.83,0.17,4.27,LOSS,-0.17
+2026-10-04 14:52:40,Jacksonville Jaguars @ Cincinnati Bengals,Receptions,Brenton Strange,Under,3.5,Novig,-113,53.8,1.39,0.39,9.84,LOSS,-0.39
+2026-10-04 14:52:40,Jacksonville Jaguars @ Cincinnati Bengals,Receptions,Samaje Perine,Under,1.5,Novig,-106,52.8,2.64,0.70,17.50,WIN,0.66
+2026-10-04 14:52:40,Jacksonville Jaguars @ Cincinnati Bengals,Rush Yds,Chris Rodriguez Jr.,Over,17.5,Novig,+102,50.0,1.00,0.25,6.13,WIN,0.26
 2026-10-04 14:52:40,Dallas Cowboys @ Houston Texans,Receptions,Jake Ferguson,Under,3.5,DraftKings,-112,53.2,0.75,0.21,5.24,WIN,0.19
-2026-10-04 14:52:40,Dallas Cowboys @ Houston Texans,Receptions,Jaylin Noel,Under,1.5,Novig,-156,62.3,2.25,0.88,21.98,PENDING,0.00
-2026-10-04 14:52:41,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,Matthew Golden,Under,4.5,Novig,+106,50.0,3.00,0.71,17.69,PENDING,0.00
-2026-10-04 14:52:41,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,Skyy Moore,Over,1.5,Novig,+108,50.0,4.00,0.93,23.15,PENDING,0.00
-2026-10-04 14:52:41,Los Angeles Rams @ Philadelphia Eagles,Receptions,Davante Adams,Over,4.5,Novig,-120,55.9,2.40,0.72,17.98,PENDING,0.00
-2026-10-04 14:52:41,Los Angeles Rams @ Philadelphia Eagles,Receptions,Tyler Higbee,Under,3.5,Novig,-133,58.3,2.13,0.71,17.70,PENDING,0.00
+2026-10-04 14:52:40,Dallas Cowboys @ Houston Texans,Receptions,Jaylin Noel,Under,1.5,Novig,-156,62.3,2.25,0.88,21.98,LOSS,-0.88
+2026-10-04 14:52:41,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,Matthew Golden,Under,4.5,Novig,+106,50.0,3.00,0.71,17.69,WIN,0.75
+2026-10-04 14:52:41,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,Skyy Moore,Over,1.5,Novig,+108,50.0,4.00,0.93,23.15,LOSS,-0.93
+2026-10-04 14:52:41,Los Angeles Rams @ Philadelphia Eagles,Receptions,Davante Adams,Over,4.5,Novig,-120,55.9,2.40,0.72,17.98,LOSS,-0.72
+2026-10-04 14:52:41,Los Angeles Rams @ Philadelphia Eagles,Receptions,Tyler Higbee,Under,3.5,Novig,-133,58.3,2.13,0.71,17.70,LOSS,-0.71
 2026-10-04 14:52:41,Los Angeles Rams @ Philadelphia Eagles,Receptions,Johnny Mundt,Under,1.5,Novig,-174,64.3,1.26,0.55,13.67,PENDING,0.00
-2026-10-04 14:52:41,Los Angeles Rams @ Philadelphia Eagles,Rush Yds,Saquon Barkley,Over,69.5,Novig,+106,50.0,3.00,0.71,17.69,PENDING,0.00
+2026-10-04 14:52:41,Los Angeles Rams @ Philadelphia Eagles,Rush Yds,Saquon Barkley,Over,69.5,Novig,+106,50.0,3.00,0.71,17.69,LOSS,-0.71
 2026-10-04 14:52:41,Miami Dolphins @ Minnesota Vikings,Reception Yds,Jaylen Wright,Over,5.5,Novig,-102,52.9,4.75,1.21,30.27,PENDING,0.00
 2026-10-04 14:52:41,Miami Dolphins @ Minnesota Vikings,Receptions,Jordan Addison,Under,4.5,BetMGM,-115,53.8,0.57,0.16,4.06,LOSS,-0.16
 2026-10-04 14:52:41,Miami Dolphins @ Minnesota Vikings,Receptions,Ryan Miller,Over,0.5,Novig,-111,52.8,0.40,0.11,2.76,PENDING,0.00
-2026-10-04 14:52:41,Denver Broncos @ San Francisco 49ers,Receptions,George Kittle,Under,4.5,Novig,+127,44.1,0.21,0.04,1.05,PENDING,0.00
-2026-10-04 14:52:41,Denver Broncos @ San Francisco 49ers,Receptions,RJ Harvey,Under,3.5,theScore Bet,-115,53.8,0.57,0.16,4.06,PENDING,0.00
-2026-10-04 14:52:41,Denver Broncos @ San Francisco 49ers,Receptions,Adam Trautman,Over,0.5,Novig,-147,60.4,1.43,0.53,13.16,PENDING,0.00
-2026-10-04 14:52:41,Kansas City Chiefs @ Las Vegas Raiders,Rush Yds,Kenneth Walker III,Over,86.5,Novig,+104,50.0,2.00,0.48,12.02,PENDING,0.00
-2026-10-04 14:52:41,Los Angeles Chargers @ Seattle Seahawks,Reception Yds,Keaton Mitchell,Over,10.5,Novig,+106,50.0,3.00,0.71,17.69,PENDING,0.00
-2026-10-04 14:52:41,Los Angeles Chargers @ Seattle Seahawks,Receptions,AJ Barner,Over,3.5,Novig,+141,41.7,0.50,0.09,2.24,PENDING,0.00
-2026-10-04 14:52:41,Los Angeles Chargers @ Seattle Seahawks,Receptions,Oronde Gadsden II,Over,2.5,BetMGM,-125,55.9,0.54,0.17,4.18,PENDING,0.00
-2026-10-04 14:52:41,Detroit Lions @ Carolina Panthers,Receptions,Darren Waller,Over,3.5,Novig,+117,46.2,0.27,0.06,1.46,PENDING,0.00
+2026-10-04 14:52:41,Denver Broncos @ San Francisco 49ers,Receptions,George Kittle,Under,4.5,Novig,+127,44.1,0.21,0.04,1.05,WIN,0.05
+2026-10-04 14:52:41,Denver Broncos @ San Francisco 49ers,Receptions,RJ Harvey,Under,3.5,theScore Bet,-115,53.8,0.57,0.16,4.06,LOSS,-0.16
+2026-10-04 14:52:41,Denver Broncos @ San Francisco 49ers,Receptions,Adam Trautman,Over,0.5,Novig,-147,60.4,1.43,0.53,13.16,LOSS,-0.53
+2026-10-04 14:52:41,Kansas City Chiefs @ Las Vegas Raiders,Rush Yds,Kenneth Walker III,Over,86.5,Novig,+104,50.0,2.00,0.48,12.02,WIN,0.50
+2026-10-04 14:52:41,Los Angeles Chargers @ Seattle Seahawks,Reception Yds,Keaton Mitchell,Over,10.5,Novig,+106,50.0,3.00,0.71,17.69,WIN,0.75
+2026-10-04 14:52:41,Los Angeles Chargers @ Seattle Seahawks,Receptions,AJ Barner,Over,3.5,Novig,+141,41.7,0.50,0.09,2.24,LOSS,-0.09
+2026-10-04 14:52:41,Los Angeles Chargers @ Seattle Seahawks,Receptions,Oronde Gadsden II,Over,2.5,BetMGM,-125,55.9,0.54,0.17,4.18,WIN,0.14
+2026-10-04 14:52:41,Detroit Lions @ Carolina Panthers,Receptions,Darren Waller,Over,3.5,Novig,+117,46.2,0.27,0.06,1.46,LOSS,-0.06
 ---,=== RUN: 2026-10-04 16:23:47 (31 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---,,
-2026-10-04 16:23:48,New York Liberty @ Atlanta Dream,Assists,Breanna Stewart,Under,3.5,Novig,-102,50.6,0.22,0.06,1.41,PENDING,0.00
+2026-10-04 16:23:48,New York Liberty @ Atlanta Dream,Assists,Breanna Stewart,Under,3.5,Novig,-102,50.6,0.22,0.06,1.41,WIN,0.06
 2026-10-04 16:23:48,Las Vegas Aces @ Golden State Valkyries,Points,Gabby Williams,Under,18.5,theScore Bet,+100,51.6,3.29,0.82,20.55,LOSS,-0.82
 2026-10-04 16:23:49,Winnipeg Jets @ Detroit Red Wings,Shots On Goal,Josh Morrissey,Over,1.5,DraftKings,-150,60.2,0.29,0.11,2.76,PENDING,0.00
 2026-10-04 16:23:49,Utah Mammoth @ New York Rangers,Shots On Goal,Nick Schmaltz,Over,2.5,DraftKings,+130,44.3,1.85,0.36,8.90,PENDING,0.00
 2026-10-04 16:23:49,Florida Panthers @ Anaheim Ducks,Shots On Goal,Leo Carlsson,Under,2.5,Novig,-122,56.1,2.06,0.63,15.67,PENDING,0.00
 2026-10-04 16:23:49,Florida Panthers @ Anaheim Ducks,Shots On Goal,Brady Tkachuk,Under,3.5,Novig,-133,58.3,2.12,0.71,17.65,PENDING,0.00
-2026-10-04 16:23:50,Arizona Cardinals @ New York Giants,Reception Yds,Darnell Mooney,Over,20.5,Novig,+104,50.0,2.00,0.48,12.02,PENDING,0.00
-2026-10-04 16:23:50,Arizona Cardinals @ New York Giants,Rush Yds,Tyler Allgeier,Over,21.5,Novig,+106,50.0,3.00,0.71,17.69,PENDING,0.00
-2026-10-04 16:23:50,Tennessee Titans @ Baltimore Ravens,Receptions,Tyjae Spears,Over,2.5,Novig,+138,42.5,1.11,0.20,5.03,PENDING,0.00
-2026-10-04 16:23:50,Tennessee Titans @ Baltimore Ravens,Receptions,Tony Pollard,Under,1.5,BetMGM,+115,47.2,1.45,0.31,7.86,PENDING,0.00
-2026-10-04 16:23:50,Tennessee Titans @ Baltimore Ravens,Receptions,Derrick Henry,Under,1.5,BetMGM,-160,63.2,2.77,1.11,27.72,PENDING,0.00
-2026-10-04 16:23:50,New England Patriots @ Buffalo Bills,Reception Yds,Rhamondre Stevenson,Over,17.5,Novig,+108,50.0,4.00,0.93,23.15,PENDING,0.00
-2026-10-04 16:23:50,New England Patriots @ Buffalo Bills,Receptions,Hunter Henry,Over,3.5,DraftKings,+135,44.1,3.75,0.69,17.34,PENDING,0.00
-2026-10-04 16:23:50,New York Jets @ Chicago Bears,Reception Yds,Garrett Wilson,Over,75.5,Novig,+106,50.0,3.00,0.71,17.69,PENDING,0.00
-2026-10-04 16:23:50,New York Jets @ Chicago Bears,Receptions,Rome Odunze,Under,2.5,Novig,+106,49.0,0.91,0.22,5.39,PENDING,0.00
-2026-10-04 16:23:50,New York Jets @ Chicago Bears,Receptions,Isaiah Williams,Over,2.5,Novig,-111,52.8,0.40,0.11,2.76,PENDING,0.00
-2026-10-04 16:23:50,Dallas Cowboys @ Houston Texans,Reception Yds,Ryan Flournoy,Over,33.5,Novig,+102,50.0,1.00,0.25,6.13,PENDING,0.00
-2026-10-04 16:23:50,Dallas Cowboys @ Houston Texans,Reception Yds,Javonte Williams,Over,13.5,Novig,+106,50.0,3.00,0.71,17.69,PENDING,0.00
-2026-10-04 16:23:50,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,Ted Hurst III,Over,1.5,Novig,-144,60.1,1.78,0.64,16.04,PENDING,0.00
+2026-10-04 16:23:50,Arizona Cardinals @ New York Giants,Reception Yds,Darnell Mooney,Over,20.5,Novig,+104,50.0,2.00,0.48,12.02,LOSS,-0.48
+2026-10-04 16:23:50,Arizona Cardinals @ New York Giants,Rush Yds,Tyler Allgeier,Over,21.5,Novig,+106,50.0,3.00,0.71,17.69,WIN,0.75
+2026-10-04 16:23:50,Tennessee Titans @ Baltimore Ravens,Receptions,Tyjae Spears,Over,2.5,Novig,+138,42.5,1.11,0.20,5.03,LOSS,-0.20
+2026-10-04 16:23:50,Tennessee Titans @ Baltimore Ravens,Receptions,Tony Pollard,Under,1.5,BetMGM,+115,47.2,1.45,0.31,7.86,LOSS,-0.31
+2026-10-04 16:23:50,Tennessee Titans @ Baltimore Ravens,Receptions,Derrick Henry,Under,1.5,BetMGM,-160,63.2,2.77,1.11,27.72,LOSS,-1.11
+2026-10-04 16:23:50,New England Patriots @ Buffalo Bills,Reception Yds,Rhamondre Stevenson,Over,17.5,Novig,+108,50.0,4.00,0.93,23.15,WIN,1.00
+2026-10-04 16:23:50,New England Patriots @ Buffalo Bills,Receptions,Hunter Henry,Over,3.5,DraftKings,+135,44.1,3.75,0.69,17.34,WIN,0.93
+2026-10-04 16:23:50,New York Jets @ Chicago Bears,Reception Yds,Garrett Wilson,Over,75.5,Novig,+106,50.0,3.00,0.71,17.69,LOSS,-0.71
+2026-10-04 16:23:50,New York Jets @ Chicago Bears,Receptions,Rome Odunze,Under,2.5,Novig,+106,49.0,0.91,0.22,5.39,LOSS,-0.22
+2026-10-04 16:23:50,New York Jets @ Chicago Bears,Receptions,Isaiah Williams,Over,2.5,Novig,-111,52.8,0.40,0.11,2.76,LOSS,-0.11
+2026-10-04 16:23:50,Dallas Cowboys @ Houston Texans,Reception Yds,Ryan Flournoy,Over,33.5,Novig,+102,50.0,1.00,0.25,6.13,WIN,0.26
+2026-10-04 16:23:50,Dallas Cowboys @ Houston Texans,Reception Yds,Javonte Williams,Over,13.5,Novig,+106,50.0,3.00,0.71,17.69,WIN,0.75
+2026-10-04 16:23:50,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,Ted Hurst III,Over,1.5,Novig,-144,60.1,1.78,0.64,16.04,WIN,0.44
 2026-10-04 16:23:50,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,Tez Johnson,Over,1.5,Novig,+233,34.4,14.51,1.56,38.92,WIN,3.63
-2026-10-04 16:23:50,Los Angeles Rams @ Philadelphia Eagles,Receptions,Davante Adams,Under,4.5,DraftKings,-119,54.6,0.45,0.13,3.31,PENDING,0.00
-2026-10-04 16:23:51,Miami Dolphins @ Minnesota Vikings,Reception Yds,Aaron Jones,Over,19.5,Novig,+111,50.0,5.50,1.24,30.97,PENDING,0.00
-2026-10-04 16:23:51,Miami Dolphins @ Minnesota Vikings,Receptions,Chris Bell,Over,2.5,Novig,+102,50.0,1.00,0.25,6.13,PENDING,0.00
-2026-10-04 16:23:51,Miami Dolphins @ Minnesota Vikings,Rush Yds,Malik Willis,Under,30.5,Novig,+104,50.0,2.00,0.48,12.02,PENDING,0.00
-2026-10-04 16:23:51,Denver Broncos @ San Francisco 49ers,Receptions,George Kittle,Over,4.5,DraftKings,-117,55.9,3.59,1.05,26.26,PENDING,0.00
-2026-10-04 16:23:51,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Ashton Jeanty,Over,3.5,DraftKings,+136,42.5,0.26,0.05,1.20,PENDING,0.00
-2026-10-04 16:23:51,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Michael Mayer,Over,2.5,DraftKings,-123,57.2,3.66,1.12,28.11,PENDING,0.00
-2026-10-04 16:23:51,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Kenneth Walker III,Over,3.5,Novig,+153,39.9,1.03,0.17,4.19,PENDING,0.00
-2026-10-04 16:23:51,Los Angeles Chargers @ Seattle Seahawks,Receptions,Cooper Kupp,Over,2.5,BetMGM,+125,45.4,2.20,0.44,10.98,PENDING,0.00
-2026-10-04 16:23:51,Los Angeles Chargers @ Seattle Seahawks,Receptions,Tory Horton,Over,0.5,Novig,-190,66.8,2.00,0.95,23.70,PENDING,0.00
-2026-10-04 16:23:51,Detroit Lions @ Carolina Panthers,Receptions,Chuba Hubbard,Over,2.5,Novig,-130,57.2,1.15,0.38,9.38,PENDING,0.00
+2026-10-04 16:23:50,Los Angeles Rams @ Philadelphia Eagles,Receptions,Davante Adams,Under,4.5,DraftKings,-119,54.6,0.45,0.13,3.31,WIN,0.11
+2026-10-04 16:23:51,Miami Dolphins @ Minnesota Vikings,Reception Yds,Aaron Jones,Over,19.5,Novig,+111,50.0,5.50,1.24,30.97,WIN,1.38
+2026-10-04 16:23:51,Miami Dolphins @ Minnesota Vikings,Receptions,Chris Bell,Over,2.5,Novig,+102,50.0,1.00,0.25,6.13,LOSS,-0.25
+2026-10-04 16:23:51,Miami Dolphins @ Minnesota Vikings,Rush Yds,Malik Willis,Under,30.5,Novig,+104,50.0,2.00,0.48,12.02,WIN,0.50
+2026-10-04 16:23:51,Denver Broncos @ San Francisco 49ers,Receptions,George Kittle,Over,4.5,DraftKings,-117,55.9,3.59,1.05,26.26,LOSS,-1.05
+2026-10-04 16:23:51,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Ashton Jeanty,Over,3.5,DraftKings,+136,42.5,0.26,0.05,1.20,WIN,0.07
+2026-10-04 16:23:51,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Michael Mayer,Over,2.5,DraftKings,-123,57.2,3.66,1.12,28.11,WIN,0.91
+2026-10-04 16:23:51,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Kenneth Walker III,Over,3.5,Novig,+153,39.9,1.03,0.17,4.19,LOSS,-0.17
+2026-10-04 16:23:51,Los Angeles Chargers @ Seattle Seahawks,Receptions,Cooper Kupp,Over,2.5,BetMGM,+125,45.4,2.20,0.44,10.98,LOSS,-0.44
+2026-10-04 16:23:51,Los Angeles Chargers @ Seattle Seahawks,Receptions,Tory Horton,Over,0.5,Novig,-190,66.8,2.00,0.95,23.70,WIN,0.50
+2026-10-04 16:23:51,Detroit Lions @ Carolina Panthers,Receptions,Chuba Hubbard,Over,2.5,Novig,-130,57.2,1.15,0.38,9.38,LOSS,-0.38
 ---,=== RUN: 2026-10-04 16:47:35 (16 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---,,
-2026-10-04 16:47:35,New York Liberty @ Atlanta Dream,Assists,Jordin Canada,Over,7.5,Novig,+102,50.6,2.23,0.55,13.64,PENDING,0.00
-2026-10-04 16:47:35,New York Liberty @ Atlanta Dream,Assists,Pauline Astier,Over,3.5,Novig,+138,44.1,5.07,0.92,22.96,PENDING,0.00
-2026-10-04 16:47:35,New York Liberty @ Atlanta Dream,Points,Sabrina Ionescu,Over,15.5,Novig,+111,49.8,5.07,1.14,28.53,PENDING,0.00
-2026-10-04 16:47:35,New York Liberty @ Atlanta Dream,Rebounds,Angel Reese,Under,12.5,DraftKings,-121,56.3,2.91,0.88,22.04,PENDING,0.00
-2026-10-04 16:47:35,New York Liberty @ Atlanta Dream,Rebounds,Rhyne Howard,Under,3.5,DraftKings,+113,47.2,0.50,0.11,2.78,PENDING,0.00
-2026-10-04 16:47:35,New York Liberty @ Atlanta Dream,Threes,Jonquel Jones,Under,1.5,Novig,+122,45.8,1.70,0.35,8.72,PENDING,0.00
-2026-10-04 16:47:35,Las Vegas Aces @ Golden State Valkyries,Threes,Jackie Young,Over,2.5,Novig,+150,40.2,0.58,0.10,2.44,PENDING,0.00
+2026-10-04 16:47:35,New York Liberty @ Atlanta Dream,Assists,Jordin Canada,Over,7.5,Novig,+102,50.6,2.23,0.55,13.64,LOSS,-0.55
+2026-10-04 16:47:35,New York Liberty @ Atlanta Dream,Assists,Pauline Astier,Over,3.5,Novig,+138,44.1,5.07,0.92,22.96,LOSS,-0.92
+2026-10-04 16:47:35,New York Liberty @ Atlanta Dream,Points,Sabrina Ionescu,Over,15.5,Novig,+111,49.8,5.07,1.14,28.53,WIN,1.27
+2026-10-04 16:47:35,New York Liberty @ Atlanta Dream,Rebounds,Angel Reese,Under,12.5,DraftKings,-121,56.3,2.91,0.88,22.04,WIN,0.73
+2026-10-04 16:47:35,New York Liberty @ Atlanta Dream,Rebounds,Rhyne Howard,Under,3.5,DraftKings,+113,47.2,0.50,0.11,2.78,LOSS,-0.11
+2026-10-04 16:47:35,New York Liberty @ Atlanta Dream,Threes,Jonquel Jones,Under,1.5,Novig,+122,45.8,1.70,0.35,8.72,LOSS,-0.35
+2026-10-04 16:47:35,Las Vegas Aces @ Golden State Valkyries,Threes,Jackie Young,Over,2.5,Novig,+150,40.2,0.58,0.10,2.44,WIN,0.15
 2026-10-04 16:47:36,Winnipeg Jets @ Detroit Red Wings,Shots On Goal,Lucas Raymond,Over,2.5,Novig,+133,46.0,7.28,1.37,34.20,PENDING,0.00
 2026-10-04 16:47:37,Vegas Golden Knights @ Vancouver Canucks,Shots On Goal,Tomas Hertl,Over,2.5,theScore Bet,+140,43.4,4.22,0.75,18.83,PENDING,0.00
-2026-10-04 16:47:37,Jacksonville Jaguars @ Cincinnati Bengals,Receptions,Brian Thomas Jr,Under,2.5,Novig,-135,57.5,0.12,0.04,1.02,PENDING,0.00
-2026-10-04 16:47:38,Dallas Cowboys @ Houston Texans,Reception Yds,Nico Collins,Over,72.5,Novig,+106,50.0,3.00,0.71,17.69,PENDING,0.00
-2026-10-04 16:47:38,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,Emeka Egbuka,Under,3.5,Novig,-122,55.1,0.28,0.08,2.12,PENDING,0.00
-2026-10-04 16:47:38,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,Cade Otton,Over,2.5,Novig,-133,57.5,0.76,0.25,6.33,PENDING,0.00
-2026-10-04 16:47:38,New York Jets @ Chicago Bears,Receptions,Kenyon Sadiq,Over,4.5,Novig,+127,44.1,0.21,0.04,1.05,PENDING,0.00
-2026-10-04 16:47:38,New York Jets @ Chicago Bears,Receptions,Kyle Monangai,Under,0.5,DraftKings,+162,38.6,1.11,0.17,4.28,PENDING,0.00
-2026-10-04 16:47:38,Miami Dolphins @ Minnesota Vikings,Receptions,Malik Washington,Over,4.5,Novig,+117,46.2,0.27,0.06,1.46,PENDING,0.00
----,=== RUN: 2026-10-04 19:44:00 (22 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
-2026-10-04 19:44:01,Las Vegas Aces @ Golden State Valkyries,Assists,Jackie Young,Under,6.5,Novig,-135,57.9,0.71,0.24,5.97
-2026-10-04 19:44:01,Las Vegas Aces @ Golden State Valkyries,Rebounds,A'ja Wilson,Over,10.5,Novig,+113,48.6,3.48,0.77,19.24
-2026-10-04 19:44:01,Las Vegas Aces @ Golden State Valkyries,Rebounds,Veronica Burton,Under,3.5,Novig,+108,49.0,1.89,0.44,10.96
-2026-10-04 19:44:01,Las Vegas Aces @ Golden State Valkyries,Rebounds,Chelsea Gray,Under,3.5,Novig,-130,57.5,1.76,0.57,14.30
-2026-10-04 19:44:02,Utah Mammoth @ New York Rangers,Shots On Goal,Clayton Keller,Over,2.5,BetMGM,+105,50.0,2.50,0.60,14.88
-2026-10-04 19:44:02,Utah Mammoth @ New York Rangers,Shots On Goal,Mika Zibanejad,Over,2.5,theScore Bet,+105,49.9,2.29,0.55,13.64
-2026-10-04 19:44:02,Utah Mammoth @ New York Rangers,Shots On Goal,J.T. Miller,Over,1.5,theScore Bet,-135,57.7,0.51,0.17,4.27
-2026-10-04 19:44:02,Florida Panthers @ Anaheim Ducks,Shots On Goal,Carter Verhaeghe,Under,2.5,BetMGM,-155,60.9,0.12,0.05,1.21
-2026-10-04 19:44:02,Calgary Flames @ Seattle Kraken,Shots On Goal,Zayne Parekh,Over,1.5,theScore Bet,+105,50.0,2.50,0.60,14.88
-2026-10-04 19:44:02,Vegas Golden Knights @ Vancouver Canucks,Shots On Goal,Mitch Marner,Under,2.5,BetMGM,-150,61.2,2.06,0.77,19.31
-2026-10-04 19:44:03,Miami Dolphins @ Minnesota Vikings,Receptions,Tai Felton,Over,1.5,Novig,-104,52.8,3.60,0.94,23.40
-2026-10-04 19:44:03,Denver Broncos @ San Francisco 49ers,Reception Yds,Pat Bryant,Under,22.5,Novig,+102,50.0,1.00,0.25,6.13
-2026-10-04 19:44:03,Denver Broncos @ San Francisco 49ers,Receptions,Courtland Sutton,Over,3.5,Novig,+130,43.7,0.40,0.08,1.93
-2026-10-04 19:44:03,Denver Broncos @ San Francisco 49ers,Receptions,Troy Franklin,Under,0.5,DraftKings,+145,42.5,4.08,0.70,17.61
-2026-10-04 19:44:03,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Tre Tucker,Over,3.5,Novig,+138,42.8,1.93,0.35,8.72
-2026-10-04 19:44:03,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Jalen Nailor,Over,1.5,Novig,-144,59.0,0.05,0.02,0.45
-2026-10-04 19:44:03,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Emmett Johnson,Under,1.5,Novig,-167,63.2,1.11,0.47,11.63
-2026-10-04 19:44:03,Kansas City Chiefs @ Las Vegas Raiders,Rush Yds,Ashton Jeanty,Over,59.5,Novig,+106,50.0,3.00,0.71,17.69
-2026-10-04 19:44:03,Kansas City Chiefs @ Las Vegas Raiders,Rush Yds,Patrick Mahomes,Under,15.5,Novig,+104,50.0,2.00,0.48,12.02
-2026-10-04 19:44:04,Los Angeles Chargers @ Seattle Seahawks,Receptions,Tre Harris,Over,3.5,Novig,+138,42.5,1.11,0.20,5.03
-2026-10-04 19:44:04,Detroit Lions @ Carolina Panthers,Reception Yds,Isaac TeSlaa,Over,17.5,Novig,+104,50.0,2.00,0.48,12.02
-2026-10-04 19:44:04,Detroit Lions @ Carolina Panthers,Reception Yds,Tommy Tremble,Under,12.5,Novig,+106,50.0,3.00,0.71,17.69
----,=== RUN: 2026-10-04 23:26:59 (15 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
-2026-10-04 23:27:00,Florida Panthers @ Anaheim Ducks,Shots On Goal,Sam Reinhart,Over,2.5,Novig,+141,44.7,7.62,1.35,33.78
-2026-10-04 23:27:00,Florida Panthers @ Anaheim Ducks,Shots On Goal,Carter Verhaeghe,Over,2.5,theScore Bet,+170,37.6,1.46,0.22,5.38
-2026-10-04 23:27:00,Florida Panthers @ Anaheim Ducks,Shots On Goal,Mikael Granlund,Under,1.5,theScore Bet,+115,46.5,0.03,0.01,0.17
-2026-10-04 23:27:00,Calgary Flames @ Seattle Kraken,Shots On Goal,Bobby McMann,Under,2.5,theScore Bet,+105,50.2,2.92,0.70,17.38
-2026-10-04 23:27:00,Calgary Flames @ Seattle Kraken,Shots On Goal,Vince Dunn,Under,1.5,theScore Bet,+150,40.8,2.12,0.35,8.83
-2026-10-04 23:27:00,Calgary Flames @ Seattle Kraken,Shots On Goal,Matvei Gridin,Under,1.5,Novig,+163,39.8,4.74,0.73,18.16
-2026-10-04 23:27:00,Vegas Golden Knights @ Vancouver Canucks,Shots On Goal,Filip Hronek,Under,1.5,theScore Bet,+125,44.7,0.48,0.10,2.38
-2026-10-04 23:27:00,Vegas Golden Knights @ Vancouver Canucks,Shots On Goal,Marco Rossi,Over,1.5,BetMGM,+105,50.0,2.50,0.60,14.88
-2026-10-04 23:27:01,Detroit Lions @ Carolina Panthers,Reception Yds,Brycen Tremayne,Under,33.5,Novig,+102,50.0,1.00,0.25,6.13
-2026-10-04 23:27:01,Detroit Lions @ Carolina Panthers,Reception Yds,Brock Wright,Over,5.5,Novig,+104,50.0,2.00,0.48,12.02
-2026-10-04 23:27:01,Detroit Lions @ Carolina Panthers,Receptions,Brycen Tremayne,Over,2.5,Novig,-104,51.0,0.06,0.02,0.40
-2026-10-04 23:27:01,Detroit Lions @ Carolina Panthers,Receptions,Tommy Tremble,Over,1.5,Novig,-133,57.9,1.35,0.45,11.24
-2026-10-04 23:27:01,Detroit Lions @ Carolina Panthers,Receptions,Tommy Tremble,Under,1.5,theScore Bet,+140,42.1,1.15,0.21,5.14
-2026-10-04 23:27:01,Detroit Lions @ Carolina Panthers,Receptions,Brock Wright,Over,0.5,Novig,-133,57.2,0.16,0.05,1.35
-2026-10-04 23:27:01,Detroit Lions @ Carolina Panthers,Receptions,Amon-Ra St. Brown,Under,6.5,Novig,+127,44.1,0.21,0.04,1.05
----,=== RUN: 2026-10-05 00:09:02 (6 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
-2026-10-05 00:09:04,Florida Panthers @ Anaheim Ducks,Shots On Goal,Jackson LaCombe,Over,1.5,theScore Bet,+105,52.1,6.90,1.64,41.08
-2026-10-05 00:09:04,Florida Panthers @ Anaheim Ducks,Total Saves,Lukas Dostal,Over,23.5,theScore Bet,+100,51.9,3.83,0.96,23.94
-2026-10-05 00:09:04,Calgary Flames @ Seattle Kraken,Shots On Goal,Jordan Eberle,Under,1.5,DraftKings,+125,44.7,0.48,0.10,2.38
-2026-10-05 00:09:04,Vegas Golden Knights @ Vancouver Canucks,Shots On Goal,Rasmus Andersson,Over,1.5,Novig,-135,57.7,0.51,0.17,4.27
-2026-10-05 00:09:05,Detroit Lions @ Carolina Panthers,Receptions,Jameson Williams,Over,3.5,Novig,+108,48.6,1.05,0.24,6.08
-2026-10-05 00:09:05,Detroit Lions @ Carolina Panthers,Rush Yds,Bryce Young,Over,12.5,Novig,+102,50.0,1.00,0.25,6.13
----,=== RUN: 2026-10-05 00:51:03 (1 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
-2026-10-05 00:51:04,Vegas Golden Knights @ Vancouver Canucks,Shots On Goal,Filip Hronek,Over,1.5,Novig,-113,54.0,1.71,0.48,12.06
+2026-10-04 16:47:37,Jacksonville Jaguars @ Cincinnati Bengals,Receptions,Brian Thomas Jr,Under,2.5,Novig,-135,57.5,0.12,0.04,1.02,WIN,0.03
+2026-10-04 16:47:38,Dallas Cowboys @ Houston Texans,Reception Yds,Nico Collins,Over,72.5,Novig,+106,50.0,3.00,0.71,17.69,WIN,0.75
+2026-10-04 16:47:38,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,Emeka Egbuka,Under,3.5,Novig,-122,55.1,0.28,0.08,2.12,WIN,0.07
+2026-10-04 16:47:38,Green Bay Packers @ Tampa Bay Buccaneers,Receptions,Cade Otton,Over,2.5,Novig,-133,57.5,0.76,0.25,6.33,WIN,0.19
+2026-10-04 16:47:38,New York Jets @ Chicago Bears,Receptions,Kenyon Sadiq,Over,4.5,Novig,+127,44.1,0.21,0.04,1.05,LOSS,-0.04
+2026-10-04 16:47:38,New York Jets @ Chicago Bears,Receptions,Kyle Monangai,Under,0.5,DraftKings,+162,38.6,1.11,0.17,4.28,LOSS,-0.17
+2026-10-04 16:47:38,Miami Dolphins @ Minnesota Vikings,Receptions,Malik Washington,Over,4.5,Novig,+117,46.2,0.27,0.06,1.46,WIN,0.07
+---,=== RUN: 2026-10-04 19:44:00 (22 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---,,
+2026-10-04 19:44:01,Las Vegas Aces @ Golden State Valkyries,Assists,Jackie Young,Under,6.5,Novig,-135,57.9,0.71,0.24,5.97,WIN,0.18
+2026-10-04 19:44:01,Las Vegas Aces @ Golden State Valkyries,Rebounds,A'ja Wilson,Over,10.5,Novig,+113,48.6,3.48,0.77,19.24,LOSS,-0.77
+2026-10-04 19:44:01,Las Vegas Aces @ Golden State Valkyries,Rebounds,Veronica Burton,Under,3.5,Novig,+108,49.0,1.89,0.44,10.96,WIN,0.48
+2026-10-04 19:44:01,Las Vegas Aces @ Golden State Valkyries,Rebounds,Chelsea Gray,Under,3.5,Novig,-130,57.5,1.76,0.57,14.30,LOSS,-0.57
+2026-10-04 19:44:02,Utah Mammoth @ New York Rangers,Shots On Goal,Clayton Keller,Over,2.5,BetMGM,+105,50.0,2.50,0.60,14.88,PENDING,0.00
+2026-10-04 19:44:02,Utah Mammoth @ New York Rangers,Shots On Goal,Mika Zibanejad,Over,2.5,theScore Bet,+105,49.9,2.29,0.55,13.64,PENDING,0.00
+2026-10-04 19:44:02,Utah Mammoth @ New York Rangers,Shots On Goal,J.T. Miller,Over,1.5,theScore Bet,-135,57.7,0.51,0.17,4.27,PENDING,0.00
+2026-10-04 19:44:02,Florida Panthers @ Anaheim Ducks,Shots On Goal,Carter Verhaeghe,Under,2.5,BetMGM,-155,60.9,0.12,0.05,1.21,PENDING,0.00
+2026-10-04 19:44:02,Calgary Flames @ Seattle Kraken,Shots On Goal,Zayne Parekh,Over,1.5,theScore Bet,+105,50.0,2.50,0.60,14.88,PENDING,0.00
+2026-10-04 19:44:02,Vegas Golden Knights @ Vancouver Canucks,Shots On Goal,Mitch Marner,Under,2.5,BetMGM,-150,61.2,2.06,0.77,19.31,PENDING,0.00
+2026-10-04 19:44:03,Miami Dolphins @ Minnesota Vikings,Receptions,Tai Felton,Over,1.5,Novig,-104,52.8,3.60,0.94,23.40,LOSS,-0.94
+2026-10-04 19:44:03,Denver Broncos @ San Francisco 49ers,Reception Yds,Pat Bryant,Under,22.5,Novig,+102,50.0,1.00,0.25,6.13,LOSS,-0.25
+2026-10-04 19:44:03,Denver Broncos @ San Francisco 49ers,Receptions,Courtland Sutton,Over,3.5,Novig,+130,43.7,0.40,0.08,1.93,LOSS,-0.08
+2026-10-04 19:44:03,Denver Broncos @ San Francisco 49ers,Receptions,Troy Franklin,Under,0.5,DraftKings,+145,42.5,4.08,0.70,17.61,PENDING,0.00
+2026-10-04 19:44:03,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Tre Tucker,Over,3.5,Novig,+138,42.8,1.93,0.35,8.72,WIN,0.48
+2026-10-04 19:44:03,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Jalen Nailor,Over,1.5,Novig,-144,59.0,0.05,0.02,0.45,PENDING,0.00
+2026-10-04 19:44:03,Kansas City Chiefs @ Las Vegas Raiders,Receptions,Emmett Johnson,Under,1.5,Novig,-167,63.2,1.11,0.47,11.63,WIN,0.28
+2026-10-04 19:44:03,Kansas City Chiefs @ Las Vegas Raiders,Rush Yds,Ashton Jeanty,Over,59.5,Novig,+106,50.0,3.00,0.71,17.69,LOSS,-0.71
+2026-10-04 19:44:03,Kansas City Chiefs @ Las Vegas Raiders,Rush Yds,Patrick Mahomes,Under,15.5,Novig,+104,50.0,2.00,0.48,12.02,WIN,0.50
+2026-10-04 19:44:04,Los Angeles Chargers @ Seattle Seahawks,Receptions,Tre Harris,Over,3.5,Novig,+138,42.5,1.11,0.20,5.03,LOSS,-0.20
+2026-10-04 19:44:04,Detroit Lions @ Carolina Panthers,Reception Yds,Isaac TeSlaa,Over,17.5,Novig,+104,50.0,2.00,0.48,12.02,WIN,0.50
+2026-10-04 19:44:04,Detroit Lions @ Carolina Panthers,Reception Yds,Tommy Tremble,Under,12.5,Novig,+106,50.0,3.00,0.71,17.69,WIN,0.75
+---,=== RUN: 2026-10-04 23:26:59 (15 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---,,
+2026-10-04 23:27:00,Florida Panthers @ Anaheim Ducks,Shots On Goal,Sam Reinhart,Over,2.5,Novig,+141,44.7,7.62,1.35,33.78,PENDING,0.00
+2026-10-04 23:27:00,Florida Panthers @ Anaheim Ducks,Shots On Goal,Carter Verhaeghe,Over,2.5,theScore Bet,+170,37.6,1.46,0.22,5.38,PENDING,0.00
+2026-10-04 23:27:00,Florida Panthers @ Anaheim Ducks,Shots On Goal,Mikael Granlund,Under,1.5,theScore Bet,+115,46.5,0.03,0.01,0.17,PENDING,0.00
+2026-10-04 23:27:00,Calgary Flames @ Seattle Kraken,Shots On Goal,Bobby McMann,Under,2.5,theScore Bet,+105,50.2,2.92,0.70,17.38,PENDING,0.00
+2026-10-04 23:27:00,Calgary Flames @ Seattle Kraken,Shots On Goal,Vince Dunn,Under,1.5,theScore Bet,+150,40.8,2.12,0.35,8.83,PENDING,0.00
+2026-10-04 23:27:00,Calgary Flames @ Seattle Kraken,Shots On Goal,Matvei Gridin,Under,1.5,Novig,+163,39.8,4.74,0.73,18.16,PENDING,0.00
+2026-10-04 23:27:00,Vegas Golden Knights @ Vancouver Canucks,Shots On Goal,Filip Hronek,Under,1.5,theScore Bet,+125,44.7,0.48,0.10,2.38,PENDING,0.00
+2026-10-04 23:27:00,Vegas Golden Knights @ Vancouver Canucks,Shots On Goal,Marco Rossi,Over,1.5,BetMGM,+105,50.0,2.50,0.60,14.88,PENDING,0.00
+2026-10-04 23:27:01,Detroit Lions @ Carolina Panthers,Reception Yds,Brycen Tremayne,Under,33.5,Novig,+102,50.0,1.00,0.25,6.13,WIN,0.26
+2026-10-04 23:27:01,Detroit Lions @ Carolina Panthers,Reception Yds,Brock Wright,Over,5.5,Novig,+104,50.0,2.00,0.48,12.02,WIN,0.50
+2026-10-04 23:27:01,Detroit Lions @ Carolina Panthers,Receptions,Brycen Tremayne,Over,2.5,Novig,-104,51.0,0.06,0.02,0.40,LOSS,-0.02
+2026-10-04 23:27:01,Detroit Lions @ Carolina Panthers,Receptions,Tommy Tremble,Over,1.5,Novig,-133,57.9,1.35,0.45,11.24,WIN,0.34
+2026-10-04 23:27:01,Detroit Lions @ Carolina Panthers,Receptions,Tommy Tremble,Under,1.5,theScore Bet,+140,42.1,1.15,0.21,5.14,LOSS,-0.21
+2026-10-04 23:27:01,Detroit Lions @ Carolina Panthers,Receptions,Brock Wright,Over,0.5,Novig,-133,57.2,0.16,0.05,1.35,WIN,0.04
+2026-10-04 23:27:01,Detroit Lions @ Carolina Panthers,Receptions,Amon-Ra St. Brown,Under,6.5,Novig,+127,44.1,0.21,0.04,1.05,LOSS,-0.04
+---,=== RUN: 2026-10-05 00:09:02 (6 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---,,
+2026-10-05 00:09:04,Florida Panthers @ Anaheim Ducks,Shots On Goal,Jackson LaCombe,Over,1.5,theScore Bet,+105,52.1,6.90,1.64,41.08,PENDING,0.00
+2026-10-05 00:09:04,Florida Panthers @ Anaheim Ducks,Total Saves,Lukas Dostal,Over,23.5,theScore Bet,+100,51.9,3.83,0.96,23.94,WIN,0.96
+2026-10-05 00:09:04,Calgary Flames @ Seattle Kraken,Shots On Goal,Jordan Eberle,Under,1.5,DraftKings,+125,44.7,0.48,0.10,2.38,PENDING,0.00
+2026-10-05 00:09:04,Vegas Golden Knights @ Vancouver Canucks,Shots On Goal,Rasmus Andersson,Over,1.5,Novig,-135,57.7,0.51,0.17,4.27,PENDING,0.00
+2026-10-05 00:09:05,Detroit Lions @ Carolina Panthers,Receptions,Jameson Williams,Over,3.5,Novig,+108,48.6,1.05,0.24,6.08,WIN,0.26
+2026-10-05 00:09:05,Detroit Lions @ Carolina Panthers,Rush Yds,Bryce Young,Over,12.5,Novig,+102,50.0,1.00,0.25,6.13,LOSS,-0.25
+---,=== RUN: 2026-10-05 00:51:03 (1 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---,,
+2026-10-05 00:51:04,Vegas Golden Knights @ Vancouver Canucks,Shots On Goal,Filip Hronek,Over,1.5,Novig,-113,54.0,1.71,0.48,12.06,PENDING,0.00
