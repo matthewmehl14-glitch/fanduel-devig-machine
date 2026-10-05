@@ -747,3 +747,10 @@ Timestamp,Game,Market,Player,Side,Line,Bookmaker,Odds,True Prob %,Edge %,Kelly U
 2026-10-04 23:27:01,Detroit Lions @ Carolina Panthers,Receptions,Tommy Tremble,Under,1.5,theScore Bet,+140,42.1,1.15,0.21,5.14
 2026-10-04 23:27:01,Detroit Lions @ Carolina Panthers,Receptions,Brock Wright,Over,0.5,Novig,-133,57.2,0.16,0.05,1.35
 2026-10-04 23:27:01,Detroit Lions @ Carolina Panthers,Receptions,Amon-Ra St. Brown,Under,6.5,Novig,+127,44.1,0.21,0.04,1.05
+---,=== RUN: 2026-10-05 00:09:02 (6 PLAYS FOUND) ===,---,---,---,---,---,---,---,---,---,---
+2026-10-05 00:09:04,Florida Panthers @ Anaheim Ducks,Shots On Goal,Jackson LaCombe,Over,1.5,theScore Bet,+105,52.1,6.90,1.64,41.08
+2026-10-05 00:09:04,Florida Panthers @ Anaheim Ducks,Total Saves,Lukas Dostal,Over,23.5,theScore Bet,+100,51.9,3.83,0.96,23.94
+2026-10-05 00:09:04,Calgary Flames @ Seattle Kraken,Shots On Goal,Jordan Eberle,Under,1.5,DraftKings,+125,44.7,0.48,0.10,2.38
+2026-10-05 00:09:04,Vegas Golden Knights @ Vancouver Canucks,Shots On Goal,Rasmus Andersson,Over,1.5,Novig,-135,57.7,0.51,0.17,4.27
+2026-10-05 00:09:05,Detroit Lions @ Carolina Panthers,Receptions,Jameson Williams,Over,3.5,Novig,+108,48.6,1.05,0.24,6.08
+2026-10-05 00:09:05,Detroit Lions @ Carolina Panthers,Rush Yds,Bryce Young,Over,12.5,Novig,+102,50.0,1.00,0.25,6.13
