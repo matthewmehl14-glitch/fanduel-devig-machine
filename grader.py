@@ -64,7 +64,8 @@ STAT_MAP = {
     "hockey": {
         "Points": [[(None, ("PTS", "P"))], [(None, ("G",)), (None, ("A",))]],
         "Assists": [[(None, ("A", "AST"))]],
-        "Shots On Goal": [[(None, ("SOG", "S"))]],
+        # ESPN NHL: "S" = shots on goal. "SOG" is a shootout column (zero almost always).
+        "Shots On Goal": [[(None, ("S",))]],
         "Total Saves": [[(None, ("SV", "SAVES"))]],
     },
     "football": {
