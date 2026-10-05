@@ -1,375 +1,350 @@
+"""
++EV prop scanner: weighted consensus devig (Novig + FanDuel anchored).
+
+For every prop line, each book's two-way price is devigged (power method),
+then blended into a weighted fair probability. Each book's price is compared
+against the fair line built from the OTHER books, so a book never validates
+its own price.
+
+Also captures closing lines: every run re-snapshots pending plays for games
+that haven't started, so the last pre-game snapshot becomes the "close" and
+the grader can report CLV.
+"""
 import os
-import re
-import csv
-import requests
-import unicodedata
+import time
+from collections import defaultdict
 from datetime import datetime, timedelta, timezone
-from difflib import SequenceMatcher
 
-API_KEY = os.environ.get('ODDS_API_KEY')
-DISCORD_WEBHOOK_URL = os.environ.get('DISCORD_WEBHOOK_URL')
-UNIT_SIZE = 25.00
+import requests
 
-# Kansas-regulated sportsbooks only (Pinnacle/EU removed to preserve API quota)
-KS_BOOKS = 'fanduel,draftkings,betmgm,caesars,espnbet,novig'
-ALLOWED_BOOKS = set(KS_BOOKS.split(','))
-CSV_FILENAME = 'ev_plays_log.csv'
+from common import (
+    CT, UNIT_SIZE, american_to_decimal, american_to_prob, fmt_american,
+    load_rows, match_name, normalize_name, parse_american, parse_iso,
+    play_key, prob_to_american, safe_float, save_rows,
+)
 
-# Minimum peer books required to establish consensus (excluding FanDuel and target book)
-MIN_CONSENSUS_BOOKS = 2
-# Minimum discount vs market average implied probability (2.0% outlier threshold)
-MIN_OUTLIER_DELTA = 0.020
+API_KEY = os.environ.get("ODDS_API_KEY")
+DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
+BASE_URL = "https://api.the-odds-api.com/v4"
+
+# ------------------------------------------------------------------ tuning
+# Kansas books. Weight = how much each book's devigged line counts toward the
+# fair price. Novig (exchange, near-zero vig) and FanDuel are the anchors.
+BOOK_WEIGHTS = {
+    "novig": 3.0,
+    "fanduel": 2.5,
+    "draftkings": 1.0,
+    "betmgm": 0.75,
+    "caesars": 0.75,
+    "espnbet": 0.75,
+}
+ANCHOR_BOOKS = {"novig", "fanduel"}
+KS_BOOKS = ",".join(BOOK_WEIGHTS)
+
+MIN_FAIR_BOOKS = 2        # two-way books (excluding target) needed for a fair line
+MAX_ANCHOR_GAP = 0.04     # skip line if Novig and FanDuel disagree by > 4 pts of prob
+STALE_MINUTES = 10        # ignore quotes not refreshed within this window
+MIN_EDGE = 0.02
+MAX_EDGE = 0.15           # larger "edges" are almost always bad or stale data
+MIN_DEC, MAX_DEC = 1.50, 3.00   # roughly -200 to +200; longshots are mostly noise
+
+KELLY_FRACTION = 0.25
+MAX_UNITS_PER_PLAY = 1.5
+MAX_UNITS_PER_PLAYER_GAME = 2.0   # Points, PRA, P+R on one player = one correlated bet
+MIN_UNITS = 0.10
 
 SPORTS_CONFIG = {
-    'basketball_wnba': 'player_points,player_rebounds,player_assists,player_points_rebounds,player_points_rebounds_assists,player_threes',
-    'basketball_nba': 'player_points,player_rebounds,player_assists,player_points_rebounds,player_points_rebounds_assists,player_threes',
-    'basketball_nba_preseason': 'player_points,player_rebounds,player_assists,player_points_rebounds,player_points_rebounds_assists,player_threes',
-    'icehockey_nhl': 'player_points,player_assists,player_shots_on_goal,player_total_saves',
-    'icehockey_nhl_preseason': 'player_points,player_assists,player_shots_on_goal,player_total_saves',
-    'americanfootball_nfl': 'player_pass_yds,player_pass_attempts,player_rush_yds,player_rush_attempts,player_reception_yds,player_receptions',
-    'americanfootball_ncaaf': 'player_pass_yds,player_pass_attempts,player_rush_yds,player_rush_attempts,player_reception_yds,player_receptions'
+    "basketball_wnba": "player_points,player_rebounds,player_assists,player_points_rebounds,player_points_rebounds_assists,player_threes",
+    "basketball_nba": "player_points,player_rebounds,player_assists,player_points_rebounds,player_points_rebounds_assists,player_threes",
+    "basketball_nba_preseason": "player_points,player_rebounds,player_assists,player_points_rebounds,player_points_rebounds_assists,player_threes",
+    "icehockey_nhl": "player_points,player_assists,player_shots_on_goal,player_total_saves",
+    "icehockey_nhl_preseason": "player_points,player_assists,player_shots_on_goal,player_total_saves",
+    "americanfootball_nfl": "player_pass_yds,player_pass_attempts,player_rush_yds,player_rush_attempts,player_reception_yds,player_receptions",
+    "americanfootball_ncaaf": "player_pass_yds,player_pass_attempts,player_rush_yds,player_rush_attempts,player_reception_yds,player_receptions",
 }
 
-def american_to_prob(odds):
-    if odds < 0: return abs(odds) / (abs(odds) + 100)
-    return 100 / (odds + 100)
-
-def american_to_decimal(odds):
-    if odds > 0: return (odds / 100) + 1
-    return (100 / abs(odds)) + 1
-
-def prob_to_american(prob):
-    if prob <= 0 or prob >= 1: return "N/A"
-    if prob >= 0.5:
-        odds = (prob / (1 - prob)) * -100
-    else:
-        odds = ((1 - prob) / prob) * 100
-    return f"+{int(round(odds))}" if odds > 0 else str(int(round(odds)))
 
 def format_market_name(market_key):
-    return market_key.replace('player_', '').replace('_', ' ').title()
+    return market_key.replace("player_", "").replace("_", " ").title()
 
-def normalize_name(name):
-    if not name: return ""
-    name = unicodedata.normalize('NFKD', str(name)).encode('ASCII', 'ignore').decode('utf-8')
-    name = name.lower()
-    name = re.sub(r'\b(jr|sr|ii|iii|iv)\b\.?', '', name)
-    name = re.sub(r'[^a-z\s]', '', name)
-    return ' '.join(name.split())
 
-def match_player_name(target_name, fd_names):
-    target_norm = normalize_name(target_name)
-    target_parts = target_norm.split()
-    best_match, best_score = None, 0.0
+DISPLAY_TO_KEY = {
+    format_market_name(k): k
+    for markets in SPORTS_CONFIG.values() for k in markets.split(",")
+}
 
-    for fd_name in fd_names:
-        fd_norm = normalize_name(fd_name)
-        if target_norm == fd_norm: return fd_name
+QUOTA = {"remaining": "?", "used": "?"}
+SESSION = requests.Session()
 
-        score = SequenceMatcher(None, target_norm, fd_norm).ratio()
-        fd_parts = fd_norm.split()
 
-        if len(target_parts) >= 2 and len(fd_parts) >= 2:
-            if target_parts[-1] == fd_parts[-1] and target_parts[0][0] == fd_parts[0][0]:
-                if score >= 0.75 and score > best_score:
-                    best_score, best_match = score, fd_name
-                    continue
-
-        if score >= 0.85 and score > best_score:
-            best_score, best_match = score, fd_name
-
-    return best_match
-
-def load_seen_plays():
-    seen = set()
-    if not os.path.isfile(CSV_FILENAME): return seen
-    with open(CSV_FILENAME, mode='r', newline='', encoding='utf-8') as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            player = row.get('Player', '')
-            game = row.get('Game', '')
-            if not player or player.startswith('---') or game.startswith('==='):
-                continue
-
-            key = (
-                game.strip().lower(),
-                row.get('Market', '').strip().lower(),
-                normalize_name(player),
-                row.get('Side', '').strip().lower(),
-                str(row.get('Line', '')).strip()
-            )
-            seen.add(key)
-    return seen
-
-def log_batch_to_csv(new_plays, run_timestamp):
-    file_exists = os.path.isfile(CSV_FILENAME)
-    is_empty = not file_exists or os.path.getsize(CSV_FILENAME) == 0
-
-    with open(CSV_FILENAME, mode='a', newline='', encoding='utf-8') as file:
-        writer = csv.writer(file)
-
-        if is_empty:
-            writer.writerow(['Timestamp', 'Game', 'Market', 'Player', 'Side', 'Line', 'Bookmaker', 'Odds', 'True Prob %', 'Edge %', 'Kelly Units', 'Bet Amount'])
-        else:
-            writer.writerow([
-                '---',
-                f'=== RUN: {run_timestamp} ({len(new_plays)} PLAYS FOUND) ===',
-                '---', '---', '---', '---', '---', '---', '---', '---', '---', '---'
-            ])
-
-        for play in new_plays:
-            writer.writerow([
-                play['timestamp'], play['game'], play['market'], 
-                play['player'], play['side'], play['line'], 
-                play['book'], play['odds'], play['true_prob'], 
-                play['edge'], play['units'], play['wager']
-            ])
-
-def send_discord_digest(new_plays, run_timestamp):
-    if not DISCORD_WEBHOOK_URL or not new_plays:
-        return
-
-    sorted_plays = sorted(new_plays, key=lambda x: float(x['edge']), reverse=True)
-
-    chunk_size = 15
-    for chunk_idx in range(0, len(sorted_plays), chunk_size):
-        chunk = sorted_plays[chunk_idx:chunk_idx + chunk_size]
-
-        lines = []
-        for play in chunk:
-            edge_val = float(play['edge'])
-            # Only Fire and Diamond icons remain
-            icon = "🔥" if edge_val >= 5.0 else "💎" 
-
-            line_1 = f"{icon} **+{play['edge']}%** | **{play['player']}** {play['side']} {play['line']} {play['market']}"
-            line_2 = f"↳ **{play['odds']}** @ {play['book']} • **{play['units']}u** (${play['wager']}) • *{play['market_avg_str']}*"
-            line_3 = f"  *{play['game']}*"
-            lines.append(f"{line_1}\n{line_2}\n{line_3}")
-
-        total_chunks = (len(sorted_plays) + chunk_size - 1) // chunk_size
-        part_tag = f" (Part {chunk_idx // chunk_size + 1}/{total_chunks})" if total_chunks > 1 else ""
-
-        embed = {
-            "title": f"🚨 +EV Prop Digest ({len(sorted_plays)} Outliers Found){part_tag}",
-            "description": "\n\n".join(lines),
-            "color": 65280,
-            "footer": {"text": f"Scanned at {run_timestamp} CT • FD Devig vs Retail Consensus"}
-        }
-
+# ------------------------------------------------------------------ http
+def get_json(url, params):
+    for attempt in range(3):
         try:
-            requests.post(DISCORD_WEBHOOK_URL, json={"embeds": [embed]}, timeout=10)
-        except Exception as e:
-            print(f"Error sending Discord digest: {e}")
+            res = SESSION.get(url, params=params, timeout=15)
+        except requests.RequestException as e:
+            print(f"    network error ({e}), retry {attempt + 1}/3")
+            time.sleep(2 * (attempt + 1))
+            continue
+        QUOTA["remaining"] = res.headers.get("x-requests-remaining", QUOTA["remaining"])
+        QUOTA["used"] = res.headers.get("x-requests-used", QUOTA["used"])
+        if res.status_code == 429:
+            time.sleep(3 * (attempt + 1))
+            continue
+        if res.status_code != 200:
+            print(f"    API {res.status_code}: {res.text[:200]}")
+            return None
+        return res.json()
+    return None
 
-def fetch_and_scan():
+
+# ------------------------------------------------------------------ devig
+def devig_power(p_over, p_under):
+    """Power-method devig: find k with p_over^k + p_under^k = 1.
+    Handles skewed lines better than proportional (doesn't overstate the
+    longshot side). Exchange prices with no overround are just normalized."""
+    total = p_over + p_under
+    if total <= 1.0:
+        return p_over / total, p_under / total
+    lo, hi = 1.0, 20.0
+    for _ in range(60):
+        k = (lo + hi) / 2
+        if p_over ** k + p_under ** k > 1:
+            lo = k
+        else:
+            hi = k
+    a, b = p_over ** lo, p_under ** lo
+    return a / (a + b), b / (a + b)
+
+
+def fair_prob(quotes, side, exclude=None):
+    """Weighted devigged fair probability for `side`, excluding one book.
+    Returns (prob, [book titles used]) or None if the line isn't trustworthy."""
+    acc = total_w = 0.0
+    used, anchors = [], {}
+    for bkey, q in quotes.items():
+        if bkey == exclude or not q["fresh"] or "Over" not in q or "Under" not in q:
+            continue
+        po, pu = devig_power(american_to_prob(q["Over"]), american_to_prob(q["Under"]))
+        p = po if side == "Over" else pu
+        w = BOOK_WEIGHTS.get(bkey, 0.5)
+        acc += w * p
+        total_w += w
+        used.append(q["title"])
+        if bkey in ANCHOR_BOOKS:
+            anchors[bkey] = p
+    if len(used) < MIN_FAIR_BOOKS or not anchors:
+        return None
+    if len(anchors) == 2 and abs(anchors["novig"] - anchors["fanduel"]) > MAX_ANCHOR_GAP:
+        return None  # the sharp books disagree, so nobody knows the true price
+    return acc / total_w, used
+
+
+def kelly_units(p, dec):
+    b = dec - 1
+    f = (p * b - (1 - p)) / b
+    return max(0.0, f * 100 * KELLY_FRACTION)   # 1u = 1% of bankroll
+
+
+# ------------------------------------------------------------------ parsing
+def build_lines(event_data, now_utc):
+    """-> {(market_key, canonical_player, point): {book_key: quote}}"""
+    lines = {}
+    canon = {}
+    for book in event_data.get("bookmakers", []):
+        bkey = book.get("key")
+        if bkey not in BOOK_WEIGHTS:
+            continue
+        for market in book.get("markets", []):
+            m_key = market.get("key")
+            updated = parse_iso(market.get("last_update") or book.get("last_update"))
+            fresh = updated is not None and (now_utc - updated) <= timedelta(minutes=STALE_MINUTES)
+            names = canon.setdefault(m_key, [])
+            for o in market.get("outcomes", []):
+                pt, side, raw = o.get("point"), o.get("name"), o.get("description")
+                if pt is None or side not in ("Over", "Under") or not raw:
+                    continue
+                player = match_name(raw, names)
+                if player is None:
+                    names.append(raw)
+                    player = raw
+                quote = lines.setdefault((m_key, player, float(pt)), {}).setdefault(
+                    bkey, {"title": book.get("title", bkey), "fresh": fresh, "raw": raw}
+                )
+                quote[side] = o["price"]
+    return lines
+
+
+def find_edges(lines):
+    out = []
+    for (m_key, player, pt), quotes in lines.items():
+        for bkey, q in quotes.items():
+            if not q["fresh"]:
+                continue
+            for side in ("Over", "Under"):
+                price = q.get(side)
+                if price is None:
+                    continue
+                dec = american_to_decimal(price)
+                if not (MIN_DEC <= dec <= MAX_DEC):
+                    continue
+                fp = fair_prob(quotes, side, exclude=bkey)
+                if fp is None:
+                    continue
+                p, used = fp
+                edge = p * dec - 1
+                if MIN_EDGE <= edge <= MAX_EDGE:
+                    out.append({
+                        "m_key": m_key, "player": player, "raw": q["raw"], "pt": pt,
+                        "side": side, "book": q["title"], "price": price, "dec": dec,
+                        "p": p, "edge": edge, "used": used,
+                    })
+    return out
+
+
+def update_closing_lines(pending_rows, lines):
+    """Snapshot current price + fair prob for pending plays on this event.
+    Overwritten each run until tip, so the last pre-game run is the close."""
+    updated = 0
+    for row in pending_rows:
+        m_key = DISPLAY_TO_KEY.get(row["Market"])
+        line = safe_float(row["Line"])
+        if not m_key or line is None:
+            continue
+        players = {p for (mk, p, pt) in lines if mk == m_key and pt == line}
+        player = match_name(row["Player"], players)
+        if player is None:
+            continue
+        quotes = lines[(m_key, player, line)]
+        side = row["Side"].strip().title()
+        fp = fair_prob(quotes, side)
+        if fp is None:
+            continue
+        close_fair = fp[0]
+        bet_dec = american_to_decimal(parse_american(row["Odds"]))
+        row["Close Fair %"] = f"{close_fair * 100:.1f}"
+        row["CLV %"] = f"{(close_fair * bet_dec - 1) * 100:.2f}"
+        for q in quotes.values():
+            if q["title"] == row["Bookmaker"] and side in q:
+                row["Close Odds"] = fmt_american(q[side])
+        updated += 1
+    return updated
+
+
+# ------------------------------------------------------------------ discord
+def send_discord_digest(new_rows, run_ts):
+    if not DISCORD_WEBHOOK_URL or not new_rows:
+        return
+    plays = sorted(new_rows, key=lambda r: float(r["Edge %"]), reverse=True)
+    chunk_size = 15
+    total_chunks = (len(plays) + chunk_size - 1) // chunk_size
+    for i in range(0, len(plays), chunk_size):
+        out = []
+        for r in plays[i:i + chunk_size]:
+            icon = "🔥" if float(r["Edge %"]) >= 5.0 else "💎"
+            out.append(
+                f"{icon} **+{r['Edge %']}%** | **{r['Player']}** {r['Side']} {r['Line']} {r['Market']}\n"
+                f"↳ **{r['Odds']}** @ {r['Bookmaker']} • **{r['Kelly Units']}u** (${r['Bet Amount']}) • *{r['_fair']}*\n"
+                f"  *{r['Game']}*"
+            )
+        part = f" (Part {i // chunk_size + 1}/{total_chunks})" if total_chunks > 1 else ""
+        embed = {
+            "title": f"🚨 +EV Prop Digest ({len(plays)} Plays){part}",
+            "description": "\n\n".join(out)[:4000],
+            "color": 65280,
+            "footer": {"text": f"Scanned {run_ts} CT • Weighted consensus devig (Novig/FD anchored)"},
+        }
+        try:
+            SESSION.post(DISCORD_WEBHOOK_URL, json={"embeds": [embed]}, timeout=10)
+        except requests.RequestException as e:
+            print(f"Discord error: {e}")
+
+
+# ------------------------------------------------------------------ main
+def run():
     if not API_KEY:
-        print("CRITICAL ERROR: API Key missing.")
+        print("CRITICAL ERROR: ODDS_API_KEY missing.")
         return
 
-    seen_plays = load_seen_plays()
-    new_plays_to_log = []
-    edges_found = 0
+    rows = load_rows()
+    seen = {play_key(r["Game"], r["Market"], r["Player"], r["Side"], r["Line"]) for r in rows}
+    exposure = defaultdict(float)
+    pending_by_event = defaultdict(list)
+    for r in rows:
+        exposure[(r["Game"].strip().lower(), normalize_name(r["Player"]))] += safe_float(r["Kelly Units"], 0.0)
+        if r["Result"] == "PENDING" and r["Event ID"]:
+            pending_by_event[r["Event ID"]].append(r)
 
-    run_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(f"--- Starting EV Prop Scanner (Run at {run_timestamp}) ---")
+    now_utc = datetime.now(timezone.utc)
+    now_ct = now_utc.astimezone(CT)
+    end_utc = now_ct.replace(hour=23, minute=59, second=59, microsecond=0).astimezone(timezone.utc)
+    run_ts = now_ct.strftime("%Y-%m-%d %H:%M:%S")
+    print(f"--- EV Prop Scanner {run_ts} CT ---")
 
-    utc_now = datetime.now(timezone.utc)
-    central_time = utc_now - timedelta(hours=5)
-    today = central_time.date()
-
-    start_local = datetime(today.year, today.month, today.day, 0, 0, 0, tzinfo=timezone(timedelta(hours=-5)))
-    end_local = datetime(today.year, today.month, today.day, 23, 59, 59, tzinfo=timezone(timedelta(hours=-5)))
+    new_rows, edges_found, closes = [], 0, 0
 
     for sport, markets in SPORTS_CONFIG.items():
-        print(f"\nFetching Schedule for {sport}...")
-
-        events_url = f'https://api.the-odds-api.com/v4/sports/{sport}/events'
-        events_params = {'apiKey': API_KEY}
-
-        try:
-            events_res = requests.get(events_url, params=events_params, timeout=15)
-        except Exception as e:
-            print(f"Network error fetching events: {e}")
+        events = get_json(f"{BASE_URL}/sports/{sport}/events", {"apiKey": API_KEY})
+        if not events:
             continue
-
-        if events_res.status_code != 200:
-            print(f"API Error fetching schedule for {sport}: {events_res.text}")
+        upcoming = []
+        for ev in events:
+            start = parse_iso(ev.get("commence_time"))
+            # Only games that have NOT started (in-play props create phantom edges)
+            if start is not None and now_utc < start <= end_utc:
+                upcoming.append((ev, start))
+        if not upcoming:
             continue
+        print(f"\n{sport}: {len(upcoming)} upcoming games")
 
-        events = events_res.json()
+        for ev, start in upcoming:
+            game = f"{ev['away_team']} @ {ev['home_team']}"
+            data = get_json(
+                f"{BASE_URL}/sports/{sport}/events/{ev['id']}/odds",
+                {"apiKey": API_KEY, "markets": markets, "bookmakers": KS_BOOKS, "oddsFormat": "american"},
+            )
+            if not data:
+                continue
+            lines = build_lines(data, datetime.now(timezone.utc))
+            closes += update_closing_lines(pending_by_event.get(ev["id"], []), lines)
 
-        for event in events:
-            event_id = event['id']
-            game_name = f"{event['away_team']} @ {event['home_team']}"
-
-            try:
-                commence_time = datetime.strptime(event['commence_time'], '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc)
-                if not (start_local.astimezone(timezone.utc) <= commence_time <= end_local.astimezone(timezone.utc)):
+            candidates = sorted(find_edges(lines), key=lambda c: c["edge"], reverse=True)
+            edges_found += len(candidates)
+            for c in candidates:
+                market = format_market_name(c["m_key"])
+                key = play_key(game, market, c["player"], c["side"], c["pt"])
+                if key in seen:
+                    continue  # also keeps only the best-priced book per play
+                ek = (game.lower(), normalize_name(c["player"]))
+                units = min(kelly_units(c["p"], c["dec"]), MAX_UNITS_PER_PLAY,
+                            MAX_UNITS_PER_PLAYER_GAME - exposure[ek])
+                if units < MIN_UNITS:
                     continue
-            except Exception:
-                pass
+                seen.add(key)
+                exposure[ek] += units
+                row = {
+                    "Timestamp": run_ts, "Sport": sport, "Event ID": ev["id"],
+                    "Commence Time": start.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    "Game": game, "Market": market, "Player": c["player"],
+                    "Side": c["side"], "Line": f"{c['pt']:g}", "Bookmaker": c["book"],
+                    "Odds": fmt_american(c["price"]),
+                    "True Prob %": f"{c['p'] * 100:.1f}", "Edge %": f"{c['edge'] * 100:.2f}",
+                    "Kelly Units": f"{units:.2f}", "Bet Amount": f"{units * UNIT_SIZE:.2f}",
+                    "Fair Books": ", ".join(c["used"]),
+                    "Close Odds": "", "Close Fair %": "", "CLV %": "",
+                    "Result": "PENDING", "Net Units": "0.00", "Actual": "",
+                    "_fair": f"Fair {prob_to_american(c['p'])} ({len(c['used'])} books)",
+                }
+                new_rows.append(row)
+                print(f"  + {row['Edge %']}% {row['Player']} {row['Side']} {row['Line']} {market} {row['Odds']} @ {row['Bookmaker']}")
 
-            print(f"  -> Scanning {game_name}...")
+    if new_rows or closes:
+        rows.extend(new_rows)
+        save_rows(rows)
+    send_discord_digest(new_rows, run_ts)
+    print(f"\nDone. {edges_found} edges seen, {len(new_rows)} new plays logged, "
+          f"{closes} closing-line snapshots updated. API quota remaining: {QUOTA['remaining']}")
 
-            # Limited to us and us_ex to conserve API requests
-            odds_url = f'https://api.the-odds-api.com/v4/sports/{sport}/events/{event_id}/odds'
-            odds_params = {
-                'apiKey': API_KEY, 
-                'regions': 'us,us_ex', 
-                'markets': markets, 
-                'bookmakers': KS_BOOKS, 
-                'oddsFormat': 'american'
-            }
-
-            try:
-                odds_res = requests.get(odds_url, params=odds_params, timeout=15)
-            except Exception as e: 
-                print(f"Network error on {game_name}: {e}")
-                continue
-
-            if odds_res.status_code != 200: 
-                print(f"API Error fetching odds for {game_name} ({sport}): {odds_res.text}")
-                continue
-
-            event_data = odds_res.json()
-
-            # Step 1: Extract FanDuel Two-Way Lines for Sharp Devig
-            fd_props = {}
-            for book in event_data.get('bookmakers', []):
-                if book['key'] != 'fanduel': continue
-                for market in book.get('markets', []):
-                    m_key = market['key']
-                    if m_key not in fd_props: fd_props[m_key] = {}
-                    for outcome in market['outcomes']:
-                        player = outcome.get('description', 'Unknown')
-                        side = outcome['name']
-                        pt = outcome.get('point')
-                        if pt is None: continue
-                        key = (player, pt)
-                        if key not in fd_props[m_key]: fd_props[m_key][key] = {}
-                        fd_props[m_key][key][side] = outcome['price']
-
-            true_probs = {}
-            for m_key, props in fd_props.items():
-                true_probs[m_key] = {}
-                for (player, pt), sides in props.items():
-                    if 'Over' in sides and 'Under' in sides:
-                        p_over = american_to_prob(sides['Over'])
-                        p_under = american_to_prob(sides['Under'])
-                        # Proportional de-vigging
-                        true_probs[m_key][(player, pt)] = {
-                            'Over': p_over / (p_over + p_under), 
-                            'Under': p_under / (p_over + p_under)
-                        }
-
-            # Step 2: Assemble All Competitor Books
-            market_data = {}
-            for book in event_data.get('bookmakers', []):
-                if book['key'] not in ALLOWED_BOOKS or book['key'] == 'fanduel': continue
-                book_name = book['title']
-
-                for market in book.get('markets', []):
-                    m_key = market['key']
-                    if m_key not in true_probs: continue
-
-                    for outcome in market['outcomes']:
-                        raw_player = outcome.get('description', 'Unknown')
-                        side = outcome['name']
-                        pt = outcome.get('point')
-                        avail_odds = outcome['price']
-                        if pt is None: continue
-
-                        candidate_fd_players = [p for (p, l) in true_probs[m_key].keys() if l == pt]
-                        matched_fd_player = match_player_name(raw_player, candidate_fd_players)
-                        if not matched_fd_player: continue
-
-                        line_key = (matched_fd_player, pt)
-                        if side not in true_probs[m_key][line_key]: continue
-
-                        if m_key not in market_data: market_data[m_key] = {}
-                        if line_key not in market_data[m_key]: market_data[m_key][line_key] = {}
-                        if side not in market_data[m_key][line_key]: market_data[m_key][line_key][side] = []
-
-                        formatted_odds = f"+{avail_odds}" if avail_odds > 0 else str(avail_odds)
-
-                        market_data[m_key][line_key][side].append({
-                            'book_key': book['key'],
-                            'book_name': book_name,
-                            'odds': avail_odds,
-                            'odds_str': formatted_odds,
-                            'dec_odds': american_to_decimal(avail_odds),
-                            'raw_player': raw_player
-                        })
-
-            # Step 3: Identify High-Probability Outliers Against Peer Consensus
-            for m_key, lines in market_data.items():
-                for line_key, sides in lines.items():
-                    matched_fd_player, pt = line_key
-                    for side, offers in sides.items():
-                        true_prob = true_probs[m_key][line_key][side]
-
-                        for offer in offers:
-                            dec_odds = offer['dec_odds']
-                            edge = (true_prob * dec_odds) - 1
-
-                            # Initial check against FanDuel devig baseline (Floor raised to 2.0%)
-                            if edge >= 0.02:
-                                peer_offers = [o for o in offers if o['book_key'] != offer['book_key']]
-
-                                # Quorum Gate: Require at least MIN_CONSENSUS_BOOKS to verify the market
-                                if len(peer_offers) < MIN_CONSENSUS_BOOKS:
-                                    continue
-
-                                # Calculate Peer Consensus Implied Probability
-                                peer_implied_probs = [1 / o['dec_odds'] for o in peer_offers]
-                                avg_peer_prob = sum(peer_implied_probs) / len(peer_implied_probs)
-                                target_implied_prob = 1 / dec_odds
-
-                                # Outlier Gate: Target book must beat consensus by at least MIN_OUTLIER_DELTA
-                                if (avg_peer_prob - target_implied_prob) < MIN_OUTLIER_DELTA:
-                                    continue
-
-                                market_avg_str = f"Consensus: {prob_to_american(avg_peer_prob)} ({len(peer_offers)} books)"
-
-                                edges_found += 1
-                                m_display = format_market_name(m_key)
-                                raw_player = offer['raw_player']
-                                book_name = offer['book_name']
-                                formatted_odds = offer['odds_str']
-
-                                dedup_key = (
-                                    game_name.strip().lower(), 
-                                    m_display.strip().lower(), 
-                                    normalize_name(raw_player), 
-                                    side.strip().lower(), 
-                                    str(pt).strip()
-                                )
-                                if dedup_key in seen_plays: continue
-
-                                # Staking Math: Quarter-Kelly
-                                b = dec_odds - 1
-                                kelly_decimal = (true_prob * b - (1 - true_prob)) / b
-                                kelly_units = kelly_decimal * 100
-                                quarter_kelly_units = kelly_units / 4
-                                dollar_wager = quarter_kelly_units * UNIT_SIZE
-
-                                play_data = {
-                                    'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                                    'game': game_name, 'market': m_display, 'player': raw_player,
-                                    'side': side, 'line': pt, 'book': book_name, 'odds': formatted_odds,
-                                    'true_prob': f"{true_prob * 100:.1f}", 'edge': f"{edge * 100:.2f}",
-                                    'units': f"{quarter_kelly_units:.2f}", 'wager': f"{dollar_wager:.2f}",
-                                    'market_avg_str': market_avg_str
-                                }
-
-                                seen_plays.add(dedup_key)
-                                new_plays_to_log.append(play_data)
-
-    if new_plays_to_log:
-        log_batch_to_csv(new_plays_to_log, run_timestamp)
-        send_discord_digest(new_plays_to_log, run_timestamp)
-
-    print(f"Scan complete. Found {edges_found} verified consensus outliers ({len(new_plays_to_log)} new plays logged & alerted).")
 
 if __name__ == "__main__":
-    fetch_and_scan()
+    run()
