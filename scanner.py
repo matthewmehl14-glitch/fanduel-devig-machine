@@ -22,6 +22,7 @@ import csv
 import time
 import unicodedata
 import requests
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from difflib import SequenceMatcher
 from requests.adapters import HTTPAdapter
@@ -78,9 +79,12 @@ SPORTS_CONFIG = {
     'americanfootball_ncaaf': 'player_pass_yds,player_pass_attempts,player_rush_yds,player_rush_attempts,player_reception_yds,player_receptions'
 }
 
-CSV_HEADER = ['Run ID', 'Timestamp', 'Game Date', 'Sport', 'Game', 'Market', 'Player', 'Side', 'Line',
-              'Bookmaker', 'Odds', 'Fair Prob %', 'Edge %', 'Kelly Units', 'Bet Amount',
-              'Peer Books', 'Peer Spread %', 'Flag']
+BASE_HEADER = ['Run ID', 'Timestamp', 'Game Date', 'Sport', 'Game', 'Market', 'Player', 'Side', 'Line',
+               'Bookmaker', 'Odds', 'Fair Prob %', 'Edge %', 'Kelly Units', 'Bet Amount',
+               'Peer Books', 'Peer Spread %', 'Flag']
+# Result / Net Units are filled in by ev_grader_v2.py (scanner writes PENDING / 0.00)
+CSV_HEADER = BASE_HEADER + ['Result', 'Net Units']
+LOCK_PATH = CSV_FILENAME + '.lock'
 
 
 # ----------------------------------------------------------------------------
@@ -239,13 +243,60 @@ def dedup_key(game_date, game, market, player, side, line):
     )
 
 
-def rotate_legacy_log():
-    """If the log is in the old (v1) format, rename it so v2 starts with a clean file."""
+@contextmanager
+def log_lock(timeout=60, stale=300):
+    """Simple lock file shared with ev_grader_v2.py so the two never write the CSV at once."""
+    start = time.time()
+    while True:
+        try:
+            fd = os.open(LOCK_PATH, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            os.close(fd)
+            break
+        except FileExistsError:
+            try:
+                if time.time() - os.path.getmtime(LOCK_PATH) > stale:
+                    os.remove(LOCK_PATH)
+                    continue
+            except OSError:
+                pass
+            if time.time() - start > timeout:
+                raise TimeoutError("Could not acquire log lock")
+            time.sleep(0.5)
+    try:
+        yield
+    finally:
+        try:
+            os.remove(LOCK_PATH)
+        except OSError:
+            pass
+
+
+def prepare_log():
+    """
+    - header == CSV_HEADER (with Result cols): nothing to do
+    - header == BASE_HEADER (v2 log without Result cols): upgraded in place
+    - anything else (v1 log): renamed to *_legacy_<ts>.csv, fresh log starts
+    """
     if not os.path.isfile(CSV_FILENAME) or os.path.getsize(CSV_FILENAME) == 0:
         return
-    with open(CSV_FILENAME, mode='r', newline='', encoding='utf-8') as f:
-        first = next(csv.reader(f), [])
-    if first != CSV_HEADER:
+    with log_lock():
+        with open(CSV_FILENAME, mode='r', newline='', encoding='utf-8') as f:
+            data = list(csv.reader(f))
+        if not data:
+            return
+        first = data[0]
+        if first == CSV_HEADER:
+            return
+        if first == BASE_HEADER:
+            tmp = CSV_FILENAME + '.tmp'
+            with open(tmp, 'w', newline='', encoding='utf-8') as f:
+                w = csv.writer(f)
+                w.writerow(CSV_HEADER)
+                for r in data[1:]:
+                    w.writerow(r[:len(BASE_HEADER)] + ['PENDING', '0.00'])
+            os.replace(tmp, CSV_FILENAME)
+            print("Log upgraded with Result / Net Units columns.")
+            return
         legacy = CSV_FILENAME.replace('.csv', f'_legacy_{int(time.time())}.csv')
         os.rename(CSV_FILENAME, legacy)
         print(f"Old-format log renamed to {legacy}; starting a fresh log.")
@@ -277,19 +328,21 @@ def load_log():
 
 
 def log_to_csv(plays, run_id, ts_str):
-    is_empty = not os.path.isfile(CSV_FILENAME) or os.path.getsize(CSV_FILENAME) == 0
-    with open(CSV_FILENAME, mode='a', newline='', encoding='utf-8') as f:
-        w = csv.writer(f)
-        if is_empty:
-            w.writerow(CSV_HEADER)
-        for p in plays:
-            w.writerow([
-                run_id, ts_str, p['game_date'], p['sport'], p['game'], p['market'], p['player'],
-                p['side'], p['line'], p['book'], p['odds_str'],
-                f"{p['fair'] * 100:.1f}", f"{p['edge'] * 100:.2f}",
-                f"{p['units']:.2f}", f"{p['wager']:.2f}",
-                p['peers'], f"{p['spread'] * 100:.1f}", p['flag']
-            ])
+    with log_lock():
+        is_empty = not os.path.isfile(CSV_FILENAME) or os.path.getsize(CSV_FILENAME) == 0
+        with open(CSV_FILENAME, mode='a', newline='', encoding='utf-8') as f:
+            w = csv.writer(f)
+            if is_empty:
+                w.writerow(CSV_HEADER)
+            for p in plays:
+                w.writerow([
+                    run_id, ts_str, p['game_date'], p['sport'], p['game'], p['market'], p['player'],
+                    p['side'], p['line'], p['book'], p['odds_str'],
+                    f"{p['fair'] * 100:.1f}", f"{p['edge'] * 100:.2f}",
+                    f"{p['units']:.2f}", f"{p['wager']:.2f}",
+                    p['peers'], f"{p['spread'] * 100:.1f}", p['flag'],
+                    'PENDING', '0.00'
+                ])
 
 
 # ----------------------------------------------------------------------------
@@ -493,7 +546,7 @@ def fetch_and_scan():
         print("CRITICAL ERROR: API Key missing.")
         return
 
-    rotate_legacy_log()
+    prepare_log()
     seen, game_exp, player_exp = load_log()
     session = make_session()
 
