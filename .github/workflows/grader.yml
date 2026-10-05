@@ -1,38 +1,45 @@
 name: EV Auto-Grader
 
 on:
-  schedule:
-    # 14:00 UTC = 9:00 AM Central Time
-    - cron: '0 14 * * *'
-  workflow_dispatch: 
+  workflow_dispatch:
+    inputs:
+      regrade:
+        description: 'Re-grade ALL past plays (use once after updating the scripts)'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
+
+concurrency:
+  group: csv-writer
+  cancel-in-progress: false
 
 jobs:
   grade-plays:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-          
+
       - name: Install dependencies
-        run: pip install requests
-        
+        run: pip install requests tzdata
+
       - name: Run Grader
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          REGRADE: ${{ inputs.regrade && '1' || '0' }}
         run: python grader.py
-        
+
       - name: Commit and Push Settled Bets
         run: |
           git config --global user.name "EV-Grader-Bot"
           git config --global user.email "bot@example.com"
-          
+
           if [ -f ev_plays_log.csv ]; then
             git add ev_plays_log.csv
             if ! git diff --quiet --cached; then
