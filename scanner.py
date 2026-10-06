@@ -197,11 +197,20 @@ def build_lines(event_data, now_utc):
     return lines
 
 
+def fd_fair(quotes, side):
+    """FanDuel-only devig (the original method)."""
+    q = quotes.get("fanduel")
+    if q and q["fresh"] and "Over" in q and "Under" in q:
+        return devigged(q, side)
+    return None
+
+
 def find_edges(lines):
+    """Evaluate every offer under BOTH methods and tag which one(s) qualify:
+    'fd' = FanDuel-only devig, 'consensus' = weighted consensus, 'both'."""
     out = []
     for (m_key, player, pt), quotes in lines.items():
-        if not anchors_ok(quotes):
-            continue
+        cons_allowed = anchors_ok(quotes)
         for bkey, q in quotes.items():
             if not q["fresh"]:
                 continue
@@ -212,23 +221,48 @@ def find_edges(lines):
                 dec = american_to_decimal(price)
                 if not (MIN_DEC <= dec <= MAX_DEC):
                     continue
-                fp = fair_prob(quotes, side, exclude=bkey)
-                if fp is None:
+
+                cons_p = cons_edge = None
+                used = []
+                if cons_allowed:
+                    fp = fair_prob(quotes, side, exclude=bkey)
+                    if fp:
+                        cons_p, used = fp
+                        cons_edge = cons_p * dec - 1
+
+                fd_p = fd_edge = None
+                if bkey != "fanduel":
+                    fd_p = fd_fair(quotes, side)
+                    if fd_p is not None:
+                        fd_edge = fd_p * dec - 1
+
+                cons_ok = cons_edge is not None and MIN_EDGE <= cons_edge <= MAX_EDGE
+                fd_ok = fd_edge is not None and MIN_EDGE <= fd_edge <= MAX_EDGE
+                if not (cons_ok or fd_ok):
                     continue
-                p, used = fp
-                edge = p * dec - 1
-                if MIN_EDGE <= edge <= MAX_EDGE:
-                    out.append({
-                        "m_key": m_key, "player": player, "raw": q["raw"], "pt": pt,
-                        "side": side, "book": q["title"], "price": price, "dec": dec,
-                        "p": p, "edge": edge, "used": used,
-                    })
+                if cons_ok and fd_ok:
+                    method = "both"
+                    # stake on the more conservative of the two estimates
+                    p, edge = (cons_p, cons_edge) if cons_edge <= fd_edge else (fd_p, fd_edge)
+                elif fd_ok:
+                    method, p, edge = "fd", fd_p, fd_edge
+                else:
+                    method, p, edge = "consensus", cons_p, cons_edge
+
+                out.append({
+                    "m_key": m_key, "player": player, "raw": q["raw"], "pt": pt,
+                    "side": side, "book": q["title"], "price": price, "dec": dec,
+                    "p": p, "edge": edge, "used": used, "method": method,
+                    "fd_p": fd_p, "fd_edge": fd_edge, "cons_p": cons_p, "cons_edge": cons_edge,
+                })
     return out
 
 
 def update_closing_lines(pending_rows, lines):
-    """Snapshot current price + fair prob for pending plays on this event.
-    Overwritten each run until tip, so the last pre-game run is the close."""
+    """Snapshot current price + fair probs for pending plays on this event.
+    Overwritten each run until tip, so the last pre-game run is the close.
+    Records both the consensus close and FanDuel's devigged close, so the two
+    methods can be judged against the SAME yardstick."""
     updated = 0
     for row in pending_rows:
         m_key = DISPLAY_TO_KEY.get(row["Market"])
@@ -241,17 +275,26 @@ def update_closing_lines(pending_rows, lines):
             continue
         quotes = lines[(m_key, player, line)]
         side = row["Side"].strip().title()
-        fp = fair_prob(quotes, side)
-        if fp is None:
-            continue
-        close_fair = fp[0]
         bet_dec = american_to_decimal(parse_american(row["Odds"]))
-        row["Close Fair %"] = f"{close_fair * 100:.1f}"
-        row["CLV %"] = f"{(close_fair * bet_dec - 1) * 100:.2f}"
-        for q in quotes.values():
-            if q["title"] == row["Bookmaker"] and side in q:
-                row["Close Odds"] = fmt_american(q[side])
-        updated += 1
+        got = False
+
+        fp = fair_prob(quotes, side)
+        if fp is not None:
+            row["Close Fair %"] = f"{fp[0] * 100:.1f}"
+            row["CLV %"] = f"{(fp[0] * bet_dec - 1) * 100:.2f}"
+            got = True
+
+        fd_p = fd_fair(quotes, side)
+        if fd_p is not None and row["Bookmaker"] != "FanDuel":
+            row["Close FD Fair %"] = f"{fd_p * 100:.1f}"
+            row["CLV FD %"] = f"{(fd_p * bet_dec - 1) * 100:.2f}"
+            got = True
+
+        if got:
+            for q in quotes.values():
+                if q["title"] == row["Bookmaker"] and side in q:
+                    row["Close Odds"] = fmt_american(q[side])
+            updated += 1
     return updated
 
 
@@ -275,8 +318,9 @@ def send_discord_digest(new_rows, run_ts):
         for r in plays[i:i + chunk_size]:
             edge = float(r["Edge %"])
             icon = "🔥" if edge >= 5.0 else ("💎" if edge >= 3.5 else "⬜")
+            tag = {"fd": "🎯 FD", "consensus": "🧮 CONS", "both": "🎯🧮 BOTH"}.get(r.get("Method"), "")
             out.append(
-                f"{icon} **+{r['Edge %']}%** | **{r['Player']}** {r['Side']} {r['Line']} {r['Market']}\n"
+                f"{icon} **+{r['Edge %']}%** `{tag}` | **{r['Player']}** {r['Side']} {r['Line']} {r['Market']}\n"
                 f"↳ **{r['Odds']}** @ {r['Bookmaker']} • **{r['Kelly Units']}u** (${r['Bet Amount']}) • *{r['_fair']}*\n"
                 f"  *{r['Game']}* • 🕒 {fmt_start(r['Commence Time'])}"
             )
@@ -285,7 +329,7 @@ def send_discord_digest(new_rows, run_ts):
             "title": f"🚨 +EV Prop Digest ({len(plays)} Plays){part}",
             "description": "\n\n".join(out)[:4000],
             "color": 65280,
-            "footer": {"text": f"Scanned {run_ts} CT • Weighted consensus devig (Novig/FD anchored)"},
+            "footer": {"text": f"Scanned {run_ts} CT • Side-by-side test: FanDuel devig vs consensus"},
         }
         try:
             SESSION.post(DISCORD_WEBHOOK_URL, json={"embeds": [embed]}, timeout=10)
@@ -373,13 +417,20 @@ def run():
                     "Odds": fmt_american(c["price"]),
                     "True Prob %": f"{c['p'] * 100:.1f}", "Edge %": f"{c['edge'] * 100:.2f}",
                     "Kelly Units": f"{units:.2f}", "Bet Amount": f"{units * UNIT_SIZE:.2f}",
-                    "Fair Books": ", ".join(c["used"]),
+                    "Fair Books": ", ".join(c["used"]) if c["used"] else "FanDuel",
                     "Close Odds": "", "Close Fair %": "", "CLV %": "",
                     "Result": "PENDING", "Net Units": "0.00", "Actual": "",
-                    "_fair": f"Fair {prob_to_american(c['p'])} ({len(c['used'])} books)",
+                    "Method": c["method"],
+                    "FD Edge %": f"{c['fd_edge'] * 100:.2f}" if c["fd_edge"] is not None else "",
+                    "Cons Edge %": f"{c['cons_edge'] * 100:.2f}" if c["cons_edge"] is not None else "",
+                    "Close FD Fair %": "", "CLV FD %": "",
+                    "_fair": " | ".join(x for x in (
+                        f"FD {prob_to_american(c['fd_p'])}" if c["fd_p"] is not None else "",
+                        f"Cons {prob_to_american(c['cons_p'])} ({len(c['used'])} bks)" if c["cons_p"] is not None else "",
+                    ) if x),
                 }
                 new_rows.append(row)
-                print(f"  + {row['Edge %']}% {row['Player']} {row['Side']} {row['Line']} {market} {row['Odds']} @ {row['Bookmaker']}")
+                print(f"  + [{c['method']}] {row['Edge %']}% {row['Player']} {row['Side']} {row['Line']} {market} {row['Odds']} @ {row['Bookmaker']}")
 
     if new_rows or closes:
         rows.extend(new_rows)
