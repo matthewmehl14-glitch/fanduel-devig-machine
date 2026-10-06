@@ -249,7 +249,8 @@ def send_discord_digest(new_rows, run_ts):
     for i in range(0, len(plays), chunk_size):
         out = []
         for r in plays[i:i + chunk_size]:
-            icon = "🔥" if float(r["Edge %"]) >= 5.0 else "💎"
+            edge = float(r["Edge %"])
+            icon = "🔥" if edge >= 5.0 else ("💎" if edge >= 3.5 else "⬜")
             out.append(
                 f"{icon} **+{r['Edge %']}%** | **{r['Player']}** {r['Side']} {r['Line']} {r['Market']}\n"
                 f"↳ **{r['Odds']}** @ {r['Bookmaker']} • **{r['Kelly Units']}u** (${r['Bet Amount']}) • *{r['_fair']}*\n"
