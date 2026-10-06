@@ -295,11 +295,14 @@ def grade_row(row):
 
 
 # ------------------------------------------------------------------ reporting
-TIERS = [(0.0, 3.5, "2–3.5% edge"), (3.5, 5.0, "3.5–5% edge"), (5.0, float("inf"), "5%+ edge")]
+TIERS = [(0.0, 3.5, "<3.5%"), (3.5, 5.0, "3.5–5%"), (5.0, float("inf"), "5%+")]
+CLV_FIELDS = ("CLV FD %", "CLV %")   # FanDuel close (common yardstick), consensus close
 
 
-def tier_of(row):
-    e = safe_float(row["Edge %"], 0.0)
+def tier_of(row, field="Edge %"):
+    e = safe_float(row.get(field), None)
+    if e is None:
+        e = safe_float(row["Edge %"], 0.0)
     for i, (lo, hi, _) in enumerate(TIERS):
         if lo <= e < hi:
             return i
@@ -307,77 +310,95 @@ def tier_of(row):
 
 
 def new_bucket():
-    return {"W": 0, "L": 0, "P": 0, "V": 0, "units": 0.0, "staked": 0.0, "clv": 0.0, "clv_n": 0, "beat": 0}
+    return {"W": 0, "L": 0, "P": 0, "V": 0, "units": 0.0, "staked": 0.0,
+            "clv": {f: [0.0, 0, 0] for f in CLV_FIELDS}}
 
 
 def add(b, row):
     res = row["Result"]
     b[{"WIN": "W", "LOSS": "L", "PUSH": "P", "VOID": "V"}[res]] += 1
-    units = safe_float(row["Kelly Units"], 0.0)
     if res in ("WIN", "LOSS"):
-        b["staked"] += units
+        b["staked"] += safe_float(row["Kelly Units"], 0.0)
     b["units"] += safe_float(row["Net Units"], 0.0)
-    clv = safe_float(row["CLV %"])
-    if clv is not None and res != "VOID":
-        b["clv"] += clv
-        b["clv_n"] += 1
-        b["beat"] += clv > 0
+    if res != "VOID":
+        for f in CLV_FIELDS:
+            v = safe_float(row.get(f))
+            if v is not None:
+                c = b["clv"][f]
+                c[0] += v
+                c[1] += 1
+                c[2] += v > 0
 
 
-def fmt(b, show_clv=True):
+def fmt(b, clv=("CLV FD %", "CLV %")):
     decided = b["W"] + b["L"]
     win = f" ({b['W'] / decided * 100:.1f}%)" if decided else ""
     roi = b["units"] / b["staked"] * 100 if b["staked"] else 0.0
     s = f"{b['W']}-{b['L']}-{b['P']}{win} | {b['units']:+.2f}u ({roi:+.1f}%)"
-    if show_clv and b["clv_n"]:
-        s += f" | CLV {b['clv'] / b['clv_n']:+.1f}% (beat {b['beat'] / b['clv_n'] * 100:.0f}%, n={b['clv_n']})"
+    labels = {"CLV FD %": "CLV(FD close)", "CLV %": "CLV(cons close)"}
+    for f in clv:
+        tot, n, beat = b["clv"][f]
+        if n:
+            s += f" | {labels[f]} {tot / n:+.1f}% (beat {beat / n * 100:.0f}%, n={n})"
     return s
 
 
-def is_new_scanner(row):
-    # Only the new consensus scanner writes an Event ID; legacy FanDuel rows have none.
-    return bool(row["Event ID"])
+def group_of(row):
+    if not row["Event ID"]:
+        return "legacy"          # original FanDuel-only scanner
+    if not row["Method"]:
+        return "pretest"         # consensus scanner before the side-by-side test
+    return "test"
 
 
 def build_report(batch, all_rows):
     graded = [r for r in all_rows if r["Result"] in GRADED]
-    new_life = [r for r in graded if is_new_scanner(r)]
-    old_life = [r for r in graded if not is_new_scanner(r)]
-    new_batch = [r for r in batch if is_new_scanner(r)]
+    test = [r for r in graded if group_of(r) == "test"]
+    lines = ["🧪 **SIDE-BY-SIDE TEST** (both judged vs the same FanDuel close)"]
 
-    lines = ["🆕 **NEW SCANNER (consensus devig)**"]
-    if not new_life:
-        lines.append("No graded plays yet.")
+    if not test:
+        lines.append("No graded test plays yet.")
     else:
-        tiers_b = [new_bucket() for _ in TIERS]
-        tiers_l = [new_bucket() for _ in TIERS]
-        sides, books = defaultdict(new_bucket), defaultdict(new_bucket)
-        total_new = new_bucket()
-        for r in new_batch:
-            add(tiers_b[tier_of(r)], r)
-        for r in new_life:
-            add(tiers_l[tier_of(r)], r)
-            add(total_new, r)
-            add(sides[r["Side"].strip().title()], r)
-            add(books[r["Bookmaker"]], r)
-        for i, (_, _, label) in enumerate(TIERS):
-            lines.append(f"**{label}**")
-            lines.append(f"Batch: {fmt(tiers_b[i], show_clv=False)}")
-            lines.append(f"Life: {fmt(tiers_l[i])}")
+        for label, icon, members, edge_field in (
+            ("FanDuel devig", "🎯", ("fd", "both"), "FD Edge %"),
+            ("Consensus", "🧮", ("consensus", "both"), "Cons Edge %"),
+        ):
+            rows = [r for r in test if r["Method"] in members]
+            total = new_bucket()
+            tiers = [new_bucket() for _ in TIERS]
+            for r in rows:
+                add(total, r)
+                add(tiers[tier_of(r, edge_field)], r)
+            lines.append(f"{icon} **{label}:** {fmt(total)}")
+            for i, (_, _, tl) in enumerate(TIERS):
+                if tiers[i]["W"] + tiers[i]["L"] + tiers[i]["P"]:
+                    lines.append(f"↳ {tl}: {fmt(tiers[i], clv=('CLV FD %',))}")
         lines.append("")
-        for side, icon in (("Over", "🔼"), ("Under", "🔽")):
-            if side in sides:
-                lines.append(f"{icon} {side}: {fmt(sides[side])}")
+        lines.append("**Overlap**")
+        for label, m in (("Only FD", "fd"), ("Only consensus", "consensus"), ("Both agreed", "both")):
+            b = new_bucket()
+            for r in test:
+                if r["Method"] == m:
+                    add(b, r)
+            lines.append(f"• {label}: {fmt(b, clv=('CLV FD %',))}")
+        books = defaultdict(new_bucket)
+        for r in test:
+            add(books[r["Bookmaker"]], r)
+        lines.append("")
+        lines.append("**Books (test)**")
         for book, b in sorted(books.items(), key=lambda kv: -kv[1]["units"]):
-            lines.append(f"• {book}: {fmt(b)}")
-        lines.append(f"📊 **New scanner total:** {fmt(total_new)} (${total_new['units'] * UNIT_SIZE:+.2f})")
+            lines.append(f"• {book}: {fmt(b, clv=('CLV FD %',))}")
 
     lines.append("")
-    lines.append("📜 **LEGACY FANDUEL SCANNER (frozen)**")
-    old_total = new_bucket()
-    for r in old_life:
-        add(old_total, r)
-    lines.append(fmt(old_total, show_clv=False) if old_life else "No graded plays.")
+    pre, old = new_bucket(), new_bucket()
+    for r in graded:
+        g = group_of(r)
+        if g == "pretest":
+            add(pre, r)
+        elif g == "legacy":
+            add(old, r)
+    lines.append(f"🆕 **Consensus pre-test:** {fmt(pre, clv=('CLV %',))}")
+    lines.append(f"📜 **Legacy FanDuel (frozen):** {fmt(old, clv=())}")
 
     batch_total, all_total = new_bucket(), new_bucket()
     for r in batch:
@@ -386,7 +407,7 @@ def build_report(batch, all_rows):
         add(all_total, r)
     lines.append("")
     lines.append(f"💰 **Batch:** {batch_total['units']:+.2f}u (${batch_total['units'] * UNIT_SIZE:+.2f})")
-    lines.append(f"🏦 **All-time combined:** {fmt(all_total, show_clv=False)}")
+    lines.append(f"🏦 **All-time combined:** {fmt(all_total, clv=())}")
     if batch_total["V"]:
         lines.append(f"⚪ {batch_total['V']} voided this batch (DNP / postponed / not in box)")
     return "\n".join(lines)
