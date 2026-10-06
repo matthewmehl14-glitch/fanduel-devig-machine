@@ -375,10 +375,20 @@ def build_report(batch, all_rows):
                     lines.append(f"↳ {tl}: {fmt(tiers[i], clv=('CLV FD %',))}")
         lines.append("")
         lines.append("**Overlap**")
-        for label, m in (("Only FD", "fd"), ("Only consensus", "consensus"), ("Both agreed", "both")):
+        overlap = (
+            # FD said bet; consensus priced the same prop and said pass -> true head-to-head
+            ("Only FD — consensus disagreed",
+             lambda r: r["Method"] == "fd" and r["Cons Edge %"] != ""),
+            # FD said bet; consensus had no fair line (Novig missing / <3 books)
+            ("Only FD — consensus couldn't price",
+             lambda r: r["Method"] == "fd" and r["Cons Edge %"] == ""),
+            ("Only consensus", lambda r: r["Method"] == "consensus"),
+            ("Both agreed", lambda r: r["Method"] == "both"),
+        )
+        for label, match in overlap:
             b = new_bucket()
             for r in test:
-                if r["Method"] == m:
+                if match(r):
                     add(b, r)
             lines.append(f"• {label}: {fmt(b, clv=('CLV FD %',))}")
         books = defaultdict(new_bucket)
