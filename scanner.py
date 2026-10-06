@@ -43,8 +43,10 @@ KS_BOOKS = ",".join(BOOK_WEIGHTS)
 
 MIN_FAIR_BOOKS = 3        # two-way books (excluding target) needed for a fair line
 MAX_ANCHOR_GAP = 0.04     # skip line if Novig and FanDuel disagree by > 4 pts of prob
+REQUIRE_BOTH_ANCHORS = True   # Novig AND FanDuel must both post fresh two-way lines
+ONE_PLAY_PER_PLAYER = True    # only the single best play per player per game
 STALE_MINUTES = 10        # ignore quotes not refreshed within this window
-MIN_EDGE = 0.02
+MIN_EDGE = 0.035
 MAX_EDGE = 0.15           # larger "edges" are almost always bad or stale data
 MIN_DEC, MAX_DEC = 1.50, 3.00   # roughly -200 to +200; longshots are mostly noise
 
@@ -117,6 +119,26 @@ def devig_power(p_over, p_under):
     return a / (a + b), b / (a + b)
 
 
+def devigged(q, side):
+    po, pu = devig_power(american_to_prob(q["Over"]), american_to_prob(q["Under"]))
+    return po if side == "Over" else pu
+
+
+def anchors_ok(quotes):
+    """Both sharp anchors must post fresh two-way lines that agree.
+    The target book counts as present, so Novig/FanDuel prices can still be bet."""
+    probs = {}
+    for bkey in ANCHOR_BOOKS:
+        q = quotes.get(bkey)
+        if q and q["fresh"] and "Over" in q and "Under" in q:
+            probs[bkey] = devigged(q, "Over")
+    if REQUIRE_BOTH_ANCHORS and len(probs) < len(ANCHOR_BOOKS):
+        return False
+    if len(probs) == 2 and abs(probs["novig"] - probs["fanduel"]) > MAX_ANCHOR_GAP:
+        return False
+    return True
+
+
 def fair_prob(quotes, side, exclude=None):
     """Weighted devigged fair probability for `side`, excluding one book.
     Returns (prob, [book titles used]) or None if the line isn't trustworthy."""
@@ -135,7 +157,7 @@ def fair_prob(quotes, side, exclude=None):
             anchors[bkey] = p
     if len(used) < MIN_FAIR_BOOKS or not anchors:
         return None
-    if len(anchors) == 2 and abs(anchors["novig"] - anchors["fanduel"]) > MAX_ANCHOR_GAP:
+    if exclude is not None and len(anchors) == 2 and abs(anchors["novig"] - anchors["fanduel"]) > MAX_ANCHOR_GAP:
         return None  # the sharp books disagree, so nobody knows the true price
     return acc / total_w, used
 
@@ -178,6 +200,8 @@ def build_lines(event_data, now_utc):
 def find_edges(lines):
     out = []
     for (m_key, player, pt), quotes in lines.items():
+        if not anchors_ok(quotes):
+            continue
         for bkey, q in quotes.items():
             if not q["fresh"]:
                 continue
@@ -279,10 +303,12 @@ def run():
     seen = {play_key(r["Game"], r["Market"], r["Player"], r["Side"], r["Line"]) for r in rows}
     exposure = defaultdict(float)
     directions = defaultdict(set)   # (game, player) -> {"over","under"} across ALL markets
+    players_logged = set()          # (game, player) already holding a play
     pending_by_event = defaultdict(list)
     for r in rows:
         exposure[(r["Game"].strip().lower(), normalize_name(r["Player"]))] += safe_float(r["Kelly Units"], 0.0)
         directions[(r["Game"].strip().lower(), normalize_name(r["Player"]))].add(r["Side"].strip().lower())
+        players_logged.add((r["Game"].strip().lower(), normalize_name(r["Player"])))
         if r["Result"] == "PENDING" and r["Event ID"]:
             pending_by_event[r["Event ID"]].append(r)
 
@@ -327,6 +353,8 @@ def run():
                 if key in seen:
                     continue  # also keeps only the best-priced book per play
                 ek = (game.lower(), normalize_name(c["player"]))
+                if ONE_PLAY_PER_PLAYER and ek in players_logged:
+                    continue  # candidates are sorted by edge, so the best play was taken first
                 if directions[ek] - {c["side"].lower()}:
                     continue  # same player, same game: every bet must point the same direction
                 units = min(kelly_units(c["p"], c["dec"]), MAX_UNITS_PER_PLAY,
@@ -335,6 +363,7 @@ def run():
                     continue
                 seen.add(key)
                 directions[ek].add(c["side"].lower())
+                players_logged.add(ek)
                 exposure[ek] += units
                 row = {
                     "Timestamp": run_ts, "Sport": sport, "Event ID": ev["id"],
