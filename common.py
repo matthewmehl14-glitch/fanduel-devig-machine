@@ -24,6 +24,8 @@ FIELDNAMES = [
     "Side", "Line", "Bookmaker", "Odds", "True Prob %", "Edge %", "Kelly Units",
     "Bet Amount", "Fair Books", "Close Odds", "Close Fair %", "CLV %",
     "Result", "Net Units", "Actual",
+    # side-by-side test columns
+    "Method", "FD Edge %", "Cons Edge %", "Close FD Fair %", "CLV FD %",
 ]
 GRADED = {"WIN", "LOSS", "PUSH", "VOID"}
 
