@@ -320,6 +320,8 @@ def send_discord_digest(new_rows, run_ts):
             edge = float(r["Edge %"])
             icon = "🔥" if edge >= 5.0 else ("💎" if edge >= 3.5 else "⬜")
             tag = {"fd": "🎯 FD", "consensus": "🧮 CONS", "both": "🎯🧮 BOTH"}.get(r.get("Method"), "")
+            if r.get("Method") == "fd" and not r.get("Cons Edge %"):
+                tag = "🎯 FD ⚠️ SOLO"   # consensus couldn't price this prop: FanDuel is the only sharp price
             out.append(
                 f"{icon} **+{r['Edge %']}%** `{tag}` | **{r['Player']}** {r['Side']} {r['Line']} {r['Market']}\n"
                 f"↳ **{r['Odds']}** @ {r['Bookmaker']} • **{r['Kelly Units']}u** (${r['Bet Amount']}) • *{r['_fair']}*\n"
