@@ -370,87 +370,134 @@ def group_of(row):
     return "test"
 
 
+# ---------- compact table helpers (monospace code blocks line up in Discord)
+def _rec(b):
+    return f"{b['W']}-{b['L']}" + (f"-{b['P']}" if b["P"] else "")
+
+
+def _units(b):
+    return f"{b['units']:+.2f}"
+
+
+def _roi(b):
+    roi = round((b["units"] / b["staked"] * 100) if b["staked"] else 0)
+    return f"{roi:+d}%" if roi else "0%"
+
+
+def _avg(b, f):
+    tot, n, _ = b["clv"][f]
+    return f"{tot / n:+.1f}" if n else "—"
+
+
+def _toward(b, f):
+    _, n, pos = b["clv"][f]
+    return f"{pos / n * 100:.0f}%" if n else "—"
+
+
+def _table(header, rows, widths):
+    def line(cells):
+        first = f"{cells[0]:<{widths[0]}}"
+        return first + "".join(f"{c:>{w}}" for c, w in zip(cells[1:], widths[1:]))
+    return "```\n" + "\n".join([line(header)] + [line(r) for r in rows]) + "\n```"
+
+
 def build_report(batch, all_rows):
+    """Returns {"fields": [...embed fields...], "text": plain-text version for the log}."""
     graded = [r for r in all_rows if r["Result"] in GRADED]
     test = [r for r in graded if group_of(r) == "test"]
-    lines = ["🧪 **SIDE-BY-SIDE TEST**",
-             "*Move = how far each fair line moved toward (+) or away (−) from the bet after placing it*"]
+    fields = []
 
     if not test:
-        lines.append("No graded test plays yet.")
+        fields.append({"name": "🧪 Side-by-side test", "value": "No graded test plays yet."})
     else:
-        for label, icon, members, edge_field in (
-            ("FanDuel devig", "🎯", ("fd", "both"), "FD Edge %"),
-            ("Consensus", "🧮", ("consensus", "both"), "Cons Edge %"),
+        # 1) Method totals + edge tiers
+        rows = []
+        for label, members, edge_field in (
+            ("FD devig", ("fd", "both"), "FD Edge %"),
+            ("Consensus", ("consensus", "both"), "Cons Edge %"),
         ):
-            rows = [r for r in test if r["Method"] in members]
             total = new_bucket()
             tiers = [new_bucket() for _ in TIERS]
-            for r in rows:
-                add(total, r)
-                add(tiers[tier_of(r, edge_field)], r)
-            lines.append(f"{icon} **{label}:** {fmt(total, clv=('MOVE FD', 'MOVE CONS'))}")
+            for r in test:
+                if r["Method"] in members:
+                    add(total, r)
+                    add(tiers[tier_of(r, edge_field)], r)
+            rows.append([label, _rec(total), _units(total), _roi(total),
+                         _avg(total, "MOVE FD"), _toward(total, "MOVE FD")])
             for i, (_, _, tl) in enumerate(TIERS):
-                if tiers[i]["W"] + tiers[i]["L"] + tiers[i]["P"]:
-                    lines.append(f"↳ {tl}: {fmt(tiers[i], clv=('MOVE FD',))}")
-        lines.append("")
-        lines.append("**Overlap**")
-        overlap = (
-            # FD said bet; consensus priced the same prop and said pass -> true head-to-head
-            ("Only FD — consensus disagreed",
-             lambda r: r["Method"] == "fd" and r["Cons Edge %"] != ""),
-            # FD said bet; consensus had no fair line (Novig missing / <3 books)
-            ("Only FD — consensus couldn't price",
-             lambda r: r["Method"] == "fd" and r["Cons Edge %"] == ""),
-            ("Only consensus", lambda r: r["Method"] == "consensus"),
-            ("Both agreed", lambda r: r["Method"] == "both"),
+                t = tiers[i]
+                if t["W"] + t["L"] + t["P"]:
+                    rows.append([f" {tl}", _rec(t), _units(t), _roi(t),
+                                 _avg(t, "MOVE FD"), _toward(t, "MOVE FD")])
+        fields.append({"name": "🧪 FanDuel devig vs Consensus",
+                       "value": _table(["", "Rec", "Units", "ROI", "Move", "Tw"], rows, [10, 7, 7, 6, 6, 5])})
+
+        # 2) Where the methods differ
+        groups = (
+            ("FD disagr", lambda r: r["Method"] == "fd" and r["Cons Edge %"] != ""),
+            ("FD SOLO", lambda r: r["Method"] == "fd" and r["Cons Edge %"] == ""),
+            ("Cons only", lambda r: r["Method"] == "consensus"),
+            ("Both", lambda r: r["Method"] == "both"),
         )
-        for label, match in overlap:
+        rows = []
+        for label, match in groups:
             b = new_bucket()
             for r in test:
                 if match(r):
                     add(b, r)
-            lines.append(f"• {label}: {fmt(b, clv=('MOVE FD', 'MOVE CONS'))}")
+            rows.append([label, _rec(b), _units(b), _avg(b, "MOVE FD"), _avg(b, "MOVE CONS"), _toward(b, "MOVE FD")])
+        fields.append({"name": "🔍 Where they differ",
+                       "value": _table(["", "Rec", "Units", "MvFD", "MvCn", "Tw"], rows, [10, 7, 7, 6, 6, 5])})
+
+        # 3) Books
         books = defaultdict(new_bucket)
         for r in test:
             add(books[r["Bookmaker"]], r)
-        lines.append("")
-        lines.append("**Books (test)**")
-        for book, b in sorted(books.items(), key=lambda kv: -kv[1]["units"]):
-            lines.append(f"• {book}: {fmt(b, clv=('MOVE FD',))}")
+        rows = [[book[:12], _rec(b), _units(b), _roi(b), _avg(b, "MOVE FD")]
+                for book, b in sorted(books.items(), key=lambda kv: -kv[1]["units"])]
+        fields.append({"name": "📚 Books (test)",
+                       "value": _table(["", "Rec", "Units", "ROI", "Move"], rows, [12, 7, 7, 6, 6])})
 
-    lines.append("")
-    pre, old = new_bucket(), new_bucket()
+    # 4) Totals
+    pre, old, batch_total, all_total = new_bucket(), new_bucket(), new_bucket(), new_bucket()
     for r in graded:
         g = group_of(r)
         if g == "pretest":
             add(pre, r)
         elif g == "legacy":
             add(old, r)
-    lines.append(f"🆕 **Consensus pre-test:** {fmt(pre, clv=('CLV %',))}")
-    lines.append(f"📜 **Legacy FanDuel (frozen):** {fmt(old, clv=())}")
-
-    batch_total, all_total = new_bucket(), new_bucket()
+        add(all_total, r)
     for r in batch:
         add(batch_total, r)
-    for r in graded:
-        add(all_total, r)
-    lines.append("")
-    lines.append(f"💰 **Batch:** {batch_total['units']:+.2f}u (${batch_total['units'] * UNIT_SIZE:+.2f})")
-    lines.append(f"🏦 **All-time combined:** {fmt(all_total, clv=())}")
+    totals = [
+        f"🆕 Pre-test: {_rec(pre)} | {_units(pre)}u ({_roi(pre)}) | CLV {_avg(pre, 'CLV %')}%",
+        f"📜 Legacy FD: {_rec(old)} | {_units(old)}u ({_roi(old)})",
+        f"💰 Batch: {_units(batch_total)}u (${batch_total['units'] * UNIT_SIZE:+.2f})",
+        f"🏦 All-time: {_rec(all_total)} | {_units(all_total)}u ({_roi(all_total)})",
+    ]
     if batch_total["V"]:
-        lines.append(f"⚪ {batch_total['V']} voided this batch (DNP / postponed / not in box)")
-    return "\n".join(lines)
+        totals.append(f"⚪ {batch_total['V']} voided (DNP / postponed)")
+    fields.append({"name": "📦 Totals", "value": "\n".join(totals)})
+
+    text = "\n\n".join(f"{f['name']}\n{f['value']}" for f in fields)
+    return {"fields": fields, "text": text}
 
 
-def send_report(text, n, regrade, title=None):
-    print("\n" + text)
+LEGEND = ("Move = how far FanDuel's fair line shifted toward (+) or away (−) "
+          "from the bet before game time  •  Tw = % of plays it moved toward  •  "
+          "MvCn = same for the consensus line")
+
+
+def send_report(report, n, regrade, title=None):
+    print("\n" + report["text"])
     if not DISCORD_WEBHOOK_URL:
         return
     title = title or f"📊 EV Auto-Grader ({n} settled{', FULL REGRADE' if regrade else ''})"
+    embed = {"title": title, "color": 3447003,
+             "fields": [{"name": f["name"], "value": f["value"][:1024], "inline": False} for f in report["fields"]],
+             "footer": {"text": LEGEND}}
     try:
-        SESSION.post(DISCORD_WEBHOOK_URL, json={"embeds": [{
-            "title": title, "description": text[:4000], "color": 3447003}]}, timeout=10)
+        SESSION.post(DISCORD_WEBHOOK_URL, json={"embeds": [embed]}, timeout=10)
     except requests.RequestException:
         pass
 
