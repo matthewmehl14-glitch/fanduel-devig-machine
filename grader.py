@@ -296,7 +296,26 @@ def grade_row(row):
 
 # ------------------------------------------------------------------ reporting
 TIERS = [(0.0, 3.5, "<3.5%"), (3.5, 5.0, "3.5–5%"), (5.0, float("inf"), "5%+")]
-CLV_FIELDS = ("CLV FD %", "CLV %")   # FanDuel close (common yardstick), consensus close
+def _diff(a, b):
+    a, b = safe_float(a), safe_float(b)
+    return None if a is None or b is None else a - b
+
+
+# Line movement = close CLV minus entry edge, measured with the same bet price.
+# Positive = that fair line moved TOWARD your bet after you placed it.
+# Unlike CLV, it doesn't automatically reward the method whose own edge picked the play.
+METRICS = {
+    "CLV FD %": lambda r: safe_float(r.get("CLV FD %")),
+    "CLV %": lambda r: safe_float(r.get("CLV %")),
+    "MOVE FD": lambda r: _diff(r.get("CLV FD %"), r.get("FD Edge %")),
+    "MOVE CONS": lambda r: _diff(r.get("CLV %"), r.get("Cons Edge %")),
+}
+METRIC_LABELS = {
+    "CLV FD %": ("CLV(FD close)", "beat"),
+    "CLV %": ("CLV(cons close)", "beat"),
+    "MOVE FD": ("Move(FD)", "toward"),
+    "MOVE CONS": ("Move(cons)", "toward"),
+}
 
 
 def tier_of(row, field="Edge %"):
@@ -311,7 +330,7 @@ def tier_of(row, field="Edge %"):
 
 def new_bucket():
     return {"W": 0, "L": 0, "P": 0, "V": 0, "units": 0.0, "staked": 0.0,
-            "clv": {f: [0.0, 0, 0] for f in CLV_FIELDS}}
+            "clv": {f: [0.0, 0, 0] for f in METRICS}}
 
 
 def add(b, row):
@@ -321,8 +340,8 @@ def add(b, row):
         b["staked"] += safe_float(row["Kelly Units"], 0.0)
     b["units"] += safe_float(row["Net Units"], 0.0)
     if res != "VOID":
-        for f in CLV_FIELDS:
-            v = safe_float(row.get(f))
+        for f, getter in METRICS.items():
+            v = getter(row)
             if v is not None:
                 c = b["clv"][f]
                 c[0] += v
@@ -335,11 +354,11 @@ def fmt(b, clv=("CLV FD %", "CLV %")):
     win = f" ({b['W'] / decided * 100:.1f}%)" if decided else ""
     roi = b["units"] / b["staked"] * 100 if b["staked"] else 0.0
     s = f"{b['W']}-{b['L']}-{b['P']}{win} | {b['units']:+.2f}u ({roi:+.1f}%)"
-    labels = {"CLV FD %": "CLV(FD close)", "CLV %": "CLV(cons close)"}
     for f in clv:
-        tot, n, beat = b["clv"][f]
+        tot, n, pos = b["clv"][f]
         if n:
-            s += f" | {labels[f]} {tot / n:+.1f}% (beat {beat / n * 100:.0f}%, n={n})"
+            label, word = METRIC_LABELS[f]
+            s += f" | {label} {tot / n:+.1f}% ({word} {pos / n * 100:.0f}%, n={n})"
     return s
 
 
@@ -354,7 +373,8 @@ def group_of(row):
 def build_report(batch, all_rows):
     graded = [r for r in all_rows if r["Result"] in GRADED]
     test = [r for r in graded if group_of(r) == "test"]
-    lines = ["🧪 **SIDE-BY-SIDE TEST** (both judged vs the same FanDuel close)"]
+    lines = ["🧪 **SIDE-BY-SIDE TEST**",
+             "*Move = how far each fair line moved toward (+) or away (−) from the bet after placing it*"]
 
     if not test:
         lines.append("No graded test plays yet.")
@@ -369,10 +389,10 @@ def build_report(batch, all_rows):
             for r in rows:
                 add(total, r)
                 add(tiers[tier_of(r, edge_field)], r)
-            lines.append(f"{icon} **{label}:** {fmt(total)}")
+            lines.append(f"{icon} **{label}:** {fmt(total, clv=('MOVE FD', 'MOVE CONS'))}")
             for i, (_, _, tl) in enumerate(TIERS):
                 if tiers[i]["W"] + tiers[i]["L"] + tiers[i]["P"]:
-                    lines.append(f"↳ {tl}: {fmt(tiers[i], clv=('CLV FD %',))}")
+                    lines.append(f"↳ {tl}: {fmt(tiers[i], clv=('MOVE FD',))}")
         lines.append("")
         lines.append("**Overlap**")
         overlap = (
@@ -390,14 +410,14 @@ def build_report(batch, all_rows):
             for r in test:
                 if match(r):
                     add(b, r)
-            lines.append(f"• {label}: {fmt(b, clv=('CLV FD %',))}")
+            lines.append(f"• {label}: {fmt(b, clv=('MOVE FD', 'MOVE CONS'))}")
         books = defaultdict(new_bucket)
         for r in test:
             add(books[r["Bookmaker"]], r)
         lines.append("")
         lines.append("**Books (test)**")
         for book, b in sorted(books.items(), key=lambda kv: -kv[1]["units"]):
-            lines.append(f"• {book}: {fmt(b, clv=('CLV FD %',))}")
+            lines.append(f"• {book}: {fmt(b, clv=('MOVE FD',))}")
 
     lines.append("")
     pre, old = new_bucket(), new_bucket()
