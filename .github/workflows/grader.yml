@@ -7,6 +7,10 @@ on:
         description: 'Re-grade ALL past plays (use once after updating the scripts)'
         type: boolean
         default: false
+      report_only:
+        description: 'Send report only (post current results to Discord, no grading)'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -33,6 +37,7 @@ jobs:
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           REGRADE: ${{ inputs.regrade && '1' || '0' }}
+          REPORT_ONLY: ${{ inputs.report_only && '1' || '0' }}
         run: python grader.py
 
       - name: Commit and Push Settled Bets
