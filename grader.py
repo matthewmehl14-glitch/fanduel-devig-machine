@@ -401,6 +401,15 @@ def _table(header, rows, widths):
     return "```\n" + "\n".join([line(header)] + [line(r) for r in rows]) + "\n```"
 
 
+EDGE_BUCKETS = [
+    (0.0, 3.5, "2–3.5%"),
+    (3.5, 4.5, "3.5–4.5%"),
+    (4.5, 6.0, "4.5–6%"),
+    (6.0, 8.0, "6–8%"),
+    (8.0, float("inf"), "8%+"),
+]
+
+
 def build_report(batch, all_rows):
     """Returns {"fields": [...embed fields...], "text": plain-text version for the log}."""
     graded = [r for r in all_rows if r["Result"] in GRADED]
@@ -458,7 +467,22 @@ def build_report(batch, all_rows):
         fields.append({"name": "📚 Books (test)",
                        "value": _table(["", "Rec", "Units", "ROI", "Move"], rows, [12, 7, 7, 6, 6])})
 
-    # 4) Totals
+    # 4) ROI by edge bucket — every play from the current scanner (pre-test + test), by logged edge
+    current = [r for r in graded if group_of(r) in ("pretest", "test")]
+    if current:
+        buckets = [new_bucket() for _ in EDGE_BUCKETS]
+        for r in current:
+            e = safe_float(r["Edge %"], 0.0)
+            for i, (lo, hi, _) in enumerate(EDGE_BUCKETS):
+                if lo <= e < hi:
+                    add(buckets[i], r)
+                    break
+        rows = [[label, _rec(b), _units(b), _roi(b), _avg(b, "MOVE FD")]
+                for (_, _, label), b in zip(EDGE_BUCKETS, buckets) if b["W"] + b["L"] + b["P"]]
+        fields.append({"name": "📈 ROI by edge (current scanner)",
+                       "value": _table(["Edge", "Rec", "Units", "ROI", "Move"], rows, [10, 7, 7, 6, 6])})
+
+    # 5) Totals
     pre, old, batch_total, all_total = new_bucket(), new_bucket(), new_bucket(), new_bucket()
     for r in graded:
         g = group_of(r)
