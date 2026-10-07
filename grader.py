@@ -443,11 +443,11 @@ def build_report(batch, all_rows):
     return "\n".join(lines)
 
 
-def send_report(text, n, regrade):
+def send_report(text, n, regrade, title=None):
     print("\n" + text)
     if not DISCORD_WEBHOOK_URL:
         return
-    title = f"📊 EV Auto-Grader ({n} settled{', FULL REGRADE' if regrade else ''})"
+    title = title or f"📊 EV Auto-Grader ({n} settled{', FULL REGRADE' if regrade else ''})"
     try:
         SESSION.post(DISCORD_WEBHOOK_URL, json={"embeds": [{
             "title": title, "description": text[:4000], "color": 3447003}]}, timeout=10)
@@ -458,9 +458,17 @@ def send_report(text, n, regrade):
 # ------------------------------------------------------------------ main
 def run():
     regrade = "--regrade" in sys.argv or os.environ.get("REGRADE") == "1"
+    report_only = "--report-only" in sys.argv or os.environ.get("REPORT_ONLY") == "1"
     rows = load_rows()
     if not rows:
         print("No plays to grade.")
+        return
+
+    if report_only and not regrade:
+        # Post the current standings without grading or changing anything
+        pending = sum(r["Result"] == "PENDING" for r in rows)
+        send_report(build_report([], rows), 0, False,
+                    title=f"📊 EV Report (no grading run • {pending} pending)")
         return
 
     if regrade:
