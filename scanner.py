@@ -278,7 +278,8 @@ def update_closing_lines(pending_rows, lines):
         bet_dec = american_to_decimal(parse_american(row["Odds"]))
         got = False
 
-        fp = fair_prob(quotes, side)
+        bet_bkey = next((k for k, q in quotes.items() if q["title"] == row["Bookmaker"]), None)
+        fp = fair_prob(quotes, side, exclude=bet_bkey)
         if fp is not None:
             row["Close Fair %"] = f"{fp[0] * 100:.1f}"
             row["CLV %"] = f"{(fp[0] * bet_dec - 1) * 100:.2f}"
