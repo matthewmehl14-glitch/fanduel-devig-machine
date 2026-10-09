@@ -410,17 +410,52 @@ EDGE_BUCKETS = [
 ]
 
 
+def _sum(buckets):
+    out = new_bucket()
+    for b in buckets:
+        for k in ("W", "L", "P", "V", "units", "staked"):
+            out[k] += b[k]
+    return out
+
+
+def _same(a, b):
+    return all(a[k] == b[k] for k in ("W", "L", "P", "V")) and abs(a["units"] - b["units"]) < 0.005
+
+
+def _bucket(rows):
+    b = new_bucket()
+    for r in rows:
+        add(b, r)
+    return b
+
+
 def build_report(batch, all_rows):
-    """Returns {"fields": [...embed fields...], "text": plain-text version for the log}."""
+    """Returns {"fields": [...embed fields...], "text": plain-text version for the log}.
+    Every number comes from the same graded rows; a reconciliation check at the end
+    confirms each table adds back up to its totals."""
     graded = [r for r in all_rows if r["Result"] in GRADED]
-    test = [r for r in graded if group_of(r) == "test"]
+    by_group = {"legacy": [], "pretest": [], "test": []}
+    for r in graded:
+        by_group[group_of(r)].append(r)
+    test, pre, old = by_group["test"], by_group["pretest"], by_group["legacy"]
+    test_total, pre_total, old_total = _bucket(test), _bucket(pre), _bucket(old)
+    all_total = _bucket(graded)
+    checks = []   # (description, passed)
     fields = []
+
+    overlap_defs = (
+        ("FD disagr", lambda r: r["Method"] == "fd" and r["Cons Edge %"] != ""),
+        ("FD SOLO", lambda r: r["Method"] == "fd" and r["Cons Edge %"] == ""),
+        ("Cons only", lambda r: r["Method"] == "consensus"),
+        ("Both", lambda r: r["Method"] == "both"),
+    )
+    overlap = {label: _bucket([r for r in test if match(r)]) for label, match in overlap_defs}
 
     if not test:
         fields.append({"name": "🧪 Side-by-side test", "value": "No graded test plays yet."})
     else:
-        # 1) Method totals + edge tiers
-        rows = []
+        # 1) Method totals + edge tiers + test total
+        rows, method_totals = [], {}
         for label, members, edge_field in (
             ("FD devig", ("fd", "both"), "FD Edge %"),
             ("Consensus", ("consensus", "both"), "Cons Edge %"),
@@ -431,6 +466,7 @@ def build_report(batch, all_rows):
                 if r["Method"] in members:
                     add(total, r)
                     add(tiers[tier_of(r, edge_field)], r)
+            method_totals[label] = total
             rows.append([label, _rec(total), _units(total), _roi(total),
                          _avg(total, "MOVE FD"), _toward(total, "MOVE FD")])
             for i, (_, _, tl) in enumerate(TIERS):
@@ -438,25 +474,22 @@ def build_report(batch, all_rows):
                 if t["W"] + t["L"] + t["P"]:
                     rows.append([f" {tl}", _rec(t), _units(t), _roi(t),
                                  _avg(t, "MOVE FD"), _toward(t, "MOVE FD")])
+            checks.append((f"{label} tiers = {label} total", _same(_sum(tiers), total)))
+        rows.append(["Test total", _rec(test_total), _units(test_total), _roi(test_total),
+                     _avg(test_total, "MOVE FD"), _toward(test_total, "MOVE FD")])
         fields.append({"name": "🧪 FanDuel devig vs Consensus",
                        "value": _table(["", "Rec", "Units", "ROI", "Move", "Tw"], rows, [10, 7, 7, 6, 6, 5])})
+        checks.append(("FD devig = FD disagr + SOLO + Both",
+                       _same(method_totals["FD devig"], _sum([overlap["FD disagr"], overlap["FD SOLO"], overlap["Both"]]))))
+        checks.append(("Consensus = Cons only + Both",
+                       _same(method_totals["Consensus"], _sum([overlap["Cons only"], overlap["Both"]]))))
 
         # 2) Where the methods differ
-        groups = (
-            ("FD disagr", lambda r: r["Method"] == "fd" and r["Cons Edge %"] != ""),
-            ("FD SOLO", lambda r: r["Method"] == "fd" and r["Cons Edge %"] == ""),
-            ("Cons only", lambda r: r["Method"] == "consensus"),
-            ("Both", lambda r: r["Method"] == "both"),
-        )
-        rows = []
-        for label, match in groups:
-            b = new_bucket()
-            for r in test:
-                if match(r):
-                    add(b, r)
-            rows.append([label, _rec(b), _units(b), _avg(b, "MOVE FD"), _avg(b, "MOVE CONS"), _toward(b, "MOVE FD")])
-        fields.append({"name": "🔍 Where they differ",
+        rows = [[label, _rec(b), _units(b), _avg(b, "MOVE FD"), _avg(b, "MOVE CONS"), _toward(b, "MOVE FD")]
+                for label, b in overlap.items()]
+        fields.append({"name": "🔍 Where they differ (adds up to Test total)",
                        "value": _table(["", "Rec", "Units", "MvFD", "MvCn", "Tw"], rows, [10, 7, 7, 6, 6, 5])})
+        checks.append(("Overlap groups = Test total", _same(_sum(overlap.values()), test_total)))
 
         # 3) Books
         books = defaultdict(new_bucket)
@@ -466,9 +499,10 @@ def build_report(batch, all_rows):
                 for book, b in sorted(books.items(), key=lambda kv: -kv[1]["units"])]
         fields.append({"name": "📚 Books (test)",
                        "value": _table(["", "Rec", "Units", "ROI", "Move"], rows, [12, 7, 7, 6, 6])})
+        checks.append(("Books = Test total", _same(_sum(books.values()), test_total)))
 
-    # 4) ROI by edge bucket — every play from the current scanner (pre-test + test), by logged edge
-    current = [r for r in graded if group_of(r) in ("pretest", "test")]
+    # 4) ROI by edge bucket — every play from the current scanner (pre-test + test)
+    current = pre + test
     if current:
         buckets = [new_bucket() for _ in EDGE_BUCKETS]
         for r in current:
@@ -478,29 +512,29 @@ def build_report(batch, all_rows):
                     add(buckets[i], r)
                     break
         rows = [[label, _rec(b), _units(b), _roi(b), _avg(b, "MOVE FD")]
-                for (_, _, label), b in zip(EDGE_BUCKETS, buckets) if b["W"] + b["L"] + b["P"]]
-        fields.append({"name": "📈 ROI by edge (current scanner)",
+                for (_, _, label), b in zip(EDGE_BUCKETS, buckets) if b["W"] + b["L"] + b["P"] + b["V"]]
+        fields.append({"name": "📈 ROI by edge (pre-test + test)",
                        "value": _table(["Edge", "Rec", "Units", "ROI", "Move"], rows, [10, 7, 7, 6, 6])})
+        checks.append(("Edge buckets = Pre-test + Test", _same(_sum(buckets), _sum([pre_total, test_total]))))
 
     # 5) Totals
-    pre, old, batch_total, all_total = new_bucket(), new_bucket(), new_bucket(), new_bucket()
-    for r in graded:
-        g = group_of(r)
-        if g == "pretest":
-            add(pre, r)
-        elif g == "legacy":
-            add(old, r)
-        add(all_total, r)
-    for r in batch:
-        add(batch_total, r)
+    batch_total = _bucket(batch)
+    checks.append(("All-time = Legacy + Pre-test + Test", _same(all_total, _sum([old_total, pre_total, test_total]))))
+    checks.append(("Every graded play is in exactly one group", len(old) + len(pre) + len(test) == len(graded)))
+
     totals = [
-        f"🆕 Pre-test: {_rec(pre)} | {_units(pre)}u ({_roi(pre)}) | CLV {_avg(pre, 'CLV %')}%",
-        f"📜 Legacy FD: {_rec(old)} | {_units(old)}u ({_roi(old)})",
-        f"💰 Batch: {_units(batch_total)}u (${batch_total['units'] * UNIT_SIZE:+.2f})",
+        f"🧪 Test: {_rec(test_total)} | {_units(test_total)}u ({_roi(test_total)})",
+        f"🆕 Pre-test: {_rec(pre_total)} | {_units(pre_total)}u ({_roi(pre_total)}) | CLV {_avg(pre_total, 'CLV %')}%",
+        f"📜 Legacy FD: {_rec(old_total)} | {_units(old_total)}u ({_roi(old_total)})",
+        f"💰 Batch: {_rec(batch_total)} | {_units(batch_total)}u (${batch_total['units'] * UNIT_SIZE:+.2f})",
         f"🏦 All-time: {_rec(all_total)} | {_units(all_total)}u ({_roi(all_total)})",
+        f"⚪ Voids: {all_total['V']} lifetime ({batch_total['V']} this batch)",
     ]
-    if batch_total["V"]:
-        totals.append(f"⚪ {batch_total['V']} voided (DNP / postponed)")
+    failed = [desc for desc, ok in checks if not ok]
+    if failed:
+        totals.append("⚠️ **Reconciliation mismatch:** " + "; ".join(failed))
+    else:
+        totals.append(f"✅ All {len(checks)} reconciliation checks passed")
     fields.append({"name": "📦 Totals", "value": "\n".join(totals)})
 
     text = "\n\n".join(f"{f['name']}\n{f['value']}" for f in fields)
