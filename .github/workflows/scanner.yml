@@ -2,6 +2,11 @@ name: EV Odds Scanner
 
 on:
   workflow_dispatch:
+    inputs:
+      verify:
+        description: 'Verify pending plays (re-check prices before betting; logs no new plays)'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -28,6 +33,7 @@ jobs:
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          VERIFY: ${{ inputs.verify && '1' || '0' }}
         run: python scanner.py
 
       - name: Commit and Push CSV Log
