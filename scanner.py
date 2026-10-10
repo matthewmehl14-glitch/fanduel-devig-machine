@@ -443,5 +443,159 @@ def run():
           f"{closes} closing-line snapshots updated. API quota remaining: {QUOTA['remaining']}")
 
 
+# ------------------------------------------------------------------ verify mode
+VERIFY_OK = MIN_EDGE        # ✅ edge at today's price still meets the scanner minimum
+VERIFY_WARN = 0.015         # ⚠️ shrinking but still positive; below this is ❌
+
+
+def _current_fair(row, quotes, side, bet_bkey):
+    """Fair prob for this play under the method that picked it (conservative if 'both')."""
+    fd_p = fd_fair(quotes, side) if bet_bkey != "fanduel" else None
+    fp = fair_prob(quotes, side, exclude=bet_bkey)
+    cons_p = fp[0] if fp else None
+    method = row.get("Method") or "consensus"
+    if method == "fd":
+        return fd_p if fd_p is not None else cons_p
+    if method == "consensus":
+        return cons_p if cons_p is not None else fd_p
+    vals = [p for p in (fd_p, cons_p) if p is not None]
+    return min(vals) if vals else None
+
+
+def verify_rows(rows_for_event, lines):
+    """Return one result dict per pending play on this event."""
+    out = []
+    for row in rows_for_event:
+        res = {"row": row, "verdict": "❓", "note": "prop not found now"}
+        out.append(res)
+        m_key = DISPLAY_TO_KEY.get(row["Market"])
+        line = safe_float(row["Line"])
+        if not m_key or line is None:
+            continue
+        players = {p for (mk, p, pt) in lines if mk == m_key and pt == line}
+        player = match_name(row["Player"], players)
+        if player is None:
+            res.update(verdict="❌", note="line no longer posted at this number")
+            continue
+        quotes = lines[(m_key, player, line)]
+        side = row["Side"].strip().title()
+        bet_bkey = next((k for k, q in quotes.items() if q["title"] == row["Bookmaker"]), None)
+        cur_price = quotes[bet_bkey].get(side) if bet_bkey else None
+        p_then = safe_float(row["True Prob %"])
+        p_then = p_then / 100 if p_then is not None else None
+        p_now = _current_fair(row, quotes, side, bet_bkey)
+        if p_now is None:
+            res.update(verdict="❓", note="no fair line available right now")
+            continue
+        logged_dec = american_to_decimal(parse_american(row["Odds"]))
+        edge_then = safe_float(row["Edge %"], 0.0) / 100
+        if cur_price is None:
+            res.update(verdict="❌", note=f"pulled at {row['Bookmaker']}",
+                       edge_then=edge_then, edge_now=None, p_then=p_then, p_now=p_now)
+            continue
+        cur_dec = american_to_decimal(cur_price)
+        edge_now = p_now * cur_dec - 1
+        verdict = "✅" if edge_now >= VERIFY_OK else ("⚠️" if edge_now >= VERIFY_WARN else "❌")
+        moved = ""
+        if p_then is not None:
+            shift = (p_now - p_then) * 100
+            if shift >= 0.5:
+                moved = "sharps moved your way"
+            elif shift <= -0.5:
+                moved = "sharps moved against you"
+            else:
+                moved = "sharps steady"
+        price_note = "" if fmt_american(cur_price) == row["Odds"] else f"price now {fmt_american(cur_price)}"
+        res.update(verdict=verdict, edge_then=edge_then, edge_now=edge_now, p_then=p_then, p_now=p_now,
+                   note=" • ".join(x for x in (moved, price_note) if x))
+    return out
+
+
+def send_verify_digest(results, run_ts):
+    if not results:
+        print("No pending plays to verify.")
+        return
+    order = {"✅": 0, "⚠️": 1, "❌": 2, "❓": 3}
+    results = sorted(results, key=lambda r: (r["row"]["Commence Time"], order[r["verdict"]]))
+    counts = {v: sum(r["verdict"] == v for r in results) for v in order}
+    text_lines = []
+    for r in results:
+        row = r["row"]
+        solo = " ⚠️SOLO" if row.get("Method") == "fd" and not row.get("Cons Edge %") else ""
+        head = f"{r['verdict']} **{row['Player']}** {row['Side']} {row['Line']} {row['Market']}{solo} • {row['Odds']} @ {row['Bookmaker']}"
+        if r.get("edge_now") is not None:
+            fair = ""
+            if r.get("p_then") is not None:
+                fair = f" • fair {prob_to_american(r['p_then'])}→{prob_to_american(r['p_now'])}"
+            detail = f"↳ edge {r['edge_then'] * 100:.1f}% → **{r['edge_now'] * 100:.1f}%**{fair}"
+        else:
+            detail = "↳ edge —"
+        if r["note"]:
+            detail += f" • *{r['note']}*"
+        detail += f" • 🕒 {fmt_start(row['Commence Time'])}"
+        text_lines.append(f"{head}\n{detail}")
+        print(f"{r['verdict']} {row['Player']} {row['Side']} {row['Line']} {row['Market']} — {detail}")
+    if not DISCORD_WEBHOOK_URL:
+        return
+    summary = f"✅ {counts['✅']} still good • ⚠️ {counts['⚠️']} shrinking • ❌ {counts['❌']} gone" + \
+              (f" • ❓ {counts['❓']} unknown" if counts["❓"] else "")
+    chunk = 12
+    total = (len(text_lines) + chunk - 1) // chunk
+    for i in range(0, len(text_lines), chunk):
+        part = f" (Part {i // chunk + 1}/{total})" if total > 1 else ""
+        embed = {
+            "title": f"🔎 Verify pending plays ({len(results)}){part}",
+            "description": (summary + "\n\n" if i == 0 else "") + "\n\n".join(text_lines[i:i + chunk]),
+            "color": 15844367,
+            "footer": {"text": f"Checked {run_ts} CT • ✅ ≥{VERIFY_OK * 100:.1f}% at today's price • "
+                               f"⚠️ {VERIFY_WARN * 100:.1f}–{VERIFY_OK * 100:.1f}% • ❌ below that, pulled, or moved off the number"},
+        }
+        try:
+            SESSION.post(DISCORD_WEBHOOK_URL, json={"embeds": [{**embed, "description": embed["description"][:4000]}]}, timeout=10)
+        except requests.RequestException as e:
+            print(f"Discord error: {e}")
+
+
+def run_verify():
+    """Re-price every pending play for games that haven't started; no new plays are logged."""
+    if not API_KEY:
+        print("CRITICAL ERROR: ODDS_API_KEY missing.")
+        return
+    rows = load_rows()
+    now_utc = datetime.now(timezone.utc)
+    run_ts = now_utc.astimezone(CT).strftime("%Y-%m-%d %H:%M:%S")
+    by_event = defaultdict(list)
+    for r in rows:
+        start = parse_iso(r["Commence Time"])
+        if r["Result"] == "PENDING" and r["Event ID"] and r["Sport"] in SPORTS_CONFIG and start and start > now_utc:
+            by_event[(r["Sport"], r["Event ID"])].append(r)
+    print(f"--- Verify mode {run_ts} CT: {sum(len(v) for v in by_event.values())} pending plays "
+          f"across {len(by_event)} games ---")
+
+    results, closes = [], 0
+    for (sport, event_id), event_rows in by_event.items():
+        # Only request the markets these plays need (saves API quota)
+        markets = sorted({DISPLAY_TO_KEY[r["Market"]] for r in event_rows if r["Market"] in DISPLAY_TO_KEY})
+        data = get_json(f"{BASE_URL}/sports/{sport}/events/{event_id}/odds",
+                        {"apiKey": API_KEY, "markets": ",".join(markets), "bookmakers": KS_BOOKS, "oddsFormat": "american"})
+        if not data:
+            for r in event_rows:
+                results.append({"row": r, "verdict": "❓", "note": "odds unavailable"})
+            continue
+        lines = build_lines(data, datetime.now(timezone.utc))
+        results.extend(verify_rows(event_rows, lines))
+        closes += update_closing_lines(event_rows, lines)   # also refreshes the closing-line snapshot
+
+    if closes:
+        save_rows(rows)
+    send_verify_digest(results, run_ts)
+    print(f"Done. {len(results)} plays checked, {closes} closing snapshots updated. "
+          f"API quota remaining: {QUOTA['remaining']}")
+
+
 if __name__ == "__main__":
-    run()
+    import sys
+    if "--verify" in sys.argv or os.environ.get("VERIFY") == "1":
+        run_verify()
+    else:
+        run()
