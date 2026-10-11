@@ -29,6 +29,21 @@ FIELDNAMES = [
 ]
 GRADED = {"WIN", "LOSS", "PUSH", "VOID"}
 
+# ---------------------------------------------------------------- betting rule
+# The plays you actually bet: FD-method plays (FD, SOLO, BOTH) with edge >= 5.5%.
+# Tracked in the grader only from RULE_START forward, so it's judged on new data.
+RULE_MIN_EDGE = 5.5          # percent, compared with the logged "Edge %"
+RULE_METHODS = {"fd", "both"}
+RULE_START = "2026-10-11"    # first scan date (Central) that counts toward the rule's record
+
+
+def meets_rule(row):
+    try:
+        edge = float(row.get("Edge %") or 0)
+    except ValueError:
+        return False
+    return row.get("Method") in RULE_METHODS and edge >= RULE_MIN_EDGE
+
 
 # ---------------------------------------------------------------- odds math
 def american_to_prob(odds):
