@@ -19,7 +19,7 @@ from datetime import datetime, timedelta, timezone
 import requests
 
 from common import (
-    ET, GRADED, UNIT_SIZE, american_to_decimal, load_rows, match_name,
+    ET, GRADED, RULE_MIN_EDGE, RULE_START, meets_rule, UNIT_SIZE, american_to_decimal, load_rows, match_name,
     normalize_name, parse_american, parse_iso, safe_float, save_rows, similarity,
 )
 
@@ -517,18 +517,54 @@ def build_report(batch, all_rows):
                        "value": _table(["Edge", "Rec", "Units", "ROI", "Move"], rows, [10, 7, 7, 6, 6])})
         checks.append(("Edge buckets = Pre-test + Test", _same(_sum(buckets), _sum([pre_total, test_total]))))
 
-    # 5) Totals
+    # 5) My rule — only plays scanned on/after RULE_START (judged on new data)
+    rule_rows = [r for r in graded if meets_rule(r) and (r["Timestamp"] or "")[:10] >= RULE_START]
+    if rule_rows:
+        days = defaultdict(list)
+        for r in rule_rows:
+            days[r["Timestamp"][:10]].append(r)
+        total = _bucket(rule_rows)
+        table = [["Total", _rec(total), _units(total), _roi(total), _avg(total, "MOVE FD"), _toward(total, "MOVE FD")]]
+        for day in sorted(days)[-5:]:
+            b = _bucket(days[day])
+            table.append([day[5:], _rec(b), _units(b), _roi(b), _avg(b, "MOVE FD"), _toward(b, "MOVE FD")])
+        value = _table(["", "Rec", "Units", "ROI", "Move", "Tw"], table, [10, 7, 7, 6, 6, 5])
+    else:
+        value = "No graded rule plays yet."
+    fields.append({"name": f"⭐ My rule: FD-method, edge ≥{RULE_MIN_EDGE}% (since {RULE_START[5:]})",
+                   "value": value})
+
+    # 6) Totals
     batch_total = _bucket(batch)
     checks.append(("All-time = Legacy + Pre-test + Test", _same(all_total, _sum([old_total, pre_total, test_total]))))
     checks.append(("Every graded play is in exactly one group", len(old) + len(pre) + len(test) == len(graded)))
 
-    totals = [
+    # Day record: every play scanned on the betting day, built up across grader runs.
+    # The day is the most recent scan date among plays settled this run
+    # (or the most recent graded day for a report-only run).
+    dated = [r for r in (batch or graded) if (r["Timestamp"] or "")[:10]]
+    day = max(r["Timestamp"][:10] for r in dated) if dated else None
+    day_lines = []
+    if day:
+        day_rows = [r for r in all_rows if (r["Timestamp"] or "")[:10] == day]
+        day_total = _bucket([r for r in day_rows if r["Result"] in GRADED])
+        day_pending = sum(r["Result"] == "PENDING" for r in day_rows)
+        day_rule = _bucket([r for r in day_rows if r["Result"] in GRADED and meets_rule(r)])
+        label = datetime.strptime(day, "%Y-%m-%d").strftime("%a %b %-d")
+        pend = f" • {day_pending} pending" if day_pending else " • all settled"
+        day_lines.append(f"📅 **{label}:** {_rec(day_total)} | {_units(day_total)}u "
+                         f"(${day_total['units'] * UNIT_SIZE:+.2f}){pend}")
+        if day_rule["W"] + day_rule["L"] + day_rule["P"]:
+            day_lines.append(f"↳ ⭐ Rule plays: {_rec(day_rule)} | {_units(day_rule)}u "
+                             f"(${day_rule['units'] * UNIT_SIZE:+.2f})")
+
+    totals = day_lines + [
+        f"🔄 This run: {_rec(batch_total)} | {_units(batch_total)}u newly settled",
         f"🧪 Test: {_rec(test_total)} | {_units(test_total)}u ({_roi(test_total)})",
         f"🆕 Pre-test: {_rec(pre_total)} | {_units(pre_total)}u ({_roi(pre_total)}) | CLV {_avg(pre_total, 'CLV %')}%",
         f"📜 Legacy FD: {_rec(old_total)} | {_units(old_total)}u ({_roi(old_total)})",
-        f"💰 Batch: {_rec(batch_total)} | {_units(batch_total)}u (${batch_total['units'] * UNIT_SIZE:+.2f})",
         f"🏦 All-time: {_rec(all_total)} | {_units(all_total)}u ({_roi(all_total)})",
-        f"⚪ Voids: {all_total['V']} lifetime ({batch_total['V']} this batch)",
+        f"⚪ Voids: {all_total['V']} lifetime ({batch_total['V']} this run)",
     ]
     failed = [desc for desc, ok in checks if not ok]
     if failed:
