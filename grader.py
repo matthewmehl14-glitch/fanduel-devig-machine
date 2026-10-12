@@ -503,6 +503,7 @@ def build_report(batch, all_rows):
 
     # 4) ROI by edge bucket — every play from the current scanner (pre-test + test)
     current = pre + test
+    edge_compact = None
     if current:
         buckets = [new_bucket() for _ in EDGE_BUCKETS]
         for r in current:
@@ -513,6 +514,7 @@ def build_report(batch, all_rows):
                     break
         rows = [[label, _rec(b), _units(b), _roi(b), _avg(b, "MOVE FD")]
                 for (_, _, label), b in zip(EDGE_BUCKETS, buckets) if b["W"] + b["L"] + b["P"] + b["V"]]
+        edge_compact = _table(["Edge", "Rec", "Units", "ROI"], [r[:4] for r in rows], [10, 7, 7, 6])
         fields.append({"name": "📈 ROI by edge (pre-test + test)",
                        "value": _table(["Edge", "Rec", "Units", "ROI", "Move"], rows, [10, 7, 7, 6, 6])})
         checks.append(("Edge buckets = Pre-test + Test", _same(_sum(buckets), _sum([pre_total, test_total]))))
@@ -574,7 +576,32 @@ def build_report(batch, all_rows):
     fields.append({"name": "📦 Totals", "value": "\n".join(totals)})
 
     text = "\n\n".join(f"{f['name']}\n{f['value']}" for f in fields)
-    return {"fields": fields, "text": text}
+
+    # ---------- compact daily card (default)
+    compact = []
+    headline = "📊 EV Report"
+    if day:
+        headline = (f"📊 {label} — {_rec(day_total)} | {_units(day_total)}u "
+                    f"(${day_total['units'] * UNIT_SIZE:+.2f}){pend}")
+    rule_total = _bucket(rule_rows)
+    rule_table = []
+    if day and day >= RULE_START:
+        rule_table.append(["Today", _rec(day_rule), _units(day_rule), _roi(day_rule)])
+    rule_table.append([f"Since {RULE_START[5:]}", _rec(rule_total), _units(rule_total), _roi(rule_total)])
+    compact.append({"name": f"⭐ My rule (FD-method, edge ≥{RULE_MIN_EDGE}%)",
+                    "value": _table(["", "Rec", "Units", "ROI"], rule_table, [12, 7, 7, 6])})
+    if test:
+        compact.append({"name": "🎯 Groups (test to date)",
+                        "value": _table(["", "Rec", "Units", "ROI"],
+                                        [[label_, _rec(b), _units(b), _roi(b)] for label_, b in overlap.items()],
+                                        [12, 7, 7, 6])})
+    if edge_compact:
+        compact.append({"name": "📈 ROI by edge", "value": edge_compact})
+    footer = [f"🏦 All-time: {_rec(all_total)} | {_units(all_total)}u ({_roi(all_total)})"]
+    footer.append("⚠️ **Totals mismatch:** " + "; ".join(failed) if failed else "✅ Totals verified")
+    compact.append({"name": "\u200b", "value": "\n".join(footer)})
+
+    return {"fields": fields, "compact": compact, "headline": headline, "text": text}
 
 
 LEGEND = ("Move = how far FanDuel's fair line shifted toward (+) or away (−) "
@@ -582,14 +609,20 @@ LEGEND = ("Move = how far FanDuel's fair line shifted toward (+) or away (−) "
           "MvCn = same for the consensus line")
 
 
-def send_report(report, n, regrade, title=None):
+def send_report(report, n, regrade, title=None, full=False):
     print("\n" + report["text"])
     if not DISCORD_WEBHOOK_URL:
         return
-    title = title or f"📊 EV Auto-Grader ({n} settled{', FULL REGRADE' if regrade else ''})"
+    if full:
+        title = title or f"📊 EV Auto-Grader ({n} settled{', FULL REGRADE' if regrade else ''})"
+        chosen = report["fields"]
+    else:
+        title = report["headline"] + (" • FULL REGRADE" if regrade else "")
+        chosen = report["compact"]
     embed = {"title": title, "color": 3447003,
-             "fields": [{"name": f["name"], "value": f["value"][:1024], "inline": False} for f in report["fields"]],
-             "footer": {"text": LEGEND}}
+             "fields": [{"name": f["name"], "value": f["value"][:1024], "inline": False} for f in chosen]}
+    if full:
+        embed["footer"] = {"text": LEGEND}
     try:
         SESSION.post(DISCORD_WEBHOOK_URL, json={"embeds": [embed]}, timeout=10)
     except requests.RequestException:
@@ -600,6 +633,7 @@ def send_report(report, n, regrade, title=None):
 def run():
     regrade = "--regrade" in sys.argv or os.environ.get("REGRADE") == "1"
     report_only = "--report-only" in sys.argv or os.environ.get("REPORT_ONLY") == "1"
+    full = "--full" in sys.argv or os.environ.get("FULL_REPORT") == "1"
     rows = load_rows()
     if not rows:
         print("No plays to grade.")
@@ -609,7 +643,7 @@ def run():
         # Post the current standings without grading or changing anything
         pending = sum(r["Result"] == "PENDING" for r in rows)
         send_report(build_report([], rows), 0, False,
-                    title=f"📊 EV Report (no grading run • {pending} pending)")
+                    title=f"📊 EV Report (no grading run • {pending} pending)", full=full)
         return
 
     if regrade:
@@ -657,7 +691,7 @@ def run():
         print("No pending plays were ready to grade.")
         return
     save_rows(rows)
-    send_report(build_report(batch, rows), len(batch), regrade)
+    send_report(build_report(batch, rows), len(batch), regrade, full=full)
 
 
 if __name__ == "__main__":
