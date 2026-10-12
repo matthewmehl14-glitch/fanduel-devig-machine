@@ -11,6 +11,10 @@ on:
         description: 'Send report only (post current results to Discord, no grading)'
         type: boolean
         default: false
+      full_report:
+        description: 'Full report (all tables: methods, books, line movement)'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -38,6 +42,7 @@ jobs:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           REGRADE: ${{ inputs.regrade && '1' || '0' }}
           REPORT_ONLY: ${{ inputs.report_only && '1' || '0' }}
+          FULL_REPORT: ${{ inputs.full_report && '1' || '0' }}
         run: python grader.py
 
       - name: Commit and Push Settled Bets
