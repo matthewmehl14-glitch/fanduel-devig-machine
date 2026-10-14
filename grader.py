@@ -19,7 +19,8 @@ from datetime import datetime, timedelta, timezone
 import requests
 
 from common import (
-    ET, GRADED, RULE_MIN_EDGE, RULE_START, meets_rule, UNIT_SIZE, american_to_decimal, load_rows, match_name,
+    ET, GRADED, RULE_MIN_EDGE, RULE_START, meets_rule,
+    CANDIDATE_MIN_CONS, CANDIDATE_MIN_EDGE, CANDIDATE_START, meets_candidate, UNIT_SIZE, american_to_decimal, load_rows, match_name,
     normalize_name, parse_american, parse_iso, safe_float, save_rows, similarity,
 )
 
@@ -536,6 +537,24 @@ def build_report(batch, all_rows):
     fields.append({"name": f"⭐ My rule: FD-method, edge ≥{RULE_MIN_EDGE}% (since {RULE_START[5:]})",
                    "value": value})
 
+    # 5b) Candidate rule — tracked from CANDIDATE_START, same layout as the rule table
+    cand_rows = [r for r in graded if meets_candidate(r) and (r["Timestamp"] or "")[:10] >= CANDIDATE_START]
+    cand_name = (f"🧪 Candidate: FD disagreed, edge ≥{CANDIDATE_MIN_EDGE:g}%, cons ≥{CANDIDATE_MIN_CONS:g}% "
+                 f"(since {CANDIDATE_START[5:]})")
+    if cand_rows:
+        cdays = defaultdict(list)
+        for r in cand_rows:
+            cdays[r["Timestamp"][:10]].append(r)
+        ctotal = _bucket(cand_rows)
+        ctable = [["Total", _rec(ctotal), _units(ctotal), _roi(ctotal), _avg(ctotal, "MOVE FD"), _toward(ctotal, "MOVE FD")]]
+        for cday in sorted(cdays)[-5:]:
+            b = _bucket(cdays[cday])
+            ctable.append([cday[5:], _rec(b), _units(b), _roi(b), _avg(b, "MOVE FD"), _toward(b, "MOVE FD")])
+        cvalue = _table(["", "Rec", "Units", "ROI", "Move", "Tw"], ctable, [10, 7, 7, 6, 6, 5])
+    else:
+        cvalue = "No graded candidate plays yet."
+    fields.append({"name": cand_name, "value": cvalue})
+
     # 6) Totals
     batch_total = _bucket(batch)
     checks.append(("All-time = Legacy + Pre-test + Test", _same(all_total, _sum([old_total, pre_total, test_total]))))
@@ -590,6 +609,15 @@ def build_report(batch, all_rows):
     rule_table.append([f"Since {RULE_START[5:]}", _rec(rule_total), _units(rule_total), _roi(rule_total)])
     compact.append({"name": f"⭐ My rule (FD-method, edge ≥{RULE_MIN_EDGE}%)",
                     "value": _table(["", "Rec", "Units", "ROI"], rule_table, [12, 7, 7, 6])})
+    cand_total = _bucket(cand_rows)
+    cand_table = []
+    if day and day >= CANDIDATE_START:
+        day_cand = _bucket([r for r in all_rows if (r["Timestamp"] or "")[:10] == day
+                            and r["Result"] in GRADED and meets_candidate(r)])
+        cand_table.append(["Today", _rec(day_cand), _units(day_cand), _roi(day_cand)])
+    cand_table.append([f"Since {CANDIDATE_START[5:]}", _rec(cand_total), _units(cand_total), _roi(cand_total)])
+    compact.append({"name": f"🧪 Candidate (FD disagreed, edge ≥{CANDIDATE_MIN_EDGE:g}%, cons ≥{CANDIDATE_MIN_CONS:g}%)",
+                    "value": _table(["", "Rec", "Units", "ROI"], cand_table, [12, 7, 7, 6])})
     if test:
         compact.append({"name": "🎯 Groups (test to date)",
                         "value": _table(["", "Rec", "Units", "ROI"],
