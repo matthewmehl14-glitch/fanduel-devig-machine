@@ -45,6 +45,25 @@ def meets_rule(row):
     return row.get("Method") in RULE_METHODS and edge >= RULE_MIN_EDGE
 
 
+# ---------------------------------------------------------------- candidate rule (tracking only)
+# Tracked side by side with the betting rule from CANDIDATE_START forward. Not starred, not bet.
+CANDIDATE_MIN_EDGE = 4.0     # FD edge, percent
+CANDIDATE_MIN_CONS = 1.5     # consensus edge, percent (must be present)
+CANDIDATE_START = "2026-10-15"
+
+
+def meets_candidate(row):
+    """FD disagreed (FD-method play the consensus priced but didn't flag), edge >= 4%, cons edge >= 1.5%."""
+    if row.get("Method") != "fd" or not (row.get("Cons Edge %") or "").strip():
+        return False
+    try:
+        edge = float(row.get("Edge %") or 0)
+        cons = float(row.get("Cons Edge %"))
+    except ValueError:
+        return False
+    return edge >= CANDIDATE_MIN_EDGE and cons >= CANDIDATE_MIN_CONS
+
+
 # ---------------------------------------------------------------- odds math
 def american_to_prob(odds):
     odds = float(odds)
