@@ -55,6 +55,11 @@ MAX_UNITS_PER_PLAY = 1.5
 MAX_UNITS_PER_PLAYER_GAME = 2.0   # Points, PRA, P+R on one player = one correlated bet
 MIN_UNITS = 0.10
 
+# Credit control. Each game costs ~1 credit per prop market with odds posted,
+# so only games starting soon are scanned. Hourly scans see every game ~3 times.
+LOOKAHEAD_HOURS = 3      # scan games starting within this many hours
+QUOTA_RESERVE = 500      # stop fetching odds if remaining credits drop below this
+
 SPORTS_CONFIG = {
     "basketball_wnba": "player_points,player_rebounds,player_assists,player_points_rebounds,player_points_rebounds_assists,player_threes",
     "basketball_nba": "player_points,player_rebounds,player_assists,player_points_rebounds,player_points_rebounds_assists,player_threes",
@@ -75,8 +80,29 @@ DISPLAY_TO_KEY = {
     for markets in SPORTS_CONFIG.values() for k in markets.split(",")
 }
 
-QUOTA = {"remaining": "?", "used": "?"}
+QUOTA = {"remaining": "?", "used": "?", "spent": 0}
 SESSION = requests.Session()
+
+
+# ------------------------------------------------------------------ credits
+def low_quota():
+    try:
+        return float(QUOTA["remaining"]) < QUOTA_RESERVE
+    except (TypeError, ValueError):
+        return False
+
+
+def credit_summary():
+    """e.g. '💳 212 credits this scan • 9,980 left • ~713/day until Nov 1'"""
+    try:
+        left = int(float(QUOTA["remaining"]))
+    except (TypeError, ValueError):
+        return f"💳 {QUOTA['spent']} credits this scan"
+    today = datetime.now(CT).date()
+    reset = (today.replace(day=1) + timedelta(days=32)).replace(day=1)
+    days = max((reset - today).days, 1)
+    return (f"💳 {QUOTA['spent']} credits this scan • {left:,} left • "
+            f"~{left // days:,}/day until {reset.strftime('%b')} {reset.day}")
 
 
 # ------------------------------------------------------------------ http
@@ -90,6 +116,10 @@ def get_json(url, params):
             continue
         QUOTA["remaining"] = res.headers.get("x-requests-remaining", QUOTA["remaining"])
         QUOTA["used"] = res.headers.get("x-requests-used", QUOTA["used"])
+        try:
+            QUOTA["spent"] += int(float(res.headers.get("x-requests-last", 0)))
+        except ValueError:
+            pass
         if res.status_code == 429:
             time.sleep(3 * (attempt + 1))
             continue
@@ -311,7 +341,6 @@ def fmt_start(commence):
 def send_discord_digest(new_rows, run_ts):
     if not DISCORD_WEBHOOK_URL or not new_rows:
         return
-    # ★ BET plays first (highest edge first), then everything else
     # ⭐ BET plays first, then 🧪 candidate plays, then everything else (highest edge first)
     plays = sorted(new_rows, key=lambda r: (not meets_rule(r), not meets_candidate(r), -float(r["Edge %"])))
     n_bet = sum(meets_rule(r) for r in plays)
@@ -335,9 +364,10 @@ def send_discord_digest(new_rows, run_ts):
         part = f" (Part {i // chunk_size + 1}/{total_chunks})" if total_chunks > 1 else ""
         embed = {
             "title": f"🚨 +EV Prop Digest — ⭐ {n_bet} to bet • 🧪 {n_cand} candidate / {len(plays)} logged{part}",
-            "description": "\n\n".join(out)[:4000],
+            # credits line at the top of the first message, above the plays
+            "description": ((f"**{credit_summary()}**\n\n" if i == 0 else "") + "\n\n".join(out))[:4000],
             "color": 65280,
-            "footer": {"text": f"Scanned {run_ts} CT • Side-by-side test: FanDuel devig vs consensus"},
+            "footer": {"text": f"Scanned {run_ts} CT"},
         }
         try:
             SESSION.post(DISCORD_WEBHOOK_URL, json={"embeds": [embed]}, timeout=10)
@@ -366,7 +396,7 @@ def run():
 
     now_utc = datetime.now(timezone.utc)
     now_ct = now_utc.astimezone(CT)
-    end_utc = now_ct.replace(hour=23, minute=59, second=59, microsecond=0).astimezone(timezone.utc)
+    end_utc = now_utc + timedelta(hours=LOOKAHEAD_HOURS)
     run_ts = now_ct.strftime("%Y-%m-%d %H:%M:%S")
     print(f"--- EV Prop Scanner {run_ts} CT ---")
 
@@ -387,6 +417,9 @@ def run():
         print(f"\n{sport}: {len(upcoming)} upcoming games")
 
         for ev, start in upcoming:
+            if low_quota():
+                print(f"    credits below reserve ({QUOTA['remaining']} < {QUOTA_RESERVE}), skipping remaining games")
+                break
             game = f"{ev['away_team']} @ {ev['home_team']}"
             data = get_json(
                 f"{BASE_URL}/sports/{sport}/events/{ev['id']}/odds",
@@ -445,7 +478,7 @@ def run():
         save_rows(rows)
     send_discord_digest(new_rows, run_ts)
     print(f"\nDone. {edges_found} edges seen, {len(new_rows)} new plays logged, "
-          f"{closes} closing-line snapshots updated. API quota remaining: {QUOTA['remaining']}")
+          f"{closes} closing-line snapshots updated.\n{credit_summary()}")
 
 
 if __name__ == "__main__":
