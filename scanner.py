@@ -57,7 +57,7 @@ MIN_UNITS = 0.10
 
 # Credit control. Each game costs ~1 credit per prop market with odds posted,
 # so only games starting soon are scanned. Hourly scans see every game ~3 times.
-LOOKAHEAD_HOURS = 4      # scan games starting within this many hours
+LOOKAHEAD_HOURS = 12      # scan games starting within this many hours
 QUOTA_RESERVE = 200      # stop fetching odds if remaining credits drop below this
 
 SPORTS_CONFIG = {
@@ -68,6 +68,12 @@ SPORTS_CONFIG = {
     "icehockey_nhl_preseason": "player_points,player_assists,player_shots_on_goal,player_total_saves",
     "americanfootball_nfl": "player_pass_yds,player_pass_attempts,player_rush_yds,player_rush_attempts,player_reception_yds,player_receptions",
     "americanfootball_ncaaf": "player_pass_yds,player_pass_attempts,player_rush_yds,player_rush_attempts,player_reception_yds,player_receptions",
+}
+
+# Sports listed here are skipped entirely: no odds requests, no credits spent.
+# Remove a sport from this set to turn it back on. Its markets above stay as they are.
+PAUSED_SPORTS = {
+    "americanfootball_ncaaf",
 }
 
 
@@ -403,6 +409,9 @@ def run():
     new_rows, edges_found, closes = [], 0, 0
 
     for sport, markets in SPORTS_CONFIG.items():
+        if sport in PAUSED_SPORTS:
+            print(f"\n{sport}: paused (in PAUSED_SPORTS), skipped")
+            continue
         events = get_json(f"{BASE_URL}/sports/{sport}/events", {"apiKey": API_KEY})
         if not events:
             continue
