@@ -57,8 +57,8 @@ MIN_UNITS = 0.10
 
 # Credit control. Each game costs ~1 credit per prop market with odds posted,
 # so only games starting soon are scanned. Hourly scans see every game ~3 times.
-LOOKAHEAD_HOURS = 12      # scan games starting within this many hours
-QUOTA_RESERVE = 200      # stop fetching odds if remaining credits drop below this
+LOOKAHEAD_HOURS = 3      # scan games starting within this many hours
+QUOTA_RESERVE = 500      # stop fetching odds if remaining credits drop below this
 
 SPORTS_CONFIG = {
     "basketball_wnba": "player_points,player_rebounds,player_assists,player_points_rebounds,player_points_rebounds_assists,player_threes",
@@ -381,6 +381,28 @@ def send_discord_digest(new_rows, run_ts):
             print(f"Discord error: {e}")
 
 
+def send_discord_no_plays(run_ts, games_scanned, edges_found):
+    """Short heartbeat when a scan logs nothing new, so every scan shows up with its credit cost."""
+    if not DISCORD_WEBHOOK_URL:
+        return
+    if games_scanned == 0:
+        detail = f"No games starting in the next {LOOKAHEAD_HOURS:g} hours."
+    elif edges_found:
+        detail = f"{games_scanned} games scanned; {edges_found} edges seen, all already logged."
+    else:
+        detail = f"{games_scanned} games scanned; nothing met the edge filters."
+    embed = {
+        "title": "😴 No new plays",
+        "description": f"**{credit_summary()}**\n{detail}",
+        "color": 0x808080,
+        "footer": {"text": f"Scanned {run_ts} CT"},
+    }
+    try:
+        SESSION.post(DISCORD_WEBHOOK_URL, json={"embeds": [embed]}, timeout=10)
+    except requests.RequestException as e:
+        print(f"Discord error: {e}")
+
+
 # ------------------------------------------------------------------ main
 def run():
     if not API_KEY:
@@ -407,6 +429,7 @@ def run():
     print(f"--- EV Prop Scanner {run_ts} CT ---")
 
     new_rows, edges_found, closes = [], 0, 0
+    games_scanned = 0
 
     for sport, markets in SPORTS_CONFIG.items():
         if sport in PAUSED_SPORTS:
@@ -424,6 +447,7 @@ def run():
         if not upcoming:
             continue
         print(f"\n{sport}: {len(upcoming)} upcoming games")
+        games_scanned += len(upcoming)
 
         for ev, start in upcoming:
             if low_quota():
@@ -485,7 +509,10 @@ def run():
     if new_rows or closes:
         rows.extend(new_rows)
         save_rows(rows)
-    send_discord_digest(new_rows, run_ts)
+    if new_rows:
+        send_discord_digest(new_rows, run_ts)
+    else:
+        send_discord_no_plays(run_ts, games_scanned, edges_found)
     print(f"\nDone. {edges_found} edges seen, {len(new_rows)} new plays logged, "
           f"{closes} closing-line snapshots updated.\n{credit_summary()}")
 
