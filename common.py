@@ -64,6 +64,32 @@ def meets_candidate(row):
     return edge >= CANDIDATE_MIN_EDGE and cons >= CANDIDATE_MIN_CONS
 
 
+# ---------------------------------------------------------------- rule 3 (tracking only)
+# 🎯 FD plays only (not BOTH) with FD edge 4-8% and odds from -150 to +100. Not starred, not bet.
+R3_METHODS = {"fd"}
+R3_MIN_EDGE = 4.0            # FD edge, percent (inclusive)
+R3_MAX_EDGE = 8.0            # FD edge, percent (inclusive)
+R3_MIN_ODDS = -150           # American odds (inclusive): -150 ... -100, +100
+R3_MAX_ODDS = 100
+R3_START = "2026-10-20"      # live tracking starts
+R3_BACKTEST_FROM = "2026-10-05"
+
+
+def meets_rule3(row):
+    if row.get("Method") not in R3_METHODS:
+        return False
+    try:
+        edge = float(row.get("FD Edge %") or row.get("Edge %") or 0)
+        odds = float(str(row.get("Odds") or "").replace("+", "").strip())
+    except ValueError:
+        return False
+    if not (R3_MIN_EDGE <= edge <= R3_MAX_EDGE):
+        return False
+    # American odds skip the gap between -100 and +100, so "between -150 and +100" means
+    # -150 <= odds <= -100, or odds of +100 exactly.
+    return (R3_MIN_ODDS <= odds <= -100) or (100 <= odds <= R3_MAX_ODDS)
+
+
 # ---------------------------------------------------------------- odds math
 def american_to_prob(odds):
     odds = float(odds)
