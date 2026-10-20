@@ -19,7 +19,7 @@ import requests
 
 from common import (
     CT, UNIT_SIZE, american_to_decimal, american_to_prob, fmt_american,
-    load_rows, match_name, meets_candidate, meets_rule, normalize_name, parse_american, parse_iso,
+    load_rows, match_name, meets_candidate, meets_rule, meets_rule3, normalize_name, parse_american, parse_iso,
     play_key, prob_to_american, safe_float, save_rows,
 )
 
@@ -57,8 +57,8 @@ MIN_UNITS = 0.10
 
 # Credit control. Each game costs ~1 credit per prop market with odds posted,
 # so only games starting soon are scanned. Hourly scans see every game ~3 times.
-LOOKAHEAD_HOURS = 14      # scan games starting within this many hours
-QUOTA_RESERVE = 200      # stop fetching odds if remaining credits drop below this
+LOOKAHEAD_HOURS = 3      # scan games starting within this many hours
+QUOTA_RESERVE = 500      # stop fetching odds if remaining credits drop below this
 
 SPORTS_CONFIG = {
     "basketball_wnba": "player_points,player_rebounds,player_assists,player_points_rebounds,player_points_rebounds_assists,player_threes",
@@ -347,10 +347,12 @@ def fmt_start(commence):
 def send_discord_digest(new_rows, run_ts):
     if not DISCORD_WEBHOOK_URL or not new_rows:
         return
-    # ⭐ BET plays first, then 🧪 candidate plays, then everything else (highest edge first)
-    plays = sorted(new_rows, key=lambda r: (not meets_rule(r), not meets_candidate(r), -float(r["Edge %"])))
+    # ⭐ BET plays first, then 🧪 candidate, then 🧫 rule 3, then everything else (highest edge first)
+    plays = sorted(new_rows, key=lambda r: (not meets_rule(r), not meets_candidate(r), not meets_rule3(r),
+                                            -float(r["Edge %"])))
     n_bet = sum(meets_rule(r) for r in plays)
     n_cand = sum(meets_candidate(r) for r in plays)
+    n_r3 = sum(meets_rule3(r) for r in plays)
     chunk_size = 15
     total_chunks = (len(plays) + chunk_size - 1) // chunk_size
     for i in range(0, len(plays), chunk_size):
@@ -361,7 +363,8 @@ def send_discord_digest(new_rows, run_ts):
             tag = {"fd": "🎯 FD", "consensus": "🧮 CONS", "both": "🎯🧮 BOTH"}.get(r.get("Method"), "")
             if r.get("Method") == "fd" and not r.get("Cons Edge %"):
                 tag = "🎯 FD ⚠️ SOLO"   # consensus couldn't price this prop: FanDuel is the only sharp price
-            star = ("⭐ **BET** " if meets_rule(r) else "") + ("🧪 " if meets_candidate(r) else "")
+            star = (("⭐ **BET** " if meets_rule(r) else "") + ("🧪 " if meets_candidate(r) else "")
+                    + ("🧫 " if meets_rule3(r) else ""))
             out.append(
                 f"{star}{icon} **+{r['Edge %']}%** `{tag}` | **{r['Player']}** {r['Side']} {r['Line']} {r['Market']}\n"
                 f"↳ **{r['Odds']}** @ {r['Bookmaker']} • **{r['Kelly Units']}u** (${r['Bet Amount']}) • *{r['_fair']}*\n"
@@ -369,7 +372,7 @@ def send_discord_digest(new_rows, run_ts):
             )
         part = f" (Part {i // chunk_size + 1}/{total_chunks})" if total_chunks > 1 else ""
         embed = {
-            "title": f"🚨 +EV Prop Digest — ⭐ {n_bet} to bet • 🧪 {n_cand} candidate / {len(plays)} logged{part}",
+            "title": f"🚨 +EV Prop Digest — ⭐ {n_bet} to bet • 🧪 {n_cand} • 🧫 {n_r3} / {len(plays)} logged{part}",
             # credits line at the top of the first message, above the plays
             "description": ((f"**{credit_summary()}**\n\n" if i == 0 else "") + "\n\n".join(out))[:4000],
             "color": 65280,
