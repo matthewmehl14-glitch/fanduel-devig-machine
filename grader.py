@@ -20,7 +20,8 @@ import requests
 
 from common import (
     ET, GRADED, RULE_MIN_EDGE, RULE_START, meets_rule,
-    CANDIDATE_MIN_CONS, CANDIDATE_MIN_EDGE, CANDIDATE_START, meets_candidate, UNIT_SIZE, american_to_decimal, load_rows, match_name,
+    CANDIDATE_MIN_CONS, CANDIDATE_MIN_EDGE, CANDIDATE_START, meets_candidate,
+    R3_BACKTEST_FROM, R3_MAX_EDGE, R3_MAX_ODDS, R3_MIN_EDGE, R3_MIN_ODDS, R3_START, meets_rule3, UNIT_SIZE, american_to_decimal, load_rows, match_name,
     normalize_name, parse_american, parse_iso, safe_float, save_rows, similarity,
 )
 
@@ -555,6 +556,27 @@ def build_report(batch, all_rows):
         cvalue = "No graded candidate plays yet."
     fields.append({"name": cand_name, "value": cvalue})
 
+    # 5c) Rule 3 — live since R3_START, plus a backtest from R3_BACKTEST_FROM
+    r3_all = [r for r in graded if meets_rule3(r) and (r["Timestamp"] or "")[:10] >= R3_BACKTEST_FROM]
+    r3_live = [r for r in r3_all if r["Timestamp"][:10] >= R3_START]
+    r3_label = f"FD only, edge {R3_MIN_EDGE:g}-{R3_MAX_EDGE:g}%, odds {R3_MIN_ODDS:+d} to {R3_MAX_ODDS:+d}"
+    if r3_all:
+        r3days = defaultdict(list)
+        for r in r3_live:
+            r3days[r["Timestamp"][:10]].append(r)
+        b_live, b_all = _bucket(r3_live), _bucket(r3_all)
+        r3table = [[f"Since {R3_START[5:]}", _rec(b_live), _units(b_live), _roi(b_live),
+                    _avg(b_live, "MOVE FD"), _toward(b_live, "MOVE FD")]]
+        for r3day in sorted(r3days)[-5:]:
+            b = _bucket(r3days[r3day])
+            r3table.append([r3day[5:], _rec(b), _units(b), _roi(b), _avg(b, "MOVE FD"), _toward(b, "MOVE FD")])
+        r3table.append([f"Back {R3_BACKTEST_FROM[5:]}+", _rec(b_all), _units(b_all), _roi(b_all),
+                        _avg(b_all, "MOVE FD"), _toward(b_all, "MOVE FD")])
+        r3value = _table(["", "Rec", "Units", "ROI", "Move", "Tw"], r3table, [10, 7, 7, 6, 6, 5])
+    else:
+        r3value = "No graded rule-3 plays yet."
+    fields.append({"name": f"🧫 Rule 3: {r3_label}", "value": r3value})
+
     # 6) Totals
     batch_total = _bucket(batch)
     checks.append(("All-time = Legacy + Pre-test + Test", _same(all_total, _sum([old_total, pre_total, test_total]))))
@@ -618,6 +640,17 @@ def build_report(batch, all_rows):
     cand_table.append([f"Since {CANDIDATE_START[5:]}", _rec(cand_total), _units(cand_total), _roi(cand_total)])
     compact.append({"name": f"🧪 Candidate (FD disagreed, edge ≥{CANDIDATE_MIN_EDGE:g}%, cons ≥{CANDIDATE_MIN_CONS:g}%)",
                     "value": _table(["", "Rec", "Units", "ROI"], cand_table, [12, 7, 7, 6])})
+    r3_table = []
+    if day and day >= R3_START:
+        day_r3 = _bucket([r for r in all_rows if (r["Timestamp"] or "")[:10] == day
+                          and r["Result"] in GRADED and meets_rule3(r)])
+        r3_table.append(["Today", _rec(day_r3), _units(day_r3), _roi(day_r3)])
+    live_r3 = _bucket(r3_live)
+    back_r3 = _bucket(r3_all)
+    r3_table.append([f"Since {R3_START[5:]}", _rec(live_r3), _units(live_r3), _roi(live_r3)])
+    r3_table.append([f"Back {R3_BACKTEST_FROM[5:]}+", _rec(back_r3), _units(back_r3), _roi(back_r3)])
+    compact.append({"name": f"🧫 Rule 3 ({r3_label})",
+                    "value": _table(["", "Rec", "Units", "ROI"], r3_table, [12, 7, 7, 6])})
     if test:
         compact.append({"name": "🎯 Groups (test to date)",
                         "value": _table(["", "Rec", "Units", "ROI"],
