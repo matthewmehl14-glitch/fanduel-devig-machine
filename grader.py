@@ -22,6 +22,7 @@ from common import (
     ET, GRADED, RULE_MIN_EDGE, RULE_START, meets_rule,
     CANDIDATE_MIN_CONS, CANDIDATE_MIN_EDGE, CANDIDATE_START, meets_candidate,
     DOGS_EDGE_BANDS, DOGS_MAX_ODDS, DOGS_MIN_ODDS, meets_dogs,
+    R5_BACKTEST_FROM, R5_BOOK, R5_MAX_ODDS, R5_MIN_ODDS, R5_START, meets_rule5,
     R3_BACKTEST_FROM, R3_MAX_EDGE, R3_MAX_ODDS, R3_MIN_EDGE, R3_MIN_ODDS, R3_START, meets_rule3, UNIT_SIZE, american_to_decimal, load_rows, match_name,
     normalize_name, parse_american, parse_iso, safe_float, save_rows, similarity,
 )
@@ -593,6 +594,27 @@ def build_report(batch, all_rows):
         dvalue = "No graded moderate-dog plays yet."
     fields.append({"name": f"🐶 Moderate dogs: {dog_label}", "value": dvalue})
 
+    # 5e) Rule 5 — live since R5_START, plus a backtest from R5_BACKTEST_FROM
+    r5_all = [r for r in graded if meets_rule5(r) and (r["Timestamp"] or "")[:10] >= R5_BACKTEST_FROM]
+    r5_live = [r for r in r5_all if r["Timestamp"][:10] >= R5_START]
+    r5_label = f"{R5_BOOK}, FD only, odds {R5_MIN_ODDS:+d} to {R5_MAX_ODDS:+d}"
+    if r5_all:
+        r5days = defaultdict(list)
+        for r in r5_live:
+            r5days[r["Timestamp"][:10]].append(r)
+        b5_live, b5_all = _bucket(r5_live), _bucket(r5_all)
+        r5table = [[f"Since {R5_START[5:]}", _rec(b5_live), _units(b5_live), _roi(b5_live),
+                    _avg(b5_live, "MOVE FD"), _toward(b5_live, "MOVE FD")]]
+        for r5day in sorted(r5days)[-5:]:
+            b = _bucket(r5days[r5day])
+            r5table.append([r5day[5:], _rec(b), _units(b), _roi(b), _avg(b, "MOVE FD"), _toward(b, "MOVE FD")])
+        r5table.append([f"Back {R5_BACKTEST_FROM[5:]}+", _rec(b5_all), _units(b5_all), _roi(b5_all),
+                        _avg(b5_all, "MOVE FD"), _toward(b5_all, "MOVE FD")])
+        r5value = _table(["", "Rec", "Units", "ROI", "Move", "Tw"], r5table, [10, 7, 7, 6, 6, 5])
+    else:
+        r5value = "No graded rule-5 plays yet."
+    fields.append({"name": f"😈 Rule 5: {r5_label}", "value": r5value})
+
     # 6) Totals
     batch_total = _bucket(batch)
     checks.append(("All-time = Legacy + Pre-test + Test", _same(all_total, _sum([old_total, pre_total, test_total]))))
@@ -676,6 +698,16 @@ def build_report(batch, all_rows):
     dog_table.append(["History", _rec(hist_dog), _units(hist_dog), _roi(hist_dog)])
     compact.append({"name": f"🐶 Moderate dogs ({dog_label})",
                     "value": _table(["", "Rec", "Units", "ROI"], dog_table, [12, 7, 7, 6])})
+    r5_table = []
+    if day and day >= R5_START:
+        day_r5 = _bucket([r for r in all_rows if (r["Timestamp"] or "")[:10] == day
+                          and r["Result"] in GRADED and meets_rule5(r)])
+        r5_table.append(["Today", _rec(day_r5), _units(day_r5), _roi(day_r5)])
+    live_r5, back_r5 = _bucket(r5_live), _bucket(r5_all)
+    r5_table.append([f"Since {R5_START[5:]}", _rec(live_r5), _units(live_r5), _roi(live_r5)])
+    r5_table.append([f"Back {R5_BACKTEST_FROM[5:]}+", _rec(back_r5), _units(back_r5), _roi(back_r5)])
+    compact.append({"name": f"😈 Rule 5 ({r5_label})",
+                    "value": _table(["", "Rec", "Units", "ROI"], r5_table, [12, 7, 7, 6])})
     if test:
         compact.append({"name": "🎯 Groups (test to date)",
                         "value": _table(["", "Rec", "Units", "ROI"],
