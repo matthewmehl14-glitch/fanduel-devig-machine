@@ -90,6 +90,28 @@ def meets_rule3(row):
     return (R3_MIN_ODDS <= odds <= -100) or (100 <= odds <= R3_MAX_ODDS)
 
 
+# ---------------------------------------------------------------- moderate dogs (tracking only)
+# Odds +126 to +150 with logged edge in the 3.5-4.5% or 6-8% buckets (same buckets as the
+# grader's ROI-by-edge table: lower bound included, upper excluded). Any method, current
+# scanner only (rows with an Event ID). Not starred, not bet.
+DOGS_MIN_ODDS = 126
+DOGS_MAX_ODDS = 150
+DOGS_EDGE_BANDS = [(3.5, 4.5), (6.0, 8.0)]
+
+
+def meets_dogs(row):
+    if not (row.get("Event ID") or "").strip():
+        return False
+    try:
+        edge = float(row.get("Edge %") or 0)
+        odds = float(str(row.get("Odds") or "").replace("+", "").strip())
+    except ValueError:
+        return False
+    if not (DOGS_MIN_ODDS <= odds <= DOGS_MAX_ODDS):
+        return False
+    return any(lo <= edge < hi for lo, hi in DOGS_EDGE_BANDS)
+
+
 # ---------------------------------------------------------------- odds math
 def american_to_prob(odds):
     odds = float(odds)
