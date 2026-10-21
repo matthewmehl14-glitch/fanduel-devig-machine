@@ -21,6 +21,7 @@ import requests
 from common import (
     ET, GRADED, RULE_MIN_EDGE, RULE_START, meets_rule,
     CANDIDATE_MIN_CONS, CANDIDATE_MIN_EDGE, CANDIDATE_START, meets_candidate,
+    DOGS_EDGE_BANDS, DOGS_MAX_ODDS, DOGS_MIN_ODDS, meets_dogs,
     R3_BACKTEST_FROM, R3_MAX_EDGE, R3_MAX_ODDS, R3_MIN_EDGE, R3_MIN_ODDS, R3_START, meets_rule3, UNIT_SIZE, american_to_decimal, load_rows, match_name,
     normalize_name, parse_american, parse_iso, safe_float, save_rows, similarity,
 )
@@ -577,6 +578,21 @@ def build_report(batch, all_rows):
         r3value = "No graded rule-3 plays yet."
     fields.append({"name": f"🧫 Rule 3: {r3_label}", "value": r3value})
 
+    # 5d) Moderate dogs — full history from the log, split by edge band
+    dog_rows = [r for r in graded if meets_dogs(r)]
+    bands = " or ".join(f"{lo:g}-{hi:g}%" for lo, hi in DOGS_EDGE_BANDS)
+    dog_label = f"odds {DOGS_MIN_ODDS:+d} to {DOGS_MAX_ODDS:+d}, edge {bands}"
+    if dog_rows:
+        b_dog = _bucket(dog_rows)
+        dtable = [["History", _rec(b_dog), _units(b_dog), _roi(b_dog), _avg(b_dog, "MOVE FD"), _toward(b_dog, "MOVE FD")]]
+        for lo, hi in DOGS_EDGE_BANDS:
+            b = _bucket([r for r in dog_rows if lo <= safe_float(r["Edge %"], 0.0) < hi])
+            dtable.append([f"  {lo:g}-{hi:g}%", _rec(b), _units(b), _roi(b), _avg(b, "MOVE FD"), _toward(b, "MOVE FD")])
+        dvalue = _table(["", "Rec", "Units", "ROI", "Move", "Tw"], dtable, [10, 7, 7, 6, 6, 5])
+    else:
+        dvalue = "No graded moderate-dog plays yet."
+    fields.append({"name": f"🐶 Moderate dogs: {dog_label}", "value": dvalue})
+
     # 6) Totals
     batch_total = _bucket(batch)
     checks.append(("All-time = Legacy + Pre-test + Test", _same(all_total, _sum([old_total, pre_total, test_total]))))
@@ -651,6 +667,15 @@ def build_report(batch, all_rows):
     r3_table.append([f"Back {R3_BACKTEST_FROM[5:]}+", _rec(back_r3), _units(back_r3), _roi(back_r3)])
     compact.append({"name": f"🧫 Rule 3 ({r3_label})",
                     "value": _table(["", "Rec", "Units", "ROI"], r3_table, [12, 7, 7, 6])})
+    dog_table = []
+    if day:
+        day_dog = _bucket([r for r in all_rows if (r["Timestamp"] or "")[:10] == day
+                           and r["Result"] in GRADED and meets_dogs(r)])
+        dog_table.append(["Today", _rec(day_dog), _units(day_dog), _roi(day_dog)])
+    hist_dog = _bucket(dog_rows)
+    dog_table.append(["History", _rec(hist_dog), _units(hist_dog), _roi(hist_dog)])
+    compact.append({"name": f"🐶 Moderate dogs ({dog_label})",
+                    "value": _table(["", "Rec", "Units", "ROI"], dog_table, [12, 7, 7, 6])})
     if test:
         compact.append({"name": "🎯 Groups (test to date)",
                         "value": _table(["", "Rec", "Units", "ROI"],
