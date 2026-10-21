@@ -112,6 +112,27 @@ def meets_dogs(row):
     return any(lo <= edge < hi for lo, hi in DOGS_EDGE_BANDS)
 
 
+# ---------------------------------------------------------------- rule 5 (tracking only)
+# Novig bets on 🎯 FD plays (method exactly "fd") at odds -120 to -100. Any sport, market or side;
+# no extra edge filter beyond what the scanner already requires to log a play. Not starred, not bet.
+R5_BOOK = "Novig"
+R5_METHODS = {"fd"}
+R5_MIN_ODDS = -120           # American odds, inclusive
+R5_MAX_ODDS = -100
+R5_START = "2026-10-21"      # live tracking starts
+R5_BACKTEST_FROM = "2026-10-05"
+
+
+def meets_rule5(row):
+    if row.get("Method") not in R5_METHODS or (row.get("Bookmaker") or "").strip() != R5_BOOK:
+        return False
+    try:
+        odds = float(str(row.get("Odds") or "").replace("+", "").strip())
+    except ValueError:
+        return False
+    return R5_MIN_ODDS <= odds <= R5_MAX_ODDS
+
+
 # ---------------------------------------------------------------- odds math
 def american_to_prob(odds):
     odds = float(odds)
