@@ -133,6 +133,30 @@ def meets_rule5(row):
     return R5_MIN_ODDS <= odds <= R5_MAX_ODDS
 
 
+# ---------------------------------------------------------------- unders (tracking only)
+# Unders with logged edge 3.00% <= edge < 5.00%, any method, excluding the Assists market.
+# Current scanner only (rows with an Event ID). Not starred, not bet.
+UNDERS_MIN_EDGE = 3.0        # inclusive
+UNDERS_MAX_EDGE = 5.0        # exclusive
+UNDERS_EXCLUDE_MARKETS = {"Assists"}   # exact market names; "Points Rebounds Assists" still counts
+UNDERS_START = "2026-10-22"  # live tracking starts
+UNDERS_BACKTEST_FROM = "2026-10-05"
+
+
+def meets_unders(row):
+    if not (row.get("Event ID") or "").strip():
+        return False
+    if (row.get("Side") or "").strip().lower() != "under":
+        return False
+    if (row.get("Market") or "").strip() in UNDERS_EXCLUDE_MARKETS:
+        return False
+    try:
+        edge = float(row.get("Edge %") or 0)
+    except ValueError:
+        return False
+    return UNDERS_MIN_EDGE <= edge < UNDERS_MAX_EDGE
+
+
 # ---------------------------------------------------------------- odds math
 def american_to_prob(odds):
     odds = float(odds)
