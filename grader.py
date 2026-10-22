@@ -128,6 +128,11 @@ def _team_variants(team):
 
 def _team_score(name, team):
     n = normalize_name(name)
+    # Nickname match: ESPN shortens some cities ("LA Clippers") while the Odds API spells them out
+    # ("Los Angeles Clippers"). Nicknames are unique within a league, and both teams must match.
+    nick = normalize_name(team.get("name", ""))
+    if nick and (n == nick or n.endswith(" " + nick)):
+        return 1.0
     return max((similarity(n, normalize_name(v)) for v in _team_variants(team)), default=0.0)
 
 
@@ -270,6 +275,8 @@ def grade_row(row):
         events = [ev for ymd in dates for ev in scoreboard(sport, league, ymd)]
         ev = find_game(row["Game"], events, anchor, exact_start=commence is not None)
         if ev is None:
+            if events and datetime.now(timezone.utc) - anchor > timedelta(hours=6):
+                print(f"  ! no ESPN game matched '{row['Game']}' ({row['Player']}) — check team names")
             continue
         status = ev.get("status", {}).get("type", {})
         if status.get("name") in ("STATUS_POSTPONED", "STATUS_CANCELED", "STATUS_CANCELLED"):
