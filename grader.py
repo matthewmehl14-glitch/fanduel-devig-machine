@@ -22,6 +22,7 @@ from common import (
     ET, GRADED, RULE_MIN_EDGE, RULE_START, meets_rule,
     CANDIDATE_MIN_CONS, CANDIDATE_MIN_EDGE, CANDIDATE_START, meets_candidate,
     DOGS_EDGE_BANDS, DOGS_MAX_ODDS, DOGS_MIN_ODDS, meets_dogs,
+    UNDERS_BACKTEST_FROM, UNDERS_MAX_EDGE, UNDERS_MIN_EDGE, UNDERS_START, meets_unders,
     R5_BACKTEST_FROM, R5_BOOK, R5_MAX_ODDS, R5_MIN_ODDS, R5_START, meets_rule5,
     R3_BACKTEST_FROM, R3_MAX_EDGE, R3_MAX_ODDS, R3_MIN_EDGE, R3_MIN_ODDS, R3_START, meets_rule3, UNIT_SIZE, american_to_decimal, load_rows, match_name,
     normalize_name, parse_american, parse_iso, safe_float, save_rows, similarity,
@@ -622,6 +623,27 @@ def build_report(batch, all_rows):
         r5value = "No graded rule-5 plays yet."
     fields.append({"name": f"😈 Rule 5: {r5_label}", "value": r5value})
 
+    # 5f) Unders — live since UNDERS_START, plus a backtest from UNDERS_BACKTEST_FROM
+    un_all = [r for r in graded if meets_unders(r) and (r["Timestamp"] or "")[:10] >= UNDERS_BACKTEST_FROM]
+    un_live = [r for r in un_all if r["Timestamp"][:10] >= UNDERS_START]
+    un_label = f"Unders, edge {UNDERS_MIN_EDGE:.2f}% to <{UNDERS_MAX_EDGE:.2f}%, no Assists"
+    if un_all:
+        undays = defaultdict(list)
+        for r in un_live:
+            undays[r["Timestamp"][:10]].append(r)
+        bu_live, bu_all = _bucket(un_live), _bucket(un_all)
+        untable = [[f"Since {UNDERS_START[5:]}", _rec(bu_live), _units(bu_live), _roi(bu_live),
+                    _avg(bu_live, "MOVE FD"), _toward(bu_live, "MOVE FD")]]
+        for unday in sorted(undays)[-5:]:
+            b = _bucket(undays[unday])
+            untable.append([unday[5:], _rec(b), _units(b), _roi(b), _avg(b, "MOVE FD"), _toward(b, "MOVE FD")])
+        untable.append([f"Back {UNDERS_BACKTEST_FROM[5:]}+", _rec(bu_all), _units(bu_all), _roi(bu_all),
+                        _avg(bu_all, "MOVE FD"), _toward(bu_all, "MOVE FD")])
+        unvalue = _table(["", "Rec", "Units", "ROI", "Move", "Tw"], untable, [12, 8, 7, 6, 6, 5])
+    else:
+        unvalue = "No graded Unders plays yet."
+    fields.append({"name": f"🏴‍☠️ {un_label}", "value": unvalue})
+
     # 6) Totals
     batch_total = _bucket(batch)
     checks.append(("All-time = Legacy + Pre-test + Test", _same(all_total, _sum([old_total, pre_total, test_total]))))
@@ -715,6 +737,16 @@ def build_report(batch, all_rows):
     r5_table.append([f"Back {R5_BACKTEST_FROM[5:]}+", _rec(back_r5), _units(back_r5), _roi(back_r5)])
     compact.append({"name": f"😈 Rule 5 ({r5_label})",
                     "value": _table(["", "Rec", "Units", "ROI"], r5_table, [12, 7, 7, 6])})
+    un_table = []
+    if day and day >= UNDERS_START:
+        day_un = _bucket([r for r in all_rows if (r["Timestamp"] or "")[:10] == day
+                          and r["Result"] in GRADED and meets_unders(r)])
+        un_table.append(["Today", _rec(day_un), _units(day_un), _roi(day_un)])
+    live_un, back_un = _bucket(un_live), _bucket(un_all)
+    un_table.append([f"Since {UNDERS_START[5:]}", _rec(live_un), _units(live_un), _roi(live_un)])
+    un_table.append([f"Back {UNDERS_BACKTEST_FROM[5:]}+", _rec(back_un), _units(back_un), _roi(back_un)])
+    compact.append({"name": f"🏴‍☠️ {un_label}",
+                    "value": _table(["", "Rec", "Units", "ROI"], un_table, [12, 7, 7, 6])})
     if test:
         compact.append({"name": "🎯 Groups (test to date)",
                         "value": _table(["", "Rec", "Units", "ROI"],
