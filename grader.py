@@ -441,6 +441,29 @@ def _bucket(rows):
     return b
 
 
+UNDERS_OVERLAPS = [
+    ("+ Candidate", meets_candidate),   # plain-text labels: emoji break column alignment in code blocks
+    ("+ Rule 3", meets_rule3),
+    ("+ Mod dogs", meets_dogs),
+    ("+ Rule 5", meets_rule5),
+]
+
+
+def _unders_overlap_table(rows):
+    """Unders plays split by which other tracked rules they also meet. A play can be in several
+    '+' rows (e.g. 🧪 and 🧫), so those rows overlap; 'Unders only' and 'Any overlap' add up to the total."""
+    only = [r for r in rows if not any(f(r) for _, f in UNDERS_OVERLAPS)]
+    anyo = [r for r in rows if any(f(r) for _, f in UNDERS_OVERLAPS)]
+    table = []
+    for label, sub in [("All Unders", rows), ("Unders only", only), ("Any overlap", anyo)]:
+        b = _bucket(sub)
+        table.append([label, _rec(b), _units(b), _roi(b)])
+    for label, f in UNDERS_OVERLAPS:
+        b = _bucket([r for r in rows if f(r)])
+        table.append([f"  {label}", _rec(b), _units(b), _roi(b)])
+    return _table(["", "Rec", "Units", "ROI"], table, [13, 8, 7, 6])
+
+
 def build_report(batch, all_rows):
     """Returns {"fields": [...embed fields...], "text": plain-text version for the log}.
     Every number comes from the same graded rows; a reconciliation check at the end
@@ -643,6 +666,11 @@ def build_report(batch, all_rows):
     else:
         unvalue = "No graded Unders plays yet."
     fields.append({"name": f"🏴‍☠️ {un_label}", "value": unvalue})
+    if un_all:
+        fields.append({"name": f"🏴‍☠️ Unders overlap — since {UNDERS_START[5:]}",
+                       "value": _unders_overlap_table(un_live)})
+        fields.append({"name": f"🏴‍☠️ Unders overlap — back {UNDERS_BACKTEST_FROM[5:]}+",
+                       "value": _unders_overlap_table(un_all)})
 
     # 6) Totals
     batch_total = _bucket(batch)
@@ -747,6 +775,9 @@ def build_report(batch, all_rows):
     un_table.append([f"Back {UNDERS_BACKTEST_FROM[5:]}+", _rec(back_un), _units(back_un), _roi(back_un)])
     compact.append({"name": f"🏴‍☠️ {un_label}",
                     "value": _table(["", "Rec", "Units", "ROI"], un_table, [12, 7, 7, 6])})
+    if un_live:
+        compact.append({"name": f"🏴‍☠️ Unders overlap (since {UNDERS_START[5:]})",
+                        "value": _unders_overlap_table(un_live)})
     if test:
         compact.append({"name": "🎯 Groups (test to date)",
                         "value": _table(["", "Rec", "Units", "ROI"],
