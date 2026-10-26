@@ -22,7 +22,8 @@ from common import (
     ET, GRADED, RULE_MIN_EDGE, RULE_START, meets_rule,
     CANDIDATE_MIN_CONS, CANDIDATE_MIN_EDGE, CANDIDATE_START, meets_candidate,
     DOGS_EDGE_BANDS, DOGS_MAX_ODDS, DOGS_MIN_ODDS, meets_dogs,
-    UNDERS_BACKTEST_FROM, UNDERS_MAX_EDGE, UNDERS_MIN_EDGE, UNDERS_START, meets_unders,
+    UNDERS_BACKTEST_FROM, UNDERS_MAX_EDGE, UNDERS_MAX_ODDS, UNDERS_MIN_EDGE, UNDERS_MIN_ODDS, UNDERS_START,
+    meets_unders,
     R5_BACKTEST_FROM, R5_BOOK, R5_MAX_ODDS, R5_MIN_ODDS, R5_START, meets_rule5,
     R3_BACKTEST_FROM, R3_MAX_EDGE, R3_MAX_ODDS, R3_MIN_EDGE, R3_MIN_ODDS, R3_START, meets_rule3, UNIT_SIZE, american_to_decimal, load_rows, match_name,
     normalize_name, parse_american, parse_iso, safe_float, save_rows, similarity,
@@ -444,7 +445,6 @@ def _bucket(rows):
 UNDERS_OVERLAPS = [
     ("+ Candidate", meets_candidate),   # plain-text labels: emoji break column alignment in code blocks
     ("+ Rule 3", meets_rule3),
-    ("+ Mod dogs", meets_dogs),
     ("+ Rule 5", meets_rule5),
 ]
 
@@ -649,7 +649,8 @@ def build_report(batch, all_rows):
     # 5f) Unders — live since UNDERS_START, plus a backtest from UNDERS_BACKTEST_FROM
     un_all = [r for r in graded if meets_unders(r) and (r["Timestamp"] or "")[:10] >= UNDERS_BACKTEST_FROM]
     un_live = [r for r in un_all if r["Timestamp"][:10] >= UNDERS_START]
-    un_label = f"Unders, edge {UNDERS_MIN_EDGE:.2f}% to <{UNDERS_MAX_EDGE:.2f}%, no Assists"
+    un_label = (f"Unders (FD+Both, edge {UNDERS_MIN_EDGE:g}-<{UNDERS_MAX_EDGE:g}%, "
+                f"odds {UNDERS_MIN_ODDS:+d} to {UNDERS_MAX_ODDS:+d}, no Ast/Saves/3s)")
     if un_all:
         undays = defaultdict(list)
         for r in un_live:
