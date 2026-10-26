@@ -134,17 +134,23 @@ def meets_rule5(row):
 
 
 # ---------------------------------------------------------------- unders (tracking only)
-# Unders with logged edge 3.00% <= edge < 5.00%, any method, excluding the Assists market.
-# Current scanner only (rows with an Event ID). Not starred, not bet.
+# Unders on 🎯 FD and 🎯🧮 BOTH plays, logged edge 3.00% <= edge < 5.00%, odds -149 to +125,
+# excluding the Assists, Total Saves and Threes markets. Current scanner only (rows with an
+# Event ID). Not starred, not bet.
+UNDERS_METHODS = {"fd", "both"}
 UNDERS_MIN_EDGE = 3.0        # inclusive
 UNDERS_MAX_EDGE = 5.0        # exclusive
-UNDERS_EXCLUDE_MARKETS = {"Assists"}   # exact market names; "Points Rebounds Assists" still counts
-UNDERS_START = "2026-10-22"  # live tracking starts
+UNDERS_MIN_ODDS = -149       # American odds, inclusive: -149 ... -100, +100 ... +125
+UNDERS_MAX_ODDS = 125
+UNDERS_EXCLUDE_MARKETS = {"Assists", "Total Saves", "Threes"}   # exact names; "Points Rebounds Assists" still counts
+UNDERS_START = "2026-10-26"  # live tracking starts (rule revised Oct 25)
 UNDERS_BACKTEST_FROM = "2026-10-05"
 
 
 def meets_unders(row):
     if not (row.get("Event ID") or "").strip():
+        return False
+    if row.get("Method") not in UNDERS_METHODS:
         return False
     if (row.get("Side") or "").strip().lower() != "under":
         return False
@@ -152,9 +158,13 @@ def meets_unders(row):
         return False
     try:
         edge = float(row.get("Edge %") or 0)
+        odds = float(str(row.get("Odds") or "").replace("+", "").strip())
     except ValueError:
         return False
-    return UNDERS_MIN_EDGE <= edge < UNDERS_MAX_EDGE
+    if not (UNDERS_MIN_EDGE <= edge < UNDERS_MAX_EDGE):
+        return False
+    # American odds skip the gap between -100 and +100.
+    return (UNDERS_MIN_ODDS <= odds <= -100) or (100 <= odds <= UNDERS_MAX_ODDS)
 
 
 # ---------------------------------------------------------------- odds math
