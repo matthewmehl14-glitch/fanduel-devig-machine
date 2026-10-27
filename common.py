@@ -134,10 +134,10 @@ def meets_rule5(row):
 
 
 # ---------------------------------------------------------------- unders (tracking only)
-# Unders on 🎯 FD and 🎯🧮 BOTH plays, logged edge 3.00% <= edge < 5.00%, odds -149 to +125,
+# Unders on 🎯 FD plays only (not BOTH), logged edge 3.00% <= edge < 5.00%, odds -149 to +125,
 # excluding the Assists, Total Saves and Threes markets. Current scanner only (rows with an
 # Event ID). Not starred, not bet.
-UNDERS_METHODS = {"fd", "both"}
+UNDERS_METHODS = {"fd"}
 UNDERS_MIN_EDGE = 3.0        # inclusive
 UNDERS_MAX_EDGE = 5.0        # exclusive
 UNDERS_MIN_ODDS = -149       # American odds, inclusive: -149 ... -100, +100 ... +125
