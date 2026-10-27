@@ -57,7 +57,7 @@ MIN_UNITS = 0.10
 
 # Credit control. Each game costs ~1 credit per prop market with odds posted,
 # so only games starting soon are scanned. Hourly scans see every game ~3 times.
-LOOKAHEAD_HOURS = 12      # scan games starting within this many hours
+LOOKAHEAD_HOURS = 15      # scan games starting within this many hours
 QUOTA_RESERVE = 200      # stop fetching odds if remaining credits drop below this
 
 SPORTS_CONFIG = {
@@ -74,6 +74,15 @@ SPORTS_CONFIG = {
 # Remove a sport from this set to turn it back on. Its markets above stay as they are.
 PAUSED_SPORTS = {
     "americanfootball_ncaaf",
+}
+
+
+# Sides never logged for these markets (Overs lost in both halves of the log; Unders were fine).
+# Market names as they appear in the log. Remove an entry to start logging those Overs again.
+SKIP_SIDES = {
+    "Total Saves": {"Over"},
+    "Assists": {"Over"},          # exact market only; "Points Rebounds Assists" Overs still log
+    "Threes": {"Over"},
 }
 
 
@@ -247,10 +256,13 @@ def find_edges(lines):
     out = []
     for (m_key, player, pt), quotes in lines.items():
         cons_allowed = anchors_ok(quotes)
+        skip = SKIP_SIDES.get(format_market_name(m_key), set())
         for bkey, q in quotes.items():
             if not q["fresh"]:
                 continue
             for side in ("Over", "Under"):
+                if side in skip:
+                    continue  # filtered here, before the one-play-per-player pick, so Unders still log
                 price = q.get(side)
                 if price is None:
                     continue
