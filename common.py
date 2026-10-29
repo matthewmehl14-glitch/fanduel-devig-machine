@@ -17,7 +17,7 @@ CT = ZoneInfo("America/Chicago")
 ET = ZoneInfo("America/New_York")
 
 CSV_FILENAME = "ev_plays_log.csv"
-UNIT_SIZE = 35.00
+UNIT_SIZE = 25.00
 
 FIELDNAMES = [
     "Timestamp", "Sport", "Event ID", "Commence Time", "Game", "Market", "Player",
@@ -134,7 +134,8 @@ def meets_rule5(row):
 
 
 # ---------------------------------------------------------------- unders (tracking only)
-# Unders on 🎯 FD plays only (not BOTH), logged edge 3.00% <= edge < 5.00%, odds -149 to +125,
+# Unders on 🎯 FD disagreed plays only (method "fd" AND the consensus priced the prop, so not SOLO,
+# not BOTH, not CONS), logged edge 3.00% <= edge < 5.00%, odds -149 to +125,
 # excluding the Assists, Total Saves and Threes markets. Current scanner only (rows with an
 # Event ID). Not starred, not bet.
 UNDERS_METHODS = {"fd"}
@@ -152,6 +153,8 @@ def meets_unders(row):
         return False
     if row.get("Method") not in UNDERS_METHODS:
         return False
+    if not (row.get("Cons Edge %") or "").strip():
+        return False  # FD SOLO: the consensus couldn't price it
     if (row.get("Side") or "").strip().lower() != "under":
         return False
     if (row.get("Market") or "").strip() in UNDERS_EXCLUDE_MARKETS:
