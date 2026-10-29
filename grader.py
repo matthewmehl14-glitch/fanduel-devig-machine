@@ -649,7 +649,7 @@ def build_report(batch, all_rows):
     # 5f) Unders — live since UNDERS_START, plus a backtest from UNDERS_BACKTEST_FROM
     un_all = [r for r in graded if meets_unders(r) and (r["Timestamp"] or "")[:10] >= UNDERS_BACKTEST_FROM]
     un_live = [r for r in un_all if r["Timestamp"][:10] >= UNDERS_START]
-    un_label = (f"Unders (FD only, edge {UNDERS_MIN_EDGE:g}-<{UNDERS_MAX_EDGE:g}%, "
+    un_label = (f"Unders (FD disagreed, edge {UNDERS_MIN_EDGE:g}-<{UNDERS_MAX_EDGE:g}%, "
                 f"odds {UNDERS_MIN_ODDS:+d} to {UNDERS_MAX_ODDS:+d}, no Ast/Saves/3s)")
     if un_all:
         undays = defaultdict(list)
