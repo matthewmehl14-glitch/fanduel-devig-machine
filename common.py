@@ -17,7 +17,7 @@ CT = ZoneInfo("America/Chicago")
 ET = ZoneInfo("America/New_York")
 
 CSV_FILENAME = "ev_plays_log.csv"
-UNIT_SIZE = 25.00
+UNIT_SIZE = 35.00
 
 FIELDNAMES = [
     "Timestamp", "Sport", "Event ID", "Commence Time", "Game", "Market", "Player",
