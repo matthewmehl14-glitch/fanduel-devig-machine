@@ -17,7 +17,7 @@ CT = ZoneInfo("America/Chicago")
 ET = ZoneInfo("America/New_York")
 
 CSV_FILENAME = "ev_plays_log.csv"
-UNIT_SIZE = 35.00
+UNIT_SIZE = 30.00
 
 FIELDNAMES = [
     "Timestamp", "Sport", "Event ID", "Commence Time", "Game", "Market", "Player",
@@ -144,7 +144,7 @@ UNDERS_MAX_EDGE = 5.0        # exclusive
 UNDERS_MIN_ODDS = -149       # American odds, inclusive: -149 ... -100, +100 ... +125
 UNDERS_MAX_ODDS = 125
 UNDERS_EXCLUDE_MARKETS = {"Assists", "Total Saves", "Threes"}   # exact names; "Points Rebounds Assists" still counts
-UNDERS_START = "2026-10-29"  # live tracking starts (rule revised Oct 25)
+UNDERS_START = "2026-10-26"  # live tracking starts (rule revised Oct 25)
 UNDERS_BACKTEST_FROM = "2026-10-05"
 
 
@@ -168,6 +168,37 @@ def meets_unders(row):
         return False
     # American odds skip the gap between -100 and +100.
     return (UNDERS_MIN_ODDS <= odds <= -100) or (100 <= odds <= UNDERS_MAX_ODDS)
+
+
+# ---------------------------------------------------------------- hope (tracking only)
+# Every Under (any sport, any method) plus NFL Receptions and Rush Yds Overs; no NFL Reception Yds
+# on either side; logged edge 4.5% to 7.0% (both inclusive). Current scanner only (rows with an
+# Event ID). Not starred, not bet.
+HOPE_MIN_EDGE = 4.5
+HOPE_MAX_EDGE = 7.0
+HOPE_NFL_OVER_MARKETS = {"Receptions", "Rush Yds"}
+HOPE_NFL_CUT_MARKETS = {"Reception Yds"}
+HOPE_START = "2026-10-30"    # live tracking starts
+HOPE_BACKTEST_FROM = "2026-10-05"
+
+
+def meets_hope(row):
+    if not (row.get("Event ID") or "").strip():
+        return False
+    nfl = row.get("Sport") == "americanfootball_nfl"
+    market = (row.get("Market") or "").strip()
+    if nfl and market in HOPE_NFL_CUT_MARKETS:
+        return False
+    try:
+        edge = float(row.get("Edge %") or 0)
+    except ValueError:
+        return False
+    if not (HOPE_MIN_EDGE <= edge <= HOPE_MAX_EDGE):
+        return False
+    side = (row.get("Side") or "").strip().lower()
+    if side == "under":
+        return True
+    return nfl and side == "over" and market in HOPE_NFL_OVER_MARKETS
 
 
 # ---------------------------------------------------------------- odds math
