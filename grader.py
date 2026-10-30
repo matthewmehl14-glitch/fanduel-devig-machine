@@ -24,6 +24,7 @@ from common import (
     DOGS_EDGE_BANDS, DOGS_MAX_ODDS, DOGS_MIN_ODDS, meets_dogs,
     UNDERS_BACKTEST_FROM, UNDERS_MAX_EDGE, UNDERS_MAX_ODDS, UNDERS_MIN_EDGE, UNDERS_MIN_ODDS, UNDERS_START,
     meets_unders,
+    HOPE_BACKTEST_FROM, HOPE_MAX_EDGE, HOPE_MIN_EDGE, HOPE_START, meets_hope,
     R5_BACKTEST_FROM, R5_BOOK, R5_MAX_ODDS, R5_MIN_ODDS, R5_START, meets_rule5,
     R3_BACKTEST_FROM, R3_MAX_EDGE, R3_MAX_ODDS, R3_MIN_EDGE, R3_MIN_ODDS, R3_START, meets_rule3, UNIT_SIZE, american_to_decimal, load_rows, match_name,
     normalize_name, parse_american, parse_iso, safe_float, save_rows, similarity,
@@ -646,6 +647,28 @@ def build_report(batch, all_rows):
         r5value = "No graded rule-5 plays yet."
     fields.append({"name": f"😈 Rule 5: {r5_label}", "value": r5value})
 
+    # 5g) Hope — live since HOPE_START, plus a backtest from HOPE_BACKTEST_FROM
+    hope_all = [r for r in graded if meets_hope(r) and (r["Timestamp"] or "")[:10] >= HOPE_BACKTEST_FROM]
+    hope_live = [r for r in hope_all if r["Timestamp"][:10] >= HOPE_START]
+    hope_label = (f"Hope (all Unders + NFL Rec/Rush Yds Overs, no NFL Rec Yds, "
+                  f"edge {HOPE_MIN_EDGE:g}-{HOPE_MAX_EDGE:g}%)")
+    if hope_all:
+        hdays = defaultdict(list)
+        for r in hope_live:
+            hdays[r["Timestamp"][:10]].append(r)
+        bh_live, bh_all = _bucket(hope_live), _bucket(hope_all)
+        htable = [[f"Since {HOPE_START[5:]}", _rec(bh_live), _units(bh_live), _roi(bh_live),
+                   _avg(bh_live, "MOVE FD"), _toward(bh_live, "MOVE FD")]]
+        for hday in sorted(hdays)[-5:]:
+            b = _bucket(hdays[hday])
+            htable.append([hday[5:], _rec(b), _units(b), _roi(b), _avg(b, "MOVE FD"), _toward(b, "MOVE FD")])
+        htable.append([f"Back {HOPE_BACKTEST_FROM[5:]}+", _rec(bh_all), _units(bh_all), _roi(bh_all),
+                       _avg(bh_all, "MOVE FD"), _toward(bh_all, "MOVE FD")])
+        hvalue = _table(["", "Rec", "Units", "ROI", "Move", "Tw"], htable, [12, 8, 7, 6, 6, 5])
+    else:
+        hvalue = "No graded Hope plays yet."
+    fields.append({"name": f"👻 {hope_label}", "value": hvalue})
+
     # 5f) Unders — live since UNDERS_START, plus a backtest from UNDERS_BACKTEST_FROM
     un_all = [r for r in graded if meets_unders(r) and (r["Timestamp"] or "")[:10] >= UNDERS_BACKTEST_FROM]
     un_live = [r for r in un_all if r["Timestamp"][:10] >= UNDERS_START]
@@ -766,6 +789,16 @@ def build_report(batch, all_rows):
     r5_table.append([f"Back {R5_BACKTEST_FROM[5:]}+", _rec(back_r5), _units(back_r5), _roi(back_r5)])
     compact.append({"name": f"😈 Rule 5 ({r5_label})",
                     "value": _table(["", "Rec", "Units", "ROI"], r5_table, [12, 7, 7, 6])})
+    hope_table = []
+    if day and day >= HOPE_START:
+        day_hope = _bucket([r for r in all_rows if (r["Timestamp"] or "")[:10] == day
+                            and r["Result"] in GRADED and meets_hope(r)])
+        hope_table.append(["Today", _rec(day_hope), _units(day_hope), _roi(day_hope)])
+    live_hope, back_hope = _bucket(hope_live), _bucket(hope_all)
+    hope_table.append([f"Since {HOPE_START[5:]}", _rec(live_hope), _units(live_hope), _roi(live_hope)])
+    hope_table.append([f"Back {HOPE_BACKTEST_FROM[5:]}+", _rec(back_hope), _units(back_hope), _roi(back_hope)])
+    compact.append({"name": f"👻 {hope_label}",
+                    "value": _table(["", "Rec", "Units", "ROI"], hope_table, [12, 8, 7, 6])})
     un_table = []
     if day and day >= UNDERS_START:
         day_un = _bucket([r for r in all_rows if (r["Timestamp"] or "")[:10] == day
