@@ -19,7 +19,7 @@ import requests
 
 from common import (
     CT, UNIT_SIZE, american_to_decimal, american_to_prob, fmt_american,
-    load_rows, match_name, meets_candidate, meets_dogs, meets_rule, meets_rule3, meets_rule5, meets_unders, normalize_name, parse_american, parse_iso,
+    load_rows, match_name, meets_candidate, meets_dogs, meets_rule, meets_hope, meets_rule3, meets_rule5, meets_unders, normalize_name, parse_american, parse_iso,
     play_key, prob_to_american, safe_float, save_rows,
 )
 
@@ -359,16 +359,17 @@ def fmt_start(commence):
 def send_discord_digest(new_rows, run_ts):
     if not DISCORD_WEBHOOK_URL or not new_rows:
         return
-    # ⭐ BET plays first, then 🧪 candidate, 🧫 rule 3, 🐶 moderate dogs, 😈 rule 5, 🏴‍☠️ unders, then the rest
-    plays = sorted(new_rows, key=lambda r: (not meets_rule(r), not meets_candidate(r), not meets_rule3(r),
-                                            not meets_dogs(r), not meets_rule5(r), not meets_unders(r),
-                                            -float(r["Edge %"])))
+    # ⭐ BET plays first, then 👻 hope, 🧪 candidate, 🧫 rule 3, 🐶 moderate dogs, 😈 rule 5, 🏴‍☠️ unders, the rest
+    plays = sorted(new_rows, key=lambda r: (not meets_rule(r), not meets_hope(r), not meets_candidate(r),
+                                            not meets_rule3(r), not meets_dogs(r), not meets_rule5(r),
+                                            not meets_unders(r), -float(r["Edge %"])))
     n_bet = sum(meets_rule(r) for r in plays)
     n_cand = sum(meets_candidate(r) for r in plays)
     n_r3 = sum(meets_rule3(r) for r in plays)
     n_dog = sum(meets_dogs(r) for r in plays)
     n_r5 = sum(meets_rule5(r) for r in plays)
     n_un = sum(meets_unders(r) for r in plays)
+    n_hope = sum(meets_hope(r) for r in plays)
     chunk_size = 15
     total_chunks = (len(plays) + chunk_size - 1) // chunk_size
     for i in range(0, len(plays), chunk_size):
@@ -379,7 +380,8 @@ def send_discord_digest(new_rows, run_ts):
             tag = {"fd": "🎯 FD", "consensus": "🧮 CONS", "both": "🎯🧮 BOTH"}.get(r.get("Method"), "")
             if r.get("Method") == "fd" and not r.get("Cons Edge %"):
                 tag = "🎯 FD ⚠️ SOLO"   # consensus couldn't price this prop: FanDuel is the only sharp price
-            star = (("⭐ **BET** " if meets_rule(r) else "") + ("🧪 " if meets_candidate(r) else "")
+            star = (("⭐ **BET** " if meets_rule(r) else "") + ("👻 " if meets_hope(r) else "")
+                    + ("🧪 " if meets_candidate(r) else "")
                     + ("🧫 " if meets_rule3(r) else "") + ("🐶 " if meets_dogs(r) else "")
                     + ("😈 " if meets_rule5(r) else "") + ("🏴‍☠️ " if meets_unders(r) else ""))
             out.append(
@@ -389,7 +391,7 @@ def send_discord_digest(new_rows, run_ts):
             )
         part = f" (Part {i // chunk_size + 1}/{total_chunks})" if total_chunks > 1 else ""
         embed = {
-            "title": f"🚨 +EV Prop Digest — ⭐ {n_bet} to bet • 🧪 {n_cand} • 🧫 {n_r3} • 🐶 {n_dog} • 😈 {n_r5} • 🏴‍☠️ {n_un} / {len(plays)} logged{part}",
+            "title": f"🚨 +EV Prop Digest — ⭐ {n_bet} to bet • 👻 {n_hope} • 🧪 {n_cand} • 🧫 {n_r3} • 🐶 {n_dog} • 😈 {n_r5} • 🏴‍☠️ {n_un} / {len(plays)} logged{part}",
             # credits line at the top of the first message, above the plays
             "description": ((f"**{credit_summary()}**\n\n" if i == 0 else "") + "\n\n".join(out))[:4000],
             "color": 65280,
