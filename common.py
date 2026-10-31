@@ -17,7 +17,7 @@ CT = ZoneInfo("America/Chicago")
 ET = ZoneInfo("America/New_York")
 
 CSV_FILENAME = "ev_plays_log.csv"
-UNIT_SIZE = 30.00
+UNIT_SIZE = 35.00
 
 FIELDNAMES = [
     "Timestamp", "Sport", "Event ID", "Commence Time", "Game", "Market", "Player",
@@ -143,8 +143,10 @@ UNDERS_MIN_EDGE = 3.0        # inclusive
 UNDERS_MAX_EDGE = 5.0        # exclusive
 UNDERS_MIN_ODDS = -149       # American odds, inclusive: -149 ... -100, +100 ... +125
 UNDERS_MAX_ODDS = 125
-UNDERS_EXCLUDE_MARKETS = {"Assists", "Total Saves", "Threes"}   # exact names; "Points Rebounds Assists" still counts
-UNDERS_START = "2026-10-26"  # live tracking starts (rule revised Oct 25)
+UNDERS_EXCLUDE_MARKETS = {"Assists", "Total Saves", "Threes",                  # exact names
+                          "Rebounds", "Points Rebounds", "Points Rebounds Assists",
+                          "Points Assists", "Rebounds Assists"}                # rebounds + combo stats (Oct 31)
+UNDERS_START = "2026-10-31"  # live tracking starts (rule revised Oct 31: no rebounds/combos)
 UNDERS_BACKTEST_FROM = "2026-10-05"
 
 
