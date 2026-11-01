@@ -42,7 +42,9 @@ ESPN_LEAGUES = {
     "icehockey_nhl_preseason": ("hockey", "nhl"),
     "americanfootball_nfl": ("football", "nfl"),
     "americanfootball_ncaaf": ("football", "college-football"),
+    "basketball_ncaab": ("basketball", "mens-college-basketball"),
 }
+COLLEGE_LEAGUES = {"college-football", "mens-college-basketball"}
 
 # For old rows logged before the Sport column existed
 _NBA, _WNBA, _NHL = ("basketball", "nba"), ("basketball", "wnba"), ("hockey", "nhl")
@@ -102,7 +104,12 @@ def scoreboard(sport, league, ymd):
     key = (sport, league, ymd)
     if key not in _scoreboards:
         base = f"{ESPN}/{sport}/{league}/scoreboard?dates={ymd}&limit=300"
-        urls = [f"{base}&groups=80", f"{base}&groups=81"] if league == "college-football" else [base]
+        if league == "college-football":
+            urls = [f"{base}&groups=80", f"{base}&groups=81"]   # FBS + FCS
+        elif league == "mens-college-basketball":
+            urls = [f"{base}&groups=50"]                        # all of Division I, not just featured games
+        else:
+            urls = [base]
         events, seen = [], set()
         for url in urls:
             for ev in (_get(url) or {}).get("events", []):
@@ -129,17 +136,23 @@ def _team_variants(team):
     ) if v.strip()]
 
 
-def _team_score(name, team):
+def _team_score(name, team, college=False):
     n = normalize_name(name)
     # Nickname match: ESPN shortens some cities ("LA Clippers") while the Odds API spells them out
-    # ("Los Angeles Clippers"). Nicknames are unique within a league, and both teams must match.
+    # ("Los Angeles Clippers"). Nicknames are unique within a pro league, and both teams must match.
+    # College nicknames repeat (dozens of Tigers, Wildcats, Bulldogs), so there the school must match too.
     nick = normalize_name(team.get("name", ""))
     if nick and (n == nick or n.endswith(" " + nick)):
-        return 1.0
+        if not college:
+            return 1.0
+        school = n[: -len(nick)].strip()
+        loc = normalize_name(team.get("location", ""))
+        if school and loc and (school == loc or similarity(school, loc) >= 0.85):
+            return 1.0
     return max((similarity(n, normalize_name(v)) for v in _team_variants(team)), default=0.0)
 
 
-def find_game(game_str, events, anchor, exact_start):
+def find_game(game_str, events, anchor, exact_start, college=False):
     """Match 'Away @ Home' to an ESPN event, using start time to separate
     back-to-backs / same-opponent series."""
     if " @ " not in game_str:
@@ -151,8 +164,8 @@ def find_game(game_str, events, anchor, exact_start):
         if len(comps) != 2:
             continue
         t0, t1 = comps[0].get("team", {}), comps[1].get("team", {})
-        pairs = [(_team_score(away, t0), _team_score(home, t1)),
-                 (_team_score(away, t1), _team_score(home, t0))]
+        pairs = [(_team_score(away, t0, college), _team_score(home, t1, college)),
+                 (_team_score(away, t1, college), _team_score(home, t0, college))]
         a, h = max(pairs, key=lambda x: x[0] + x[1])
         if min(a, h) < 0.75:
             continue
@@ -276,7 +289,8 @@ def grade_row(row):
         if not recipes:
             continue
         events = [ev for ymd in dates for ev in scoreboard(sport, league, ymd)]
-        ev = find_game(row["Game"], events, anchor, exact_start=commence is not None)
+        ev = find_game(row["Game"], events, anchor, exact_start=commence is not None,
+                       college=league in COLLEGE_LEAGUES)
         if ev is None:
             if events and datetime.now(timezone.utc) - anchor > timedelta(hours=6):
                 print(f"  ! no ESPN game matched '{row['Game']}' ({row['Player']}) — check team names")
