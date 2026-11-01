@@ -68,6 +68,7 @@ SPORTS_CONFIG = {
     "icehockey_nhl_preseason": "player_points,player_assists,player_shots_on_goal,player_total_saves",
     "americanfootball_nfl": "player_pass_yds,player_pass_attempts,player_rush_yds,player_rush_attempts,player_reception_yds,player_receptions",
     "americanfootball_ncaaf": "player_pass_yds,player_pass_attempts,player_rush_yds,player_rush_attempts,player_reception_yds,player_receptions",
+    "basketball_ncaab": "player_points",   # men's college basketball, points only (added Oct 31)
 }
 
 # Sports listed here are skipped entirely: no odds requests, no credits spent.
