@@ -17,7 +17,7 @@ CT = ZoneInfo("America/Chicago")
 ET = ZoneInfo("America/New_York")
 
 CSV_FILENAME = "ev_plays_log.csv"
-UNIT_SIZE = 35.00
+UNIT_SIZE = 25.00
 
 FIELDNAMES = [
     "Timestamp", "Sport", "Event ID", "Commence Time", "Game", "Market", "Player",
@@ -26,6 +26,8 @@ FIELDNAMES = [
     "Result", "Net Units", "Actual",
     # side-by-side test columns
     "Method", "FD Edge %", "Cons Edge %", "Close FD Fair %", "CLV FD %",
+    # when the closing-line snapshot was last taken (UTC); the last pre-game scan is the close
+    "Close Time",
 ]
 GRADED = {"WIN", "LOSS", "PUSH", "VOID"}
 
