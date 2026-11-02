@@ -341,6 +341,7 @@ def update_closing_lines(pending_rows, lines):
             got = True
 
         if got:
+            row["Close Time"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
             for q in quotes.values():
                 if q["title"] == row["Bookmaker"] and side in q:
                     row["Close Odds"] = fmt_american(q[side])
@@ -521,7 +522,7 @@ def run():
                     "Method": c["method"],
                     "FD Edge %": f"{c['fd_edge'] * 100:.2f}" if c["fd_edge"] is not None else "",
                     "Cons Edge %": f"{c['cons_edge'] * 100:.2f}" if c["cons_edge"] is not None else "",
-                    "Close FD Fair %": "", "CLV FD %": "",
+                    "Close FD Fair %": "", "CLV FD %": "", "Close Time": "",
                     "_fair": " | ".join(x for x in (
                         f"FD {prob_to_american(c['fd_p'])}" if c["fd_p"] is not None else "",
                         f"Cons {prob_to_american(c['cons_p'])} ({len(c['used'])} bks)" if c["cons_p"] is not None else "",
