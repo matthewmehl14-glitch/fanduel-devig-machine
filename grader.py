@@ -457,6 +457,45 @@ def _bucket(rows):
     return b
 
 
+# ---------------------------------------------------------------- closing line value
+# "CLV %" = the consensus fair price at the last pre-game scan (excluding the book you bet) applied
+# to the odds you got. Positive = your price was better than where the market closed ("beat the close").
+CLV_RULES = [
+    ("Unders", meets_unders, UNDERS_START),
+    ("Hope", meets_hope, HOPE_START),
+    ("My rule", meets_rule, RULE_START),
+    ("Candidate", meets_candidate, CANDIDATE_START),
+    ("Rule 3", meets_rule3, R3_START),
+    ("Rule 5", meets_rule5, R5_START),
+]
+
+
+def _clv_values(rows):
+    return [v for v in (safe_float(r.get("CLV %")) for r in rows) if v is not None]
+
+
+def _clv_row(label, rows):
+    v = _clv_values(rows)
+    if not v:
+        return [label, f"0/{len(rows)}", "—", "—"]
+    beat = sum(x > 0 for x in v) / len(v) * 100
+    return [label, f"{len(v)}/{len(rows)}", f"{beat:.0f}%", f"{sum(v) / len(v):+.2f}"]
+
+
+def _clv_table(rows_by_label):
+    return _table(["", "Closes", "Beat", "Avg CLV"], [_clv_row(l, r) for l, r in rows_by_label], [17, 9, 6, 8])
+
+
+def _close_lead_minutes(rows):
+    """Average minutes between the closing snapshot and game start (rows that have both)."""
+    mins = []
+    for r in rows:
+        ct, st = parse_iso(r.get("Close Time")), parse_iso(r.get("Commence Time"))
+        if ct and st:
+            mins.append((st - ct).total_seconds() / 60)
+    return (sum(mins) / len(mins), len(mins)) if mins else (None, 0)
+
+
 UNDERS_OVERLAPS = [
     ("+ Candidate", meets_candidate),   # plain-text labels: emoji break column alignment in code blocks
     ("+ Rule 3", meets_rule3),
@@ -710,6 +749,23 @@ def build_report(batch, all_rows):
         fields.append({"name": f"🏴‍☠️ Unders overlap — back {UNDERS_BACKTEST_FROM[5:]}+",
                        "value": _unders_overlap_table(un_all)})
 
+    # 5h) Closing line value — does beating the close still predict results? and each rule's rate
+    clv_graded = [r for r in graded if r.get("Method") and safe_float(r.get("CLV %")) is not None]
+    if clv_graded:
+        beat_rows = [r for r in clv_graded if safe_float(r["CLV %"]) > 0]
+        miss_rows = [r for r in clv_graded if safe_float(r["CLV %"]) <= 0]
+        bb, bm = _bucket(beat_rows), _bucket(miss_rows)
+        lead, n_lead = _close_lead_minutes(clv_graded)
+        vtable = _table(["", "Rec", "Units", "ROI"],
+                        [["Beat close", _rec(bb), _units(bb), _roi(bb)],
+                         ["Didn't", _rec(bm), _units(bm), _roi(bm)]], [12, 9, 8, 6])
+        note = (f"\nClose taken ~{lead:.0f} min before start on average ({n_lead} plays with a close time)."
+                if lead is not None else "")
+        fields.append({"name": "📏 Closing line value — does it predict results? (all test plays)",
+                       "value": vtable + note})
+        fields.append({"name": "📏 Beat the close — each rule, backtest + live (all dates)",
+                       "value": _clv_table([(n, [r for r in graded if f(r) and r.get("Method")]) for n, f, _ in CLV_RULES])})
+
     # 6) Totals
     batch_total = _bucket(batch)
     checks.append(("All-time = Legacy + Pre-test + Test", _same(all_total, _sum([old_total, pre_total, test_total]))))
@@ -826,6 +882,18 @@ def build_report(batch, all_rows):
     if un_live:
         compact.append({"name": f"🏴‍☠️ Unders overlap (since {UNDERS_START[5:]})",
                         "value": _unders_overlap_table(un_live)})
+    # Closing line value: how often each rule's price beat where the market closed, since its live start
+    clv_rows = []
+    if day:
+        today_rows = [r for r in all_rows if (r["Timestamp"] or "")[:10] == day and r["Result"] in GRADED
+                      and r.get("Method")]
+        clv_rows.append(("Today, all", today_rows))
+        clv_rows.append(("Today, Unders", [r for r in today_rows if meets_unders(r)]))
+    for name, f, start in CLV_RULES:
+        clv_rows.append((f"{name} {start[5:]}+",
+                         [r for r in graded if f(r) and (r["Timestamp"] or "")[:10] >= start]))
+    compact.append({"name": "📏 Beat the close (live since each rule's start)",
+                    "value": _clv_table(clv_rows)})
     if test:
         compact.append({"name": "🎯 Groups (test to date)",
                         "value": _table(["", "Rec", "Units", "ROI"],
