@@ -75,6 +75,7 @@ SPORTS_CONFIG = {
 # Remove a sport from this set to turn it back on. Its markets above stay as they are.
 PAUSED_SPORTS = {
     "americanfootball_ncaaf",
+    "basketball_ncaab",          # paused Nov 2 to save credits; remove this line to turn it back on
 }
 
 
