@@ -705,7 +705,7 @@ def build_report(batch, all_rows):
     # 5i) Cha Ching — live since CHA_START, plus a backtest from CHA_BACKTEST_FROM
     cc_all = [r for r in graded if meets_chaching(r) and (r["Timestamp"] or "")[:10] >= CHA_BACKTEST_FROM]
     cc_live = [r for r in cc_all if r["Timestamp"][:10] >= CHA_START]
-    cc_label = "Cha Ching (NBA Points Unders at -105 or longer + NHL Unders with Kelly ≥ 1u)"
+    cc_label = "Cha Ching (NBA Points Unders at -105 or longer + NHL Unders with Kelly ≥ 1u (no Saves))"
     if cc_all:
         cdays = defaultdict(list)
         for r in cc_live:
@@ -856,7 +856,7 @@ def build_report(batch, all_rows):
         return out
 
     compact.append({"name": "🚀 Cha Ching",
-                    "value": "NBA Points Unders at −105 or longer • NHL Unders with Kelly ≥ 1u\n"
+                    "value": "NBA Points Unders at −105 or longer • NHL Unders with Kelly ≥ 1u (no Saves)\n"
                              + _rule_section(meets_chaching, cc_all, cc_live, CHA_START, CHA_BACKTEST_FROM)})
     compact.append({"name": "🏴‍☠️ Unders",
                     "value": "FD disagreed • edge 3–5% • odds −149 to +125 • no Ast/Saves/3s/Reb/combos\n"
