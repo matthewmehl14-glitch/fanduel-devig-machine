@@ -205,6 +205,35 @@ def meets_hope(row):
     return nfl and side == "over" and market in HOPE_NFL_OVER_MARKETS
 
 
+# ---------------------------------------------------------------- cha ching (tracking only)
+# Two parts, one rule:
+#   NBA: Points Unders at -105 or longer (-105 ... -100, or any plus price)
+#   NHL: any Under where the scanner's Kelly stake ("Kelly Units") is 1.0u or more
+# Any method. Current scanner only (rows with an Event ID). Not starred, not bet.
+CHA_NBA_MARKET = "Points"
+CHA_NBA_MIN_ODDS = -105      # American; "-105 or longer" = -105 and anything paying more
+CHA_NHL_MIN_KELLY = 1.0      # units
+CHA_START = "2026-11-03"     # live tracking starts
+CHA_BACKTEST_FROM = "2026-10-05"
+
+
+def meets_chaching(row):
+    if not (row.get("Event ID") or "").strip():
+        return False
+    if (row.get("Side") or "").strip().lower() != "under":
+        return False
+    sport = row.get("Sport")
+    try:
+        if sport == "basketball_nba":
+            odds = float(str(row.get("Odds") or "").replace("+", "").strip())
+            return (row.get("Market") or "").strip() == CHA_NBA_MARKET and odds >= CHA_NBA_MIN_ODDS
+        if sport == "icehockey_nhl":
+            return float(row.get("Kelly Units") or 0) >= CHA_NHL_MIN_KELLY
+    except ValueError:
+        return False
+    return False
+
+
 # ---------------------------------------------------------------- odds math
 def american_to_prob(odds):
     odds = float(odds)
