@@ -25,6 +25,7 @@ from common import (
     UNDERS_BACKTEST_FROM, UNDERS_MAX_EDGE, UNDERS_MAX_ODDS, UNDERS_MIN_EDGE, UNDERS_MIN_ODDS, UNDERS_START,
     meets_unders,
     HOPE_BACKTEST_FROM, HOPE_MAX_EDGE, HOPE_MIN_EDGE, HOPE_START, meets_hope,
+    CHA_BACKTEST_FROM, CHA_START, meets_chaching,
     R5_BACKTEST_FROM, R5_BOOK, R5_MAX_ODDS, R5_MIN_ODDS, R5_START, meets_rule5,
     R3_BACKTEST_FROM, R3_MAX_EDGE, R3_MAX_ODDS, R3_MIN_EDGE, R3_MIN_ODDS, R3_START, meets_rule3, UNIT_SIZE, american_to_decimal, load_rows, match_name,
     normalize_name, parse_american, parse_iso, safe_float, save_rows, similarity,
@@ -461,6 +462,7 @@ def _bucket(rows):
 # "CLV %" = the consensus fair price at the last pre-game scan (excluding the book you bet) applied
 # to the odds you got. Positive = your price was better than where the market closed ("beat the close").
 CLV_RULES = [
+    ("Cha Ching", meets_chaching, CHA_START),
     ("Unders", meets_unders, UNDERS_START),
     ("Hope", meets_hope, HOPE_START),
     ("My rule", meets_rule, RULE_START),
@@ -700,6 +702,29 @@ def build_report(batch, all_rows):
         r5value = "No graded rule-5 plays yet."
     fields.append({"name": f"😈 Rule 5: {r5_label}", "value": r5value})
 
+    # 5i) Cha Ching — live since CHA_START, plus a backtest from CHA_BACKTEST_FROM
+    cc_all = [r for r in graded if meets_chaching(r) and (r["Timestamp"] or "")[:10] >= CHA_BACKTEST_FROM]
+    cc_live = [r for r in cc_all if r["Timestamp"][:10] >= CHA_START]
+    cc_label = "Cha Ching (NBA Points Unders at -105 or longer + NHL Unders with Kelly ≥ 1u)"
+    if cc_all:
+        cdays = defaultdict(list)
+        for r in cc_live:
+            cdays[r["Timestamp"][:10]].append(r)
+        bc_live, bc_all = _bucket(cc_live), _bucket(cc_all)
+        ctable = [[f"Since {CHA_START[5:]}", _rec(bc_live), _units(bc_live), _roi(bc_live)]]
+        for cday in sorted(cdays)[-5:]:
+            b = _bucket(cdays[cday])
+            ctable.append([cday[5:], _rec(b), _units(b), _roi(b)])
+        for part, f in [("  NBA part", lambda r: r.get("Sport") == "basketball_nba"),
+                        ("  NHL part", lambda r: r.get("Sport") == "icehockey_nhl")]:
+            b = _bucket([r for r in cc_all if f(r)])
+            ctable.append([part, _rec(b), _units(b), _roi(b)])
+        ctable.append([f"Back {CHA_BACKTEST_FROM[5:]}+", _rec(bc_all), _units(bc_all), _roi(bc_all)])
+        cvalue = _table(["", "Rec", "Units", "ROI"], ctable, [12, 8, 7, 6])
+    else:
+        cvalue = "No graded Cha Ching plays yet."
+    fields.append({"name": f"🚀 {cc_label}", "value": cvalue})
+
     # 5g) Hope — live since HOPE_START, plus a backtest from HOPE_BACKTEST_FROM
     hope_all = [r for r in graded if meets_hope(r) and (r["Timestamp"] or "")[:10] >= HOPE_BACKTEST_FROM]
     hope_live = [r for r in hope_all if r["Timestamp"][:10] >= HOPE_START]
@@ -813,97 +838,31 @@ def build_report(batch, all_rows):
     if day:
         headline = (f"📊 {label} — {_rec(day_total)} | {_units(day_total)}u "
                     f"(${day_total['units'] * UNIT_SIZE:+.2f}){pend}")
-    rule_total = _bucket(rule_rows)
-    rule_table = []
-    if day and day >= RULE_START:
-        rule_table.append(["Today", _rec(day_rule), _units(day_rule), _roi(day_rule)])
-    rule_table.append([f"Since {RULE_START[5:]}", _rec(rule_total), _units(rule_total), _roi(rule_total)])
-    compact.append({"name": f"⭐ My rule (FD-method, edge ≥{RULE_MIN_EDGE}%)",
-                    "value": _table(["", "Rec", "Units", "ROI"], rule_table, [12, 7, 7, 6])})
-    cand_total = _bucket(cand_rows)
-    cand_table = []
-    if day and day >= CANDIDATE_START:
-        day_cand = _bucket([r for r in all_rows if (r["Timestamp"] or "")[:10] == day
-                            and r["Result"] in GRADED and meets_candidate(r)])
-        cand_table.append(["Today", _rec(day_cand), _units(day_cand), _roi(day_cand)])
-    cand_table.append([f"Since {CANDIDATE_START[5:]}", _rec(cand_total), _units(cand_total), _roi(cand_total)])
-    compact.append({"name": f"🧪 Candidate (FD disagreed, edge ≥{CANDIDATE_MIN_EDGE:g}%, cons ≥{CANDIDATE_MIN_CONS:g}%)",
-                    "value": _table(["", "Rec", "Units", "ROI"], cand_table, [12, 7, 7, 6])})
-    r3_table = []
-    if day and day >= R3_START:
-        day_r3 = _bucket([r for r in all_rows if (r["Timestamp"] or "")[:10] == day
-                          and r["Result"] in GRADED and meets_rule3(r)])
-        r3_table.append(["Today", _rec(day_r3), _units(day_r3), _roi(day_r3)])
-    live_r3 = _bucket(r3_live)
-    back_r3 = _bucket(r3_all)
-    r3_table.append([f"Since {R3_START[5:]}", _rec(live_r3), _units(live_r3), _roi(live_r3)])
-    r3_table.append([f"Back {R3_BACKTEST_FROM[5:]}+", _rec(back_r3), _units(back_r3), _roi(back_r3)])
-    compact.append({"name": f"🧫 Rule 3 ({r3_label})",
-                    "value": _table(["", "Rec", "Units", "ROI"], r3_table, [12, 7, 7, 6])})
-    dog_table = []
-    if day:
-        day_dog = _bucket([r for r in all_rows if (r["Timestamp"] or "")[:10] == day
-                           and r["Result"] in GRADED and meets_dogs(r)])
-        dog_table.append(["Today", _rec(day_dog), _units(day_dog), _roi(day_dog)])
-    hist_dog = _bucket(dog_rows)
-    dog_table.append(["History", _rec(hist_dog), _units(hist_dog), _roi(hist_dog)])
-    compact.append({"name": f"🐶 Moderate dogs ({dog_label})",
-                    "value": _table(["", "Rec", "Units", "ROI"], dog_table, [12, 7, 7, 6])})
-    r5_table = []
-    if day and day >= R5_START:
-        day_r5 = _bucket([r for r in all_rows if (r["Timestamp"] or "")[:10] == day
-                          and r["Result"] in GRADED and meets_rule5(r)])
-        r5_table.append(["Today", _rec(day_r5), _units(day_r5), _roi(day_r5)])
-    live_r5, back_r5 = _bucket(r5_live), _bucket(r5_all)
-    r5_table.append([f"Since {R5_START[5:]}", _rec(live_r5), _units(live_r5), _roi(live_r5)])
-    r5_table.append([f"Back {R5_BACKTEST_FROM[5:]}+", _rec(back_r5), _units(back_r5), _roi(back_r5)])
-    compact.append({"name": f"😈 Rule 5 ({r5_label})",
-                    "value": _table(["", "Rec", "Units", "ROI"], r5_table, [12, 7, 7, 6])})
-    hope_table = []
-    if day and day >= HOPE_START:
-        day_hope = _bucket([r for r in all_rows if (r["Timestamp"] or "")[:10] == day
-                            and r["Result"] in GRADED and meets_hope(r)])
-        hope_table.append(["Today", _rec(day_hope), _units(day_hope), _roi(day_hope)])
-    live_hope, back_hope = _bucket(hope_live), _bucket(hope_all)
-    hope_table.append([f"Since {HOPE_START[5:]}", _rec(live_hope), _units(live_hope), _roi(live_hope)])
-    hope_table.append([f"Back {HOPE_BACKTEST_FROM[5:]}+", _rec(back_hope), _units(back_hope), _roi(back_hope)])
-    compact.append({"name": f"👻 {hope_label}",
-                    "value": _table(["", "Rec", "Units", "ROI"], hope_table, [12, 8, 7, 6])})
-    un_table = []
-    if day and day >= UNDERS_START:
-        day_un = _bucket([r for r in all_rows if (r["Timestamp"] or "")[:10] == day
-                          and r["Result"] in GRADED and meets_unders(r)])
-        un_table.append(["Today", _rec(day_un), _units(day_un), _roi(day_un)])
-    live_un, back_un = _bucket(un_live), _bucket(un_all)
-    un_table.append([f"Since {UNDERS_START[5:]}", _rec(live_un), _units(live_un), _roi(live_un)])
-    un_table.append([f"Back {UNDERS_BACKTEST_FROM[5:]}+", _rec(back_un), _units(back_un), _roi(back_un)])
-    compact.append({"name": f"🏴‍☠️ {un_label}",
-                    "value": _table(["", "Rec", "Units", "ROI"], un_table, [12, 7, 7, 6])})
-    if un_live:
-        compact.append({"name": f"🏴‍☠️ Unders overlap (since {UNDERS_START[5:]})",
-                        "value": _unders_overlap_table(un_live)})
-    # Closing line value: how often each rule's price beat where the market closed, since its live start
-    clv_rows = []
-    if day:
-        today_rows = [r for r in all_rows if (r["Timestamp"] or "")[:10] == day and r["Result"] in GRADED
-                      and r.get("Method")]
-        clv_rows.append(("Today, all", today_rows))
-        clv_rows.append(("Today, Unders", [r for r in today_rows if meets_unders(r)]))
-    for name, f, start in CLV_RULES:
-        clv_rows.append((f"{name} {start[5:]}+",
-                         [r for r in graded if f(r) and (r["Timestamp"] or "")[:10] >= start]))
-    compact.append({"name": "📏 Beat the close (live since each rule's start)",
-                    "value": _clv_table(clv_rows)})
-    if test:
-        compact.append({"name": "🎯 Groups (test to date)",
-                        "value": _table(["", "Rec", "Units", "ROI"],
-                                        [[label_, _rec(b), _units(b), _roi(b)] for label_, b in overlap.items()],
-                                        [12, 7, 7, 6])})
-    if edge_compact:
-        compact.append({"name": "📈 ROI by edge", "value": edge_compact})
-    footer = [f"🏦 All-time: {_rec(all_total)} | {_units(all_total)}u ({_roi(all_total)})"]
-    footer.append("⚠️ **Totals mismatch:** " + "; ".join(failed) if failed else "✅ Totals verified")
-    compact.append({"name": "\u200b", "value": "\n".join(footer)})
+    # Clean card: only 🚀 Cha Ching and 🏴‍☠️ Unders. Everything else lives in the Full report.
+    def _rule_section(test_fn, all_rows_rule, live_rows, start, back_from):
+        tbl = []
+        if day and day >= start:
+            d = _bucket([r for r in all_rows if (r["Timestamp"] or "")[:10] == day
+                         and r["Result"] in GRADED and test_fn(r)])
+            tbl.append(["Today", _rec(d), _units(d), _roi(d)])
+        bl, ba = _bucket(live_rows), _bucket(all_rows_rule)
+        tbl.append([f"Since {start[5:]}", _rec(bl), _units(bl), _roi(bl)])
+        tbl.append([f"Back {back_from[5:]}+", _rec(ba), _units(ba), _roi(ba)])
+        out = _table(["", "Rec", "Units", "ROI"], tbl, [12, 8, 7, 6])
+        v = _clv_values(live_rows)
+        if v:
+            out += (f"\n📏 Beat the close since {start[5:]}: {sum(x > 0 for x in v) / len(v) * 100:.0f}% "
+                    f"of {len(v)} • avg CLV {sum(v) / len(v):+.2f}")
+        return out
+
+    compact.append({"name": "🚀 Cha Ching",
+                    "value": "NBA Points Unders at −105 or longer • NHL Unders with Kelly ≥ 1u\n"
+                             + _rule_section(meets_chaching, cc_all, cc_live, CHA_START, CHA_BACKTEST_FROM)})
+    compact.append({"name": "🏴‍☠️ Unders",
+                    "value": "FD disagreed • edge 3–5% • odds −149 to +125 • no Ast/Saves/3s/Reb/combos\n"
+                             + _rule_section(meets_unders, un_all, un_live, UNDERS_START, UNDERS_BACKTEST_FROM)})
+    footer = ("⚠️ **Totals mismatch:** " + "; ".join(failed)) if failed else "✅ Totals verified"
+    compact.append({"name": "\u200b", "value": footer + " • other rules in the Full report"})
 
     return {"fields": fields, "compact": compact, "headline": headline, "text": text}
 
