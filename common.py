@@ -17,7 +17,7 @@ CT = ZoneInfo("America/Chicago")
 ET = ZoneInfo("America/New_York")
 
 CSV_FILENAME = "ev_plays_log.csv"
-UNIT_SIZE = 35.00
+UNIT_SIZE = 25.00
 
 FIELDNAMES = [
     "Timestamp", "Sport", "Event ID", "Commence Time", "Game", "Market", "Player",
@@ -208,11 +208,12 @@ def meets_hope(row):
 # ---------------------------------------------------------------- cha ching (tracking only)
 # Two parts, one rule:
 #   NBA: Points Unders at -105 or longer (-105 ... -100, or any plus price)
-#   NHL: any Under where the scanner's Kelly stake ("Kelly Units") is 1.0u or more
+#   NHL: any Under where the scanner's Kelly stake ("Kelly Units") is 1.0u or more, except Total Saves
 # Any method. Current scanner only (rows with an Event ID). Not starred, not bet.
 CHA_NBA_MARKET = "Points"
 CHA_NBA_MIN_ODDS = -105      # American; "-105 or longer" = -105 and anything paying more
 CHA_NHL_MIN_KELLY = 1.0      # units
+CHA_NHL_EXCLUDE_MARKETS = {"Total Saves"}   # removed Nov 3 (lost in 3 of 4 backtest weeks)
 CHA_START = "2026-11-03"     # live tracking starts
 CHA_BACKTEST_FROM = "2026-10-05"
 
@@ -228,6 +229,8 @@ def meets_chaching(row):
             odds = float(str(row.get("Odds") or "").replace("+", "").strip())
             return (row.get("Market") or "").strip() == CHA_NBA_MARKET and odds >= CHA_NBA_MIN_ODDS
         if sport == "icehockey_nhl":
+            if (row.get("Market") or "").strip() in CHA_NHL_EXCLUDE_MARKETS:
+                return False
             return float(row.get("Kelly Units") or 0) >= CHA_NHL_MIN_KELLY
     except ValueError:
         return False
