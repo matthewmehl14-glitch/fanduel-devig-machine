@@ -19,7 +19,7 @@ import requests
 
 from common import (
     CT, UNIT_SIZE, american_to_decimal, american_to_prob, fmt_american,
-    load_rows, match_name, meets_candidate, meets_chaching, meets_dogs, meets_rule, meets_hope, meets_rule3, meets_rule5, meets_unders, normalize_name, parse_american, parse_iso,
+    load_rows, match_name, STUDY_AGREE_EDGE, meets_candidate, meets_chaching, meets_dogs, meets_rule, meets_hope, meets_rule3, meets_rule5, meets_unders, normalize_name, parse_american, parse_iso,
     play_key, prob_to_american, safe_float, save_rows,
 )
 
@@ -420,14 +420,21 @@ def send_discord_digest(new_rows, run_ts):
             tag = {"fd": "🎯 FD", "consensus": "🧮 CONS", "both": "🎯🧮 BOTH"}.get(r.get("Method"), "")
             if r.get("Method") == "fd" and not r.get("Cons Edge %"):
                 tag = "🎯 FD ⚠️ SOLO"   # consensus couldn't price this prop: FanDuel is the only sharp price
-            star = (("🚀 **CHA CHING** " if meets_chaching(r) else "")
+            st_edge = safe_float(r.get("Study Edge %"))
+            if st_edge is None:
+                st_mark, st_text = "", " • study n/a"
+            elif st_edge >= STUDY_AGREE_EDGE:
+                st_mark, st_text = "✅ ", f" • ✅ study {st_edge:+.2f}%"
+            else:
+                st_mark, st_text = "❌ ", f" • ❌ study {st_edge:+.2f}%"
+            star = (st_mark + ("🚀 **CHA CHING** " if meets_chaching(r) else "")
                     + ("🏴‍☠️ **UNDERS** " if meets_unders(r) else "") + ("⭐ " if meets_rule(r) else "")
                     + ("👻 " if meets_hope(r) else "") + ("🧪 " if meets_candidate(r) else "")
                     + ("🧫 " if meets_rule3(r) else "") + ("🐶 " if meets_dogs(r) else "")
                     + ("😈 " if meets_rule5(r) else ""))
             out.append(
                 f"{star}{icon} **+{r['Edge %']}%** `{tag}` | **{r['Player']}** {r['Side']} {r['Line']} {r['Market']}\n"
-                f"↳ **{r['Odds']}** @ {r['Bookmaker']} • **{r['Kelly Units']}u** (${r['Bet Amount']}) • *{r['_fair']}*\n"
+                f"↳ **{r['Odds']}** @ {r['Bookmaker']} • **{r['Kelly Units']}u** (${r['Bet Amount']}) • *{r['_fair']}*{st_text}\n"
                 f"  *{r['Game']}* • 🕒 {fmt_start(r['Commence Time'])}"
             )
         part = f" (Part {i // chunk_size + 1}/{total_chunks})" if total_chunks > 1 else ""
