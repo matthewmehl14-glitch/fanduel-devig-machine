@@ -39,6 +39,19 @@ BOOK_WEIGHTS = {
     "espnbet": 0.75,
 }
 ANCHOR_BOOKS = {"novig", "fanduel"}
+
+# Shadow "study" weights from the published player-prop study. Only books we already pull are
+# used (Kalshi, ProphetX, Pinnacle and the small books aren't fetched), so this costs no credits.
+# Tracking only: it is logged next to each play and never changes what is logged, staked or marked.
+STUDY_WEIGHTS = {
+    "novig": 7.0,
+    "draftkings": 1.4,
+    "fanduel": 1.0,
+    "caesars": 0.5,
+    "betmgm": 0.0,      # "everything else off"
+    "espnbet": 0.0,     # theScore Bet
+}
+STUDY_MIN_BOOKS = 2       # books with weight > 0 (excluding the one bet) needed for a study price
 KS_BOOKS = ",".join(BOOK_WEIGHTS)
 
 MIN_FAIR_BOOKS = 3        # two-way books (excluding target) needed for a fair line
@@ -209,6 +222,24 @@ def fair_prob(quotes, side, exclude=None):
     return acc / total_w, used
 
 
+def study_fair(quotes, side, exclude=None):
+    """Fair probability under STUDY_WEIGHTS, excluding the book being bet.
+    Returns (prob, [book titles used]) or None. Shadow only."""
+    acc = total_w = 0.0
+    used = []
+    for bkey, q in quotes.items():
+        w = STUDY_WEIGHTS.get(bkey, 0.0)
+        if w <= 0 or bkey == exclude or not q["fresh"] or "Over" not in q or "Under" not in q:
+            continue
+        po, pu = devig_power(american_to_prob(q["Over"]), american_to_prob(q["Under"]))
+        acc += w * (po if side == "Over" else pu)
+        total_w += w
+        used.append(q["title"])
+    if len(used) < STUDY_MIN_BOOKS:
+        return None
+    return acc / total_w, used
+
+
 def kelly_units(p, dec):
     b = dec - 1
     f = (p * b - (1 - p)) / b
@@ -299,7 +330,9 @@ def find_edges(lines):
                 else:
                     method, p, edge = "consensus", cons_p, cons_edge
 
+                st = study_fair(quotes, side, exclude=bkey)   # shadow only; doesn't affect selection
                 out.append({
+                    "study_p": st[0] if st else None, "study_used": st[1] if st else [],
                     "m_key": m_key, "player": player, "raw": q["raw"], "pt": pt,
                     "side": side, "book": q["title"], "price": price, "dec": dec,
                     "p": p, "edge": edge, "used": used, "method": method,
@@ -340,6 +373,11 @@ def update_closing_lines(pending_rows, lines):
             row["Close FD Fair %"] = f"{fd_p * 100:.1f}"
             row["CLV FD %"] = f"{(fd_p * bet_dec - 1) * 100:.2f}"
             got = True
+
+        st = study_fair(quotes, side, exclude=bet_bkey)   # shadow close under study weights
+        if st is not None:
+            row["Study Close Fair %"] = f"{st[0] * 100:.1f}"
+            row["Study CLV %"] = f"{(st[0] * bet_dec - 1) * 100:.2f}"
 
         if got:
             row["Close Time"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -523,6 +561,10 @@ def run():
                     "FD Edge %": f"{c['fd_edge'] * 100:.2f}" if c["fd_edge"] is not None else "",
                     "Cons Edge %": f"{c['cons_edge'] * 100:.2f}" if c["cons_edge"] is not None else "",
                     "Close FD Fair %": "", "CLV FD %": "", "Close Time": "",
+                    "Study Fair %": f"{c['study_p'] * 100:.1f}" if c["study_p"] is not None else "",
+                    "Study Edge %": f"{(c['study_p'] * c['dec'] - 1) * 100:.2f}" if c["study_p"] is not None else "",
+                    "Study Books": ", ".join(c["study_used"]),
+                    "Study Close Fair %": "", "Study CLV %": "",
                     "_fair": " | ".join(x for x in (
                         f"FD {prob_to_american(c['fd_p'])}" if c["fd_p"] is not None else "",
                         f"Cons {prob_to_american(c['cons_p'])} ({len(c['used'])} bks)" if c["cons_p"] is not None else "",
