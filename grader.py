@@ -25,7 +25,7 @@ from common import (
     UNDERS_BACKTEST_FROM, UNDERS_MAX_EDGE, UNDERS_MAX_ODDS, UNDERS_MIN_EDGE, UNDERS_MIN_ODDS, UNDERS_START,
     meets_unders,
     HOPE_BACKTEST_FROM, HOPE_MAX_EDGE, HOPE_MIN_EDGE, HOPE_START, meets_hope,
-    CHA_BACKTEST_FROM, CHA_START, meets_chaching,
+    CHA_BACKTEST_FROM, CHA_START, meets_chaching, STUDY_AGREE_EDGE,
     R5_BACKTEST_FROM, R5_BOOK, R5_MAX_ODDS, R5_MIN_ODDS, R5_START, meets_rule5,
     R3_BACKTEST_FROM, R3_MAX_EDGE, R3_MAX_ODDS, R3_MIN_EDGE, R3_MIN_ODDS, R3_START, meets_rule3, UNIT_SIZE, american_to_decimal, load_rows, match_name,
     normalize_name, parse_american, parse_iso, safe_float, save_rows, similarity,
@@ -499,7 +499,6 @@ def _close_lead_minutes(rows):
 
 
 # ---------------------------------------------------------------- study weights (shadow)
-STUDY_AGREE_EDGE = 3.5   # % — "the study agrees" = study edge at least the scanner's own minimum
 
 
 def _study_table(rows, groups):
