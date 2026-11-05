@@ -17,7 +17,7 @@ CT = ZoneInfo("America/Chicago")
 ET = ZoneInfo("America/New_York")
 
 CSV_FILENAME = "ev_plays_log.csv"
-UNIT_SIZE = 35.00
+UNIT_SIZE = 35.00   # dollars per unit (matches the repo as of Nov 4)
 
 FIELDNAMES = [
     "Timestamp", "Sport", "Event ID", "Commence Time", "Game", "Market", "Player",
@@ -28,6 +28,9 @@ FIELDNAMES = [
     "Method", "FD Edge %", "Cons Edge %", "Close FD Fair %", "CLV FD %",
     # when the closing-line snapshot was last taken (UTC); the last pre-game scan is the close
     "Close Time",
+    # shadow "study" weights (Novig 7, DK 1.4, FanDuel 1, Caesars 0.5; BetMGM/theScore off).
+    # Tracking only: never used to pick, stake, star or mark a play.
+    "Study Fair %", "Study Edge %", "Study Books", "Study Close Fair %", "Study CLV %",
 ]
 GRADED = {"WIN", "LOSS", "PUSH", "VOID"}
 
