@@ -240,6 +240,11 @@ def meets_chaching(row):
     return False
 
 
+# ---------------------------------------------------------------- study weights (shadow)
+# "The study agrees" = the study-weight edge is at least the scanner's own minimum edge.
+STUDY_AGREE_EDGE = 3.5   # percent
+
+
 # ---------------------------------------------------------------- odds math
 def american_to_prob(odds):
     odds = float(odds)
