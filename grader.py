@@ -498,6 +498,22 @@ def _close_lead_minutes(rows):
     return (sum(mins) / len(mins), len(mins)) if mins else (None, 0)
 
 
+# ---------------------------------------------------------------- study weights (shadow)
+STUDY_AGREE_EDGE = 3.5   # % — "the study agrees" = study edge at least the scanner's own minimum
+
+
+def _study_table(rows, groups):
+    """For each group: how plays did when the study weights agreed (study edge >= 3.5%) vs didn't."""
+    out = []
+    for label, f in groups:
+        sub = [r for r in rows if f(r)]
+        agree = [r for r in sub if safe_float(r.get("Study Edge %"), -99) >= STUDY_AGREE_EDGE]
+        disagree = [r for r in sub if safe_float(r.get("Study Edge %"), -99) < STUDY_AGREE_EDGE]
+        ba, bd = _bucket(agree), _bucket(disagree)
+        out.append([label, _rec(ba), _roi(ba), _rec(bd), _roi(bd)])
+    return _table(["", "Agree", "ROI", "Disagree", "ROI"], out, [12, 8, 7, 9, 7])
+
+
 UNDERS_OVERLAPS = [
     ("+ Candidate", meets_candidate),   # plain-text labels: emoji break column alignment in code blocks
     ("+ Rule 3", meets_rule3),
@@ -774,6 +790,28 @@ def build_report(batch, all_rows):
         fields.append({"name": f"🏴‍☠️ Unders overlap — back {UNDERS_BACKTEST_FROM[5:]}+",
                        "value": _unders_overlap_table(un_all)})
 
+    # 5j) Study weights (shadow) — only plays logged after the study columns were added
+    st_rows = [r for r in graded if r.get("Method") and safe_float(r.get("Study Edge %")) is not None]
+    if st_rows:
+        first = min(r["Timestamp"][:10] for r in st_rows)
+        fields.append({"name": f"🔬 Study weights (shadow, since {first[5:]}) — study edge ≥{STUDY_AGREE_EDGE:g}% vs not",
+                       "value": _study_table(st_rows, [("All plays", lambda r: True),
+                                                       ("Cha Ching", meets_chaching),
+                                                       ("Unders", meets_unders)])})
+        cur = _clv_values(st_rows)
+        stc = [v for v in (safe_float(r.get("Study CLV %")) for r in st_rows) if v is not None]
+        sb = [r for r in st_rows if safe_float(r.get("Study CLV %")) is not None]
+        sb_beat, sb_miss = _bucket([r for r in sb if safe_float(r["Study CLV %"]) > 0]), \
+            _bucket([r for r in sb if safe_float(r["Study CLV %"]) <= 0])
+        lines = []
+        if cur:
+            lines.append(f"Current close: beat {sum(v > 0 for v in cur) / len(cur) * 100:.0f}% • avg {sum(cur) / len(cur):+.2f}")
+        if stc:
+            lines.append(f"Study close:   beat {sum(v > 0 for v in stc) / len(stc) * 100:.0f}% • avg {sum(stc) / len(stc):+.2f}")
+            lines.append(f"Beat study close {_rec(sb_beat)} ({_roi(sb_beat)}) • didn't {_rec(sb_miss)} ({_roi(sb_miss)})")
+        if lines:
+            fields.append({"name": "🔬 Study weights — closing line", "value": "```\n" + "\n".join(lines) + "\n```"})
+
     # 5h) Closing line value — does beating the close still predict results? and each rule's rate
     clv_graded = [r for r in graded if r.get("Method") and safe_float(r.get("CLV %")) is not None]
     if clv_graded:
@@ -861,6 +899,24 @@ def build_report(batch, all_rows):
     compact.append({"name": "🏴‍☠️ Unders",
                     "value": "FD disagreed • edge 3–5% • odds −149 to +125 • no Ast/Saves/3s/Reb/combos\n"
                              + _rule_section(meets_unders, un_all, un_live, UNDERS_START, UNDERS_BACKTEST_FROM)})
+    # 🔬 Study weights (shadow) for the two rules on this card
+    st_card = [r for r in graded if r.get("Method") and safe_float(r.get("Study Edge %")) is not None]
+    if st_card:
+        first = min(r["Timestamp"][:10] for r in st_card)
+        groups = [("Cha Ching", meets_chaching), ("Unders", meets_unders)]
+        sval = _study_table(st_card, groups)
+        beats = []
+        for label, f in groups:
+            v = [x for x in (safe_float(r.get("Study CLV %")) for r in st_card if f(r)) if x is not None]
+            if v:
+                beats.append(f"{label} {sum(x > 0 for x in v) / len(v) * 100:.0f}% of {len(v)}")
+        if beats:
+            sval += "\n📏 Beat the study close: " + " • ".join(beats)
+        compact.append({"name": f"🔬 Study weights (shadow, since {first[5:]})",
+                        "value": f"Agree = study edge ≥{STUDY_AGREE_EDGE:g}% too\n" + sval})
+    else:
+        compact.append({"name": "🔬 Study weights (shadow)",
+                        "value": "No plays with study prices yet. They start with plays logged after the update."})
     footer = ("⚠️ **Totals mismatch:** " + "; ".join(failed)) if failed else "✅ Totals verified"
     compact.append({"name": "\u200b", "value": footer + " • other rules in the Full report"})
 
@@ -882,14 +938,27 @@ def send_report(report, n, regrade, title=None, full=False):
     else:
         title = report["headline"] + (" • FULL REGRADE" if regrade else "")
         chosen = report["compact"]
-    embed = {"title": title, "color": 3447003,
-             "fields": [{"name": f["name"], "value": f["value"][:1024], "inline": False} for f in chosen]}
-    if full:
-        embed["footer"] = {"text": LEGEND}
-    try:
-        SESSION.post(DISCORD_WEBHOOK_URL, json={"embeds": [embed]}, timeout=10)
-    except requests.RequestException:
-        pass
+    fields = [{"name": f["name"][:256], "value": f["value"][:1024], "inline": False} for f in chosen]
+    # Discord caps one embed at 6,000 characters and 25 fields, and rejects anything bigger,
+    # so long reports go out as several messages ("1/2", "2/2").
+    pages, page, size = [], [], len(title) + (len(LEGEND) if full else 0)
+    for f in fields:
+        fsize = len(f["name"]) + len(f["value"])
+        if page and (size + fsize > 5500 or len(page) >= 25):
+            pages.append(page)
+            page, size = [], len(title) + (len(LEGEND) if full else 0)
+        page.append(f)
+        size += fsize
+    if page:
+        pages.append(page)
+    for i, pf in enumerate(pages, 1):
+        embed = {"title": title + (f" ({i}/{len(pages)})" if len(pages) > 1 else ""), "color": 3447003, "fields": pf}
+        if full and i == len(pages):
+            embed["footer"] = {"text": LEGEND}
+        try:
+            SESSION.post(DISCORD_WEBHOOK_URL, json={"embeds": [embed]}, timeout=10)
+        except requests.RequestException:
+            pass
 
 
 # ------------------------------------------------------------------ main
