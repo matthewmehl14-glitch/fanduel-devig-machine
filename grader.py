@@ -26,6 +26,7 @@ from common import (
     meets_unders,
     HOPE_BACKTEST_FROM, HOPE_MAX_EDGE, HOPE_MIN_EDGE, HOPE_START, meets_hope,
     CHA_BACKTEST_FROM, CHA_START, meets_chaching, STUDY_AGREE_EDGE,
+    CAL_BACKTEST_FROM, CAL_START, meets_calienta,
     R5_BACKTEST_FROM, R5_BOOK, R5_MAX_ODDS, R5_MIN_ODDS, R5_START, meets_rule5,
     R3_BACKTEST_FROM, R3_MAX_EDGE, R3_MAX_ODDS, R3_MIN_EDGE, R3_MIN_ODDS, R3_START, meets_rule3, UNIT_SIZE, american_to_decimal, load_rows, match_name,
     normalize_name, parse_american, parse_iso, safe_float, save_rows, similarity,
@@ -463,6 +464,7 @@ def _bucket(rows):
 # to the odds you got. Positive = your price was better than where the market closed ("beat the close").
 CLV_RULES = [
     ("Cha Ching", meets_chaching, CHA_START),
+    ("Calienta", meets_calienta, CAL_START),
     ("Unders", meets_unders, UNDERS_START),
     ("Hope", meets_hope, HOPE_START),
     ("My rule", meets_rule, RULE_START),
@@ -740,6 +742,28 @@ def build_report(batch, all_rows):
         cvalue = "No graded Cha Ching plays yet."
     fields.append({"name": f"🚀 {cc_label}", "value": cvalue})
 
+    # 5k) Calienta — live since CAL_START, plus a backtest from CAL_BACKTEST_FROM
+    cal_all = [r for r in graded if meets_calienta(r) and (r["Timestamp"] or "")[:10] >= CAL_BACKTEST_FROM]
+    cal_live = [r for r in cal_all if r["Timestamp"][:10] >= CAL_START]
+    if cal_all:
+        kdays = defaultdict(list)
+        for r in cal_live:
+            kdays[r["Timestamp"][:10]].append(r)
+        bk_live, bk_all = _bucket(cal_live), _bucket(cal_all)
+        ktable = [[f"Since {CAL_START[5:]}", _rec(bk_live), _units(bk_live), _roi(bk_live)]]
+        for kday in sorted(kdays)[-5:]:
+            b = _bucket(kdays[kday])
+            ktable.append([kday[5:], _rec(b), _units(b), _roi(b)])
+        for part, f in [("  NHL part", lambda r: r.get("Sport") == "icehockey_nhl"),
+                        ("  NBA part", lambda r: r.get("Sport") == "basketball_nba")]:
+            b = _bucket([r for r in cal_all if f(r)])
+            ktable.append([part, _rec(b), _units(b), _roi(b)])
+        ktable.append([f"Back {CAL_BACKTEST_FROM[5:]}+", _rec(bk_all), _units(bk_all), _roi(bk_all)])
+        kvalue = _table(["", "Rec", "Units", "ROI"], ktable, [12, 8, 7, 6])
+    else:
+        kvalue = "No graded Calienta plays yet."
+    fields.append({"name": "🚒 Calienta (NHL SOG Unders ≥4%, BOTH or FD • NBA Points Unders, BOTH)", "value": kvalue})
+
     # 5g) Hope — live since HOPE_START, plus a backtest from HOPE_BACKTEST_FROM
     hope_all = [r for r in graded if meets_hope(r) and (r["Timestamp"] or "")[:10] >= HOPE_BACKTEST_FROM]
     hope_live = [r for r in hope_all if r["Timestamp"][:10] >= HOPE_START]
@@ -796,7 +820,8 @@ def build_report(batch, all_rows):
         fields.append({"name": f"🔬 Study weights (shadow, since {first[5:]}) — study edge ≥{STUDY_AGREE_EDGE:g}% vs not",
                        "value": _study_table(st_rows, [("All plays", lambda r: True),
                                                        ("Cha Ching", meets_chaching),
-                                                       ("Unders", meets_unders)])})
+                                                       ("Unders", meets_unders),
+                                                       ("Calienta", meets_calienta)])})
         cur = _clv_values(st_rows)
         stc = [v for v in (safe_float(r.get("Study CLV %")) for r in st_rows) if v is not None]
         sb = [r for r in st_rows if safe_float(r.get("Study CLV %")) is not None]
@@ -898,11 +923,14 @@ def build_report(batch, all_rows):
     compact.append({"name": "🏴‍☠️ Unders",
                     "value": "FD disagreed • edge 3–5% • odds −149 to +125 • no Ast/Saves/3s/Reb/combos\n"
                              + _rule_section(meets_unders, un_all, un_live, UNDERS_START, UNDERS_BACKTEST_FROM)})
+    compact.append({"name": "🚒 Calienta",
+                    "value": "NHL SOG Unders, edge ≥4%, BOTH or FD • NBA Points Unders, BOTH\n"
+                             + _rule_section(meets_calienta, cal_all, cal_live, CAL_START, CAL_BACKTEST_FROM)})
     # 🔬 Study weights (shadow) for the two rules on this card
     st_card = [r for r in graded if r.get("Method") and safe_float(r.get("Study Edge %")) is not None]
     if st_card:
         first = min(r["Timestamp"][:10] for r in st_card)
-        groups = [("Cha Ching", meets_chaching), ("Unders", meets_unders)]
+        groups = [("Cha Ching", meets_chaching), ("Unders", meets_unders), ("Calienta", meets_calienta)]
         sval = _study_table(st_card, groups)
         beats = []
         for label, f in groups:
