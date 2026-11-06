@@ -240,6 +240,37 @@ def meets_chaching(row):
     return False
 
 
+# ---------------------------------------------------------------- calienta (tracking only)
+# Two parts, one rule:
+#   NHL: Shots On Goal Unders, logged edge >= 4%, method BOTH or FD (FD includes disagreed and SOLO)
+#   NBA: Points Unders, method BOTH (any edge the scanner logs, any odds)
+# Current scanner only (rows with an Event ID). Not starred, not bet.
+CAL_NHL_MARKET = "Shots On Goal"
+CAL_NHL_MIN_EDGE = 4.0
+CAL_NHL_METHODS = {"both", "fd"}
+CAL_NBA_MARKET = "Points"
+CAL_NBA_METHODS = {"both"}
+CAL_START = "2026-11-07"     # live tracking starts
+CAL_BACKTEST_FROM = "2026-10-05"
+
+
+def meets_calienta(row):
+    if not (row.get("Event ID") or "").strip():
+        return False
+    if (row.get("Side") or "").strip().lower() != "under":
+        return False
+    sport, market, method = row.get("Sport"), (row.get("Market") or "").strip(), row.get("Method")
+    if sport == "icehockey_nhl":
+        try:
+            edge = float(row.get("Edge %") or 0)
+        except ValueError:
+            return False
+        return market == CAL_NHL_MARKET and method in CAL_NHL_METHODS and edge >= CAL_NHL_MIN_EDGE
+    if sport == "basketball_nba":
+        return market == CAL_NBA_MARKET and method in CAL_NBA_METHODS
+    return False
+
+
 # ---------------------------------------------------------------- study weights (shadow)
 # "The study agrees" = the study-weight edge is at least the scanner's own minimum edge.
 STUDY_AGREE_EDGE = 3.5   # percent
