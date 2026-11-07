@@ -27,6 +27,7 @@ from common import (
     HOPE_BACKTEST_FROM, HOPE_MAX_EDGE, HOPE_MIN_EDGE, HOPE_START, meets_hope,
     CHA_BACKTEST_FROM, CHA_START, meets_chaching, STUDY_AGREE_EDGE,
     CAL_BACKTEST_FROM, CAL_START, meets_calienta,
+    WTF_BACKTEST_FROM, WTF_START, meets_wtf,
     R5_BACKTEST_FROM, R5_BOOK, R5_MAX_ODDS, R5_MIN_ODDS, R5_START, meets_rule5,
     R3_BACKTEST_FROM, R3_MAX_EDGE, R3_MAX_ODDS, R3_MIN_EDGE, R3_MIN_ODDS, R3_START, meets_rule3, UNIT_SIZE, american_to_decimal, load_rows, match_name,
     normalize_name, parse_american, parse_iso, safe_float, save_rows, similarity,
@@ -465,6 +466,7 @@ def _bucket(rows):
 CLV_RULES = [
     ("Cha Ching", meets_chaching, CHA_START),
     ("Calienta", meets_calienta, CAL_START),
+    ("WTF", meets_wtf, WTF_START),
     ("Unders", meets_unders, UNDERS_START),
     ("Hope", meets_hope, HOPE_START),
     ("My rule", meets_rule, RULE_START),
@@ -764,6 +766,31 @@ def build_report(batch, all_rows):
         kvalue = "No graded Calienta plays yet."
     fields.append({"name": "🚒 Calienta (NHL SOG Unders ≥4%, BOTH or FD • NBA Points Unders, BOTH)", "value": kvalue})
 
+    # 5l) WTF — live since WTF_START, plus a backtest from WTF_BACKTEST_FROM
+    wtf_all = [r for r in graded if meets_wtf(r) and (r["Timestamp"] or "")[:10] >= WTF_BACKTEST_FROM]
+    wtf_live = [r for r in wtf_all if r["Timestamp"][:10] >= WTF_START]
+    if wtf_all:
+        wdays = defaultdict(list)
+        for r in wtf_live:
+            wdays[r["Timestamp"][:10]].append(r)
+        bw_live, bw_all = _bucket(wtf_live), _bucket(wtf_all)
+        wtable = [[f"Since {WTF_START[5:]}", _rec(bw_live), _units(bw_live), _roi(bw_live)]]
+        for wday in sorted(wdays)[-5:]:
+            b = _bucket(wdays[wday])
+            wtable.append([wday[5:], _rec(b), _units(b), _roi(b)])
+        for part, sp in [("  NHL part", "icehockey_nhl"), ("  NBA part", "basketball_nba"), ("  NFL part", "americanfootball_nfl")]:
+            b = _bucket([r for r in wtf_all if r.get("Sport") == sp])
+            wtable.append([part, _rec(b), _units(b), _roi(b)])
+        for part, sd in [("  Unders", "Under"), ("  Overs", "Over")]:
+            b = _bucket([r for r in wtf_all if r.get("Side") == sd])
+            wtable.append([part, _rec(b), _units(b), _roi(b)])
+        wtable.append([f"Back {WTF_BACKTEST_FROM[5:]}+", _rec(bw_all), _units(bw_all), _roi(bw_all)])
+        wvalue = _table(["", "Rec", "Units", "ROI"], wtable, [12, 8, 7, 6])
+    else:
+        wvalue = "No graded WTF plays yet."
+    fields.append({"name": "💪 WTF (Configuration A: NHL / NBA / NFL windows on odds, hours out, method, edge)",
+                   "value": wvalue})
+
     # 5g) Hope — live since HOPE_START, plus a backtest from HOPE_BACKTEST_FROM
     hope_all = [r for r in graded if meets_hope(r) and (r["Timestamp"] or "")[:10] >= HOPE_BACKTEST_FROM]
     hope_live = [r for r in hope_all if r["Timestamp"][:10] >= HOPE_START]
@@ -821,7 +848,8 @@ def build_report(batch, all_rows):
                        "value": _study_table(st_rows, [("All plays", lambda r: True),
                                                        ("Cha Ching", meets_chaching),
                                                        ("Unders", meets_unders),
-                                                       ("Calienta", meets_calienta)])})
+                                                       ("Calienta", meets_calienta),
+                                                       ("WTF", meets_wtf)])})
         cur = _clv_values(st_rows)
         stc = [v for v in (safe_float(r.get("Study CLV %")) for r in st_rows) if v is not None]
         sb = [r for r in st_rows if safe_float(r.get("Study CLV %")) is not None]
@@ -926,11 +954,15 @@ def build_report(batch, all_rows):
     compact.append({"name": "🚒 Calienta",
                     "value": "NHL SOG Unders, edge ≥4%, BOTH or FD • NBA Points Unders, BOTH\n"
                              + _rule_section(meets_calienta, cal_all, cal_live, CAL_START, CAL_BACKTEST_FROM)})
+    compact.append({"name": "💪 WTF",
+                    "value": "NHL 5–7.5%, ≤3h or ≥9h out • NBA +100 to +199, 9–12h out • NFL ≥4%, 3–6h out\n"
+                             + _rule_section(meets_wtf, wtf_all, wtf_live, WTF_START, WTF_BACKTEST_FROM)})
     # 🔬 Study weights (shadow) for the two rules on this card
     st_card = [r for r in graded if r.get("Method") and safe_float(r.get("Study Edge %")) is not None]
     if st_card:
         first = min(r["Timestamp"][:10] for r in st_card)
-        groups = [("Cha Ching", meets_chaching), ("Unders", meets_unders), ("Calienta", meets_calienta)]
+        groups = [("Cha Ching", meets_chaching), ("Unders", meets_unders), ("Calienta", meets_calienta),
+                  ("WTF", meets_wtf)]
         sval = _study_table(st_card, groups)
         beats = []
         for label, f in groups:
