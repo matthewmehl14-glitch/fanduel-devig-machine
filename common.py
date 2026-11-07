@@ -271,6 +271,48 @@ def meets_calienta(row):
     return False
 
 
+# ---------------------------------------------------------------- WTF (tracking only)
+# "Configuration A": sport-specific windows on odds, hours before start, method and edge.
+# Either side (Overs and Unders). Hours before start = Commence Time (UTC) minus Timestamp (Central).
+#   NHL: no Total Saves | odds -139..+139 | found <=3h or >=9h before start | fd or both | edge 5.0-7.5%
+#   NBA: no Assists     | odds +100..+199 | found 9-12h before start        | fd or consensus | edge 4.5-7.5%
+#   NFL:                | odds -139..+139 | found 3-6h before start         | fd or consensus | edge >= 4.0%
+# All bounds inclusive. Not starred, not bet.
+WTF_START = "2026-11-07"     # live tracking starts
+WTF_BACKTEST_FROM = "2026-10-15"
+
+
+def hours_before_start(row):
+    """Hours between when a play was logged (Central) and game start (UTC). None if unknown."""
+    try:
+        logged = datetime.strptime((row.get("Timestamp") or "")[:19], "%Y-%m-%d %H:%M:%S").replace(tzinfo=CT)
+    except ValueError:
+        return None
+    start = parse_iso(row.get("Commence Time"))
+    return (start - logged).total_seconds() / 3600 if start else None
+
+
+def meets_wtf(row):
+    sport, market, method = row.get("Sport"), (row.get("Market") or "").strip(), row.get("Method")
+    if sport not in ("icehockey_nhl", "basketball_nba", "americanfootball_nfl"):
+        return False
+    try:
+        odds = float(str(row.get("Odds") or "").replace("+", "").strip())
+        edge = float(row.get("Edge %") or "")
+    except ValueError:
+        return False
+    h = hours_before_start(row)
+    if h is None:
+        return False
+    if sport == "icehockey_nhl":
+        return (market != "Total Saves" and -139 <= odds <= 139 and (h <= 3.0 or h >= 9.0)
+                and method in ("fd", "both") and 5.0 <= edge <= 7.5)
+    if sport == "basketball_nba":
+        return (market != "Assists" and 100 <= odds <= 199 and 9.0 <= h <= 12.0
+                and method in ("fd", "consensus") and 4.5 <= edge <= 7.5)
+    return -139 <= odds <= 139 and 3.0 <= h <= 6.0 and method in ("fd", "consensus") and edge >= 4.0
+
+
 # ---------------------------------------------------------------- study weights (shadow)
 # "The study agrees" = the study-weight edge is at least the scanner's own minimum edge.
 STUDY_AGREE_EDGE = 3.5   # percent
