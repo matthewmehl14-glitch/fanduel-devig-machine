@@ -19,7 +19,7 @@ import requests
 
 from common import (
     CT, UNIT_SIZE, american_to_decimal, american_to_prob, fmt_american,
-    load_rows, match_name, STUDY_AGREE_EDGE, meets_wtf, meets_calienta, meets_candidate, meets_chaching, meets_dogs, meets_rule, meets_hope, meets_rule3, meets_rule5, meets_unders, normalize_name, parse_american, parse_iso,
+    load_rows, match_name, STUDY_AGREE_EDGE, meets_lucky, meets_wtf, meets_calienta, meets_candidate, meets_chaching, meets_dogs, meets_rule, meets_hope, meets_rule3, meets_rule5, meets_unders, normalize_name, parse_american, parse_iso,
     play_key, prob_to_american, safe_float, save_rows,
 )
 
@@ -70,7 +70,7 @@ MIN_UNITS = 0.10
 
 # Credit control. Each game costs ~1 credit per prop market with odds posted,
 # so only games starting soon are scanned. Hourly scans see every game ~3 times.
-LOOKAHEAD_HOURS = 6      # scan games starting within this many hours
+LOOKAHEAD_HOURS = 15      # scan games starting within this many hours
 QUOTA_RESERVE = 200      # stop fetching odds if remaining credits drop below this
 
 SPORTS_CONFIG = {
@@ -402,7 +402,7 @@ def send_discord_digest(new_rows, run_ts):
         return
     # 🚀 Cha Ching first, then 🏴‍☠️ Unders, then everything else. Highest edge first within each group.
     plays = sorted(new_rows, key=lambda r: (not meets_chaching(r), not meets_unders(r), not meets_calienta(r),
-                                            not meets_wtf(r), -float(r["Edge %"])))
+                                            not meets_wtf(r), not meets_lucky(r), -float(r["Edge %"])))
     n_bet = sum(meets_rule(r) for r in plays)
     n_cand = sum(meets_candidate(r) for r in plays)
     n_r3 = sum(meets_rule3(r) for r in plays)
@@ -412,6 +412,7 @@ def send_discord_digest(new_rows, run_ts):
     n_cc = sum(meets_chaching(r) for r in plays)
     n_cal = sum(meets_calienta(r) for r in plays)
     n_wtf = sum(meets_wtf(r) for r in plays)
+    n_lucky = sum(meets_lucky(r) for r in plays)
     n_hope = sum(meets_hope(r) for r in plays)
     chunk_size = 15
     total_chunks = (len(plays) + chunk_size - 1) // chunk_size
@@ -433,6 +434,7 @@ def send_discord_digest(new_rows, run_ts):
             star = (st_mark + ("🚀 **CHA CHING** " if meets_chaching(r) else "")
                     + ("🏴‍☠️ **UNDERS** " if meets_unders(r) else "")
                     + ("🚒 **CALIENTA** " if meets_calienta(r) else "") + ("💪 **WTF** " if meets_wtf(r) else "")
+                    + ("🍀 **LUCKY** " if meets_lucky(r) else "")
                     + ("⭐ " if meets_rule(r) else "")
                     + ("👻 " if meets_hope(r) else "") + ("🧪 " if meets_candidate(r) else "")
                     + ("🧫 " if meets_rule3(r) else "") + ("🐶 " if meets_dogs(r) else "")
@@ -444,7 +446,7 @@ def send_discord_digest(new_rows, run_ts):
             )
         part = f" (Part {i // chunk_size + 1}/{total_chunks})" if total_chunks > 1 else ""
         embed = {
-            "title": f"🚨 +EV Prop Digest — 🚀 {n_cc} Cha Ching • 🏴‍☠️ {n_un} Unders • 🚒 {n_cal} Calienta • 💪 {n_wtf} WTF / {len(plays)} logged{part}",
+            "title": f"🚨 +EV Prop Digest — 🚀 {n_cc} Cha Ching • 🏴‍☠️ {n_un} Unders • 🚒 {n_cal} Calienta • 💪 {n_wtf} WTF • 🍀 {n_lucky} Lucky / {len(plays)} logged{part}",
             # credits line at the top of the first message, above the plays
             "description": ((f"**{credit_summary()}**\n\n" if i == 0 else "") + "\n\n".join(out))[:4000],
             "color": 65280,
