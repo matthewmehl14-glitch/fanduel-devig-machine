@@ -28,6 +28,7 @@ from common import (
     CHA_BACKTEST_FROM, CHA_START, meets_chaching, STUDY_AGREE_EDGE,
     CAL_BACKTEST_FROM, CAL_START, meets_calienta,
     WTF_BACKTEST_FROM, WTF_START, meets_wtf,
+    LUCKY_BACKTEST_FROM, LUCKY_START, meets_lucky,
     R5_BACKTEST_FROM, R5_BOOK, R5_MAX_ODDS, R5_MIN_ODDS, R5_START, meets_rule5,
     R3_BACKTEST_FROM, R3_MAX_EDGE, R3_MAX_ODDS, R3_MIN_EDGE, R3_MIN_ODDS, R3_START, meets_rule3, UNIT_SIZE, american_to_decimal, load_rows, match_name,
     normalize_name, parse_american, parse_iso, safe_float, save_rows, similarity,
@@ -467,6 +468,7 @@ CLV_RULES = [
     ("Cha Ching", meets_chaching, CHA_START),
     ("Calienta", meets_calienta, CAL_START),
     ("WTF", meets_wtf, WTF_START),
+    ("Lucky Charm", meets_lucky, LUCKY_START),
     ("Unders", meets_unders, UNDERS_START),
     ("Hope", meets_hope, HOPE_START),
     ("My rule", meets_rule, RULE_START),
@@ -791,6 +793,31 @@ def build_report(batch, all_rows):
     fields.append({"name": "💪 WTF (Configuration A: NHL / NBA / NFL windows on odds, hours out, method, edge)",
                    "value": wvalue})
 
+    # 5m) Lucky Charm — live since LUCKY_START, plus a backtest from LUCKY_BACKTEST_FROM
+    lc_all = [r for r in graded if meets_lucky(r) and (r["Timestamp"] or "")[:10] >= LUCKY_BACKTEST_FROM]
+    lc_live = [r for r in lc_all if r["Timestamp"][:10] >= LUCKY_START]
+    if lc_all:
+        ldays = defaultdict(list)
+        for r in lc_live:
+            ldays[r["Timestamp"][:10]].append(r)
+        bl_live, bl_all = _bucket(lc_live), _bucket(lc_all)
+        ltable = [[f"Since {LUCKY_START[5:]}", _rec(bl_live), _units(bl_live), _roi(bl_live)]]
+        for lday in sorted(ldays)[-5:]:
+            b = _bucket(ldays[lday])
+            ltable.append([lday[5:], _rec(b), _units(b), _roi(b)])
+        for part, sp in [("  NBA part", "basketball_nba"), ("  NHL part", "icehockey_nhl"), ("  NFL part", "americanfootball_nfl")]:
+            b = _bucket([r for r in lc_all if r.get("Sport") == sp])
+            ltable.append([part, _rec(b), _units(b), _roi(b)])
+        for part, sd in [("  Unders", "Under"), ("  Overs", "Over")]:
+            b = _bucket([r for r in lc_all if r.get("Side") == sd])
+            ltable.append([part, _rec(b), _units(b), _roi(b)])
+        ltable.append([f"Back {LUCKY_BACKTEST_FROM[5:]}+", _rec(bl_all), _units(bl_all), _roi(bl_all)])
+        lvalue = _table(["", "Rec", "Units", "ROI"], ltable, [12, 8, 7, 6])
+    else:
+        lvalue = "No graded Lucky Charm plays yet."
+    fields.append({"name": "🍀 Lucky Charm (sharp consensus • fd floor • Over haircut • NBA/NHL/NFL windows)",
+                   "value": lvalue})
+
     # 5g) Hope — live since HOPE_START, plus a backtest from HOPE_BACKTEST_FROM
     hope_all = [r for r in graded if meets_hope(r) and (r["Timestamp"] or "")[:10] >= HOPE_BACKTEST_FROM]
     hope_live = [r for r in hope_all if r["Timestamp"][:10] >= HOPE_START]
@@ -849,7 +876,8 @@ def build_report(batch, all_rows):
                                                        ("Cha Ching", meets_chaching),
                                                        ("Unders", meets_unders),
                                                        ("Calienta", meets_calienta),
-                                                       ("WTF", meets_wtf)])})
+                                                       ("WTF", meets_wtf),
+                                                       ("Lucky Charm", meets_lucky)])})
         cur = _clv_values(st_rows)
         stc = [v for v in (safe_float(r.get("Study CLV %")) for r in st_rows) if v is not None]
         sb = [r for r in st_rows if safe_float(r.get("Study CLV %")) is not None]
@@ -957,12 +985,15 @@ def build_report(batch, all_rows):
     compact.append({"name": "💪 WTF",
                     "value": "NHL 5–7.5%, ≤3h or ≥9h out • NBA +100 to +199, 9–12h out • NFL ≥4%, 3–6h out\n"
                              + _rule_section(meets_wtf, wtf_all, wtf_live, WTF_START, WTF_BACKTEST_FROM)})
+    compact.append({"name": "🍀 Lucky Charm",
+                    "value": "Sharp consensus • fd floor 2% • Over haircut • NBA/NHL/NFL windows\n"
+                             + _rule_section(meets_lucky, lc_all, lc_live, LUCKY_START, LUCKY_BACKTEST_FROM)})
     # 🔬 Study weights (shadow) for the two rules on this card
     st_card = [r for r in graded if r.get("Method") and safe_float(r.get("Study Edge %")) is not None]
     if st_card:
         first = min(r["Timestamp"][:10] for r in st_card)
         groups = [("Cha Ching", meets_chaching), ("Unders", meets_unders), ("Calienta", meets_calienta),
-                  ("WTF", meets_wtf)]
+                  ("WTF", meets_wtf), ("Lucky Charm", meets_lucky)]
         sval = _study_table(st_card, groups)
         beats = []
         for label, f in groups:
