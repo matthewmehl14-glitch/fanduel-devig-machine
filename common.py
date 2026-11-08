@@ -313,6 +313,81 @@ def meets_wtf(row):
     return -139 <= odds <= 139 and 3.0 <= h <= 6.0 and method in ("fd", "consensus") and edge >= 4.0
 
 
+# ---------------------------------------------------------------- lucky charm (tracking only)
+# Three filters, then one of three sport windows. "Edge" is the logged Edge %; hours out as in WTF.
+# Step 1  Sharp consensus: if Fair Books lists 3+ books, at least 2 must be sharp
+#         (FanDuel, DraftKings, Novig, Pinnacle). 1-2 book fair lines pass.
+# Step 2  fd guardrail: for Method "fd", Cons Edge % (if filled) >= 2.0 and Study Edge % (if filled) >= 2.0.
+# Step 3  No Total Saves. Overs must clear a 1.5-point haircut on True Prob %:
+#         ((True Prob % - 1.5) / 100 * decimal odds - 1) * 100 >= 3.5
+# NBA: Unders only; no Rebounds or Threes; odds -139..+114; >=9h or <=6h out; edge >= 4.5%
+# NHL: Shots On Goal; Under or haircut-passing Over; odds -139..+139; >=6h or <=3h out; edge 4.0-7.5%
+# NFL: any market; Under or haircut-passing Over; odds -139..+139; 1-6h out; fd or consensus; edge 3.5-7.5%
+# All bounds inclusive. Not starred, not bet.
+LUCKY_SHARP_BOOKS = {"FanDuel", "DraftKings", "Novig", "Pinnacle"}
+LUCKY_FLOOR = 2.0            # Step 2 floor for Cons Edge % and Study Edge %, percent
+LUCKY_OVER_HAIRCUT = 1.5     # Step 3, percentage points off True Prob %
+LUCKY_OVER_MIN_EDGE = 3.5    # Step 3, adjusted edge needed for an Over
+LUCKY_START = "2026-11-07"   # live tracking starts
+LUCKY_BACKTEST_FROM = "2026-10-15"
+
+
+def lucky_over_adjusted_edge(row):
+    try:
+        p = float(row.get("True Prob %") or "")
+        odds = float(str(row.get("Odds") or "").replace("+", "").strip())
+    except ValueError:
+        return None
+    dec = odds / 100 + 1 if odds > 0 else 100 / -odds + 1
+    return ((p - LUCKY_OVER_HAIRCUT) / 100 * dec - 1) * 100
+
+
+def meets_lucky(row):
+    sport, market, method = row.get("Sport"), (row.get("Market") or "").strip(), row.get("Method")
+    side = (row.get("Side") or "").strip().lower()
+    if sport not in ("basketball_nba", "icehockey_nhl", "americanfootball_nfl"):
+        return False
+    try:
+        odds = float(str(row.get("Odds") or "").replace("+", "").strip())
+        edge = float(row.get("Edge %") or "")
+    except ValueError:
+        return False
+    # Step 1: sharp consensus
+    books = [b.strip() for b in (row.get("Fair Books") or "").split(",") if b.strip()]
+    if len(books) >= 3 and sum(b in LUCKY_SHARP_BOOKS for b in books) < 2:
+        return False
+    # Step 2: fd guardrail
+    if method == "fd":
+        for col in ("Cons Edge %", "Study Edge %"):
+            v = (row.get(col) or "").strip()
+            if v:
+                try:
+                    if float(v) < LUCKY_FLOOR:
+                        return False
+                except ValueError:
+                    return False
+    # Step 3: market cleanup + Over haircut
+    if market == "Total Saves":
+        return False
+    if side == "over":
+        adj = lucky_over_adjusted_edge(row)
+        if adj is None or adj < LUCKY_OVER_MIN_EDGE:
+            return False
+    elif side != "under":
+        return False
+    h = hours_before_start(row)
+    if h is None:
+        return False
+    if sport == "basketball_nba":
+        return (side == "under" and market not in ("Rebounds", "Threes") and -139 <= odds <= 114
+                and (h >= 9.0 or h <= 6.0) and edge >= 4.5)
+    if sport == "icehockey_nhl":
+        return (market == "Shots On Goal" and -139 <= odds <= 139 and (h >= 6.0 or h <= 3.0)
+                and 4.0 <= edge <= 7.5)
+    return (-139 <= odds <= 139 and 1.0 <= h <= 6.0 and method in ("fd", "consensus")
+            and 3.5 <= edge <= 7.5)
+
+
 # ---------------------------------------------------------------- study weights (shadow)
 # "The study agrees" = the study-weight edge is at least the scanner's own minimum edge.
 STUDY_AGREE_EDGE = 3.5   # percent
