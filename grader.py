@@ -973,15 +973,15 @@ def build_report(batch, all_rows):
                     f"of {len(v)} • avg CLV {sum(v) / len(v):+.2f}")
         return out
 
+    compact.append({"name": "🚒 Calienta  ⬅ main focus",
+                    "value": "NHL SOG Unders, edge ≥4%, BOTH or FD • NBA Points Unders, BOTH\n"
+                             + _rule_section(meets_calienta, cal_all, cal_live, CAL_START, CAL_BACKTEST_FROM)})
     compact.append({"name": "🚀 Cha Ching",
                     "value": "NBA Points Unders at −105 or longer • NHL Unders with Kelly ≥ 1u (no Saves)\n"
                              + _rule_section(meets_chaching, cc_all, cc_live, CHA_START, CHA_BACKTEST_FROM)})
     compact.append({"name": "🏴‍☠️ Unders",
                     "value": "FD disagreed • edge 3–5% • odds −149 to +125 • no Ast/Saves/3s/Reb/combos\n"
                              + _rule_section(meets_unders, un_all, un_live, UNDERS_START, UNDERS_BACKTEST_FROM)})
-    compact.append({"name": "🚒 Calienta",
-                    "value": "NHL SOG Unders, edge ≥4%, BOTH or FD • NBA Points Unders, BOTH\n"
-                             + _rule_section(meets_calienta, cal_all, cal_live, CAL_START, CAL_BACKTEST_FROM)})
     compact.append({"name": "💪 WTF",
                     "value": "NHL 5–7.5%, ≤3h or ≥9h out • NBA +100 to +199, 9–12h out • NFL ≥4%, 3–6h out\n"
                              + _rule_section(meets_wtf, wtf_all, wtf_live, WTF_START, WTF_BACKTEST_FROM)})
@@ -992,7 +992,7 @@ def build_report(batch, all_rows):
     st_card = [r for r in graded if r.get("Method") and safe_float(r.get("Study Edge %")) is not None]
     if st_card:
         first = min(r["Timestamp"][:10] for r in st_card)
-        groups = [("Cha Ching", meets_chaching), ("Unders", meets_unders), ("Calienta", meets_calienta),
+        groups = [("Calienta", meets_calienta), ("Cha Ching", meets_chaching), ("Unders", meets_unders),
                   ("WTF", meets_wtf), ("Lucky Charm", meets_lucky)]
         sval = _study_table(st_card, groups)
         beats = []
