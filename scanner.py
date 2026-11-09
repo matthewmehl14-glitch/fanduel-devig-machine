@@ -400,82 +400,95 @@ def fmt_start(commence):
 DIGEST_BUDGET = 3500   # max UTF-16 units of play text per Discord message (limit is 4,096)
 
 
+def _short_side(r):
+    return f"{'U' if r['Side'] == 'Under' else 'O'} {r['Line']} {r['Market']}"
+
+
+def _method_word(r):
+    if r.get("Method") == "fd":
+        return "FD" if (r.get("Cons Edge %") or "").strip() else "FD SOLO"
+    return {"both": "BOTH", "consensus": "CONS"}.get(r.get("Method"), "")
+
+
+def _study_bit(r):
+    st = safe_float(r.get("Study Edge %"))
+    if st is None:
+        return "study n/a"
+    return f"{'✅' if st >= STUDY_AGREE_EDGE else '❌'} study {st:+.2f}%"
+
+
 def send_discord_digest(new_rows, run_ts):
+    """Clean digest: 🚒 Calienta plays first with full detail, then other card-rule plays on one line
+    each, then everything else on one plain line each. Messages are packed by size, never trimmed."""
     if not DISCORD_WEBHOOK_URL or not new_rows:
         return
-    # 🚀 Cha Ching first, then 🏴‍☠️ Unders, then everything else. Highest edge first within each group.
-    plays = sorted(new_rows, key=lambda r: (not meets_chaching(r), not meets_unders(r), not meets_calienta(r),
-                                            not meets_wtf(r), not meets_lucky(r), -float(r["Edge %"])))
-    n_bet = sum(meets_rule(r) for r in plays)
-    n_cand = sum(meets_candidate(r) for r in plays)
-    n_r3 = sum(meets_rule3(r) for r in plays)
-    n_dog = sum(meets_dogs(r) for r in plays)
-    n_r5 = sum(meets_rule5(r) for r in plays)
-    n_un = sum(meets_unders(r) for r in plays)
-    n_cc = sum(meets_chaching(r) for r in plays)
-    n_cal = sum(meets_calienta(r) for r in plays)
-    n_wtf = sum(meets_wtf(r) for r in plays)
-    n_lucky = sum(meets_lucky(r) for r in plays)
-    n_hope = sum(meets_hope(r) for r in plays)
-    # Build every play's text first, then pack messages by size. Discord caps an embed description at
-    # 4,096 characters and counts some emoji as several, so we stay well under that (DIGEST_BUDGET,
-    # measured in UTF-16 units like Discord) and never trim text: a play that doesn't fit starts the
-    # next message instead of being cut off.
-    entries = []
-    for r in plays:
-        edge = float(r["Edge %"])
-        icon = "🔥" if edge >= 5.0 else ("💎" if edge >= 3.5 else "⬜")
-        tag = {"fd": "🎯 FD", "consensus": "🧮 CONS", "both": "🎯🧮 BOTH"}.get(r.get("Method"), "")
-        if r.get("Method") == "fd" and not r.get("Cons Edge %"):
-            tag = "🎯 FD ⚠️ SOLO"   # consensus couldn't price this prop: FanDuel is the only sharp price
-        st_edge = safe_float(r.get("Study Edge %"))
-        if st_edge is None:
-            st_mark, st_text = "", " • study n/a"
-        elif st_edge >= STUDY_AGREE_EDGE:
-            st_mark, st_text = "✅ ", f" • ✅ study {st_edge:+.2f}%"
-        else:
-            st_mark, st_text = "❌ ", f" • ❌ study {st_edge:+.2f}%"
-        star = (st_mark + ("🚀 **CHA CHING** " if meets_chaching(r) else "")
-                + ("🏴‍☠️ **UNDERS** " if meets_unders(r) else "")
-                + ("🚒 **CALIENTA** " if meets_calienta(r) else "") + ("💪 **WTF** " if meets_wtf(r) else "")
-                + ("🍀 **LUCKY** " if meets_lucky(r) else "")
-                + ("⭐ " if meets_rule(r) else "")
-                + ("👻 " if meets_hope(r) else "") + ("🧪 " if meets_candidate(r) else "")
-                + ("🧫 " if meets_rule3(r) else "") + ("🐶 " if meets_dogs(r) else "")
-                + ("😈 " if meets_rule5(r) else ""))
-        entries.append(
-            f"{star}{icon} **+{r['Edge %']}%** `{tag}` | **{r['Player']}** {r['Side']} {r['Line']} {r['Market']}\n"
-            f"↳ **{r['Odds']}** @ {r['Bookmaker']} • **{r['Kelly Units']}u** (${r['Bet Amount']}) • *{r['_fair']}*{st_text}\n"
-            f"  *{r['Game']}* • 🕒 {fmt_start(r['Commence Time'])}"
-        )
+    cal = sorted([r for r in new_rows if meets_calienta(r)], key=lambda r: -float(r["Edge %"]))
+    other_rules = [("🚀", meets_chaching), ("🏴‍☠️", meets_unders), ("💪", meets_wtf), ("🍀", meets_lucky)]
+    ruled = sorted([r for r in new_rows if not meets_calienta(r) and any(f(r) for _, f in other_rules)],
+                   key=lambda r: (not meets_chaching(r), not meets_unders(r), -float(r["Edge %"])))
+    rest = sorted([r for r in new_rows if not meets_calienta(r) and not any(f(r) for _, f in other_rules)],
+                  key=lambda r: -float(r["Edge %"]))
+    counts = {e: sum(f(r) for r in new_rows) for e, f in other_rules}
+    n_cal = len(cal)
+
+    entries = []   # (text, is_play)
+    if cal:
+        entries.append((f"**🚒 CALIENTA — {n_cal} play{'s' if n_cal != 1 else ''} to focus on**", False))
+        for r in cal:
+            also = "".join(e for e, f in other_rules if f(r))
+            entries.append((
+                f"🚒 **{r['Player']}** {_short_side(r)}\n"
+                f"**{r['Odds']} @ {r['Bookmaker']}** • **{r['Kelly Units']}u (${r['Bet Amount']})** • "
+                f"edge {float(r['Edge %']):.2f}% • {_method_word(r)} • {_study_bit(r)}\n"
+                f"{r['Game']} • 🕒 {fmt_start(r['Commence Time'])}" + (f" • also {also}" if also else ""), True))
+    else:
+        entries.append(("**🚒 No Calienta plays this scan**", False))
+    if ruled:
+        entries.append(("**Other rule plays**", False))
+        for r in ruled:
+            tags = "".join(e for e, f in other_rules if f(r))
+            entries.append((f"{tags} {r['Player']} {_short_side(r)} • {r['Odds']} @ {r['Bookmaker']} • "
+                            f"{r['Kelly Units']}u • {float(r['Edge %']):.2f}% • 🕒 {fmt_start(r['Commence Time'])}", True))
+    if rest:
+        entries.append((f"**Everything else ({len(rest)})**", False))
+        for r in rest:
+            entries.append((f"· {r['Player']} {_short_side(r)} • {r['Odds']} @ {r['Bookmaker']} • "
+                            f"{float(r['Edge %']):.2f}%", True))
 
     def u16(text):
         return len(text.encode("utf-16-le")) // 2
 
     header = f"**{credit_summary()}**\n\n"
     pages, cur, size = [], [], u16(header)
-    for e in entries:
-        add = u16(e) + 2
+    for text, is_play in entries:
+        sep = "\n\n" if (is_play and text.startswith("🚒")) or not is_play else "\n"
+        add = u16(text) + len(sep)
         if cur and size + add > DIGEST_BUDGET:
             pages.append(cur)
             cur, size = [], 0
-        cur.append(e)
+        cur.append((text, is_play, sep))
         size += add
     if cur:
         pages.append(cur)
 
+    total = len(new_rows)
+    title_base = (f"🚒 {n_cal} Calienta • 🚀 {counts['🚀']} • 🏴‍☠️ {counts['🏴‍☠️']} • 💪 {counts['💪']} • "
+                  f"🍀 {counts['🍀']} / {total} logged")
     first = 1
     for i, page in enumerate(pages):
-        last = first + len(page) - 1
+        body = ""
+        for j, (text, is_play, sep) in enumerate(page):
+            body += ("" if j == 0 else sep) + text
+        n_plays = sum(p for _, p, _ in page)
+        last = first + n_plays - 1
         part = f" (Part {i + 1}/{len(pages)})" if len(pages) > 1 else ""
         embed = {
-            "title": f"🚨 +EV Prop Digest — 🚀 {n_cc} Cha Ching • 🏴‍☠️ {n_un} Unders • 🚒 {n_cal} Calienta • 💪 {n_wtf} WTF • 🍀 {n_lucky} Lucky / {len(plays)} logged{part}",
-            # credits line at the top of the first message, above the plays
-            "description": (header if i == 0 else "") + "\n\n".join(page),
-            "color": 65280,
-            "footer": {"text": f"Plays {first}–{last} of {len(plays)} • Scanned {run_ts} CT"},
+            "title": title_base + part,
+            "description": (header if i == 0 else "") + body,
+            "color": 0xE8471C if n_cal else 0x808080,   # fire-truck red when there are Calienta plays
+            "footer": {"text": (f"Plays {first}–{last} of {total} • " if n_plays else "") + f"Scanned {run_ts} CT"},
         }
-        first = last + 1
+        first = last + 1 if n_plays else first
         try:
             resp = SESSION.post(DISCORD_WEBHOOK_URL, json={"embeds": [embed]}, timeout=10)
             if getattr(resp, "status_code", 204) >= 300:
