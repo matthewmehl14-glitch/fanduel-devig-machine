@@ -989,11 +989,11 @@ def build_report(batch, all_rows):
     compact.append({"name": "🍀 Lucky Charm",
                     "value": "Sharp consensus • fd floor 2% • Over haircut • NBA/NHL/NFL windows\n"
                              + _rule_section(meets_lucky, lc_all, lc_live, LUCKY_START, LUCKY_BACKTEST_FROM)})
-    # 🎯 Calibration: plays that still have >= CAL_MIN_EDGE after the sport+side correction vs not
+    # 🏹 Calibration: plays that still have >= CAL_MIN_EDGE after the sport+side correction vs not
     cal_rows = [r for r in graded if r.get("Method") and (r.get("Cal Edge %") or "").strip()
                 and (r["Timestamp"] or "")[:10] >= CAL_TRACK_START]
     ctab = []
-    for label, sub in [("🎯 Pass", [r for r in cal_rows if passes_calibration(r)]),
+    for label, sub in [("🏹 Pass", [r for r in cal_rows if passes_calibration(r)]),
                        ("Don't pass", [r for r in cal_rows if not passes_calibration(r)])]:
         b = _bucket(sub)
         ctab.append([label, _rec(b), _units(b), _roi(b)])
@@ -1007,7 +1007,7 @@ def build_report(batch, all_rows):
                      if isinstance(k, tuple) and k[0] in ("icehockey_nhl", "basketball_nba", "americanfootball_nfl"))
     if adj:
         cval += f"\nCurrent adjustments (win-chance pts): {adj}"
-    compact.append({"name": "🎯 Calibration", "value": cval})
+    compact.append({"name": "🏹 Calibration", "value": cval})
 
     # 🔬 Study weights (shadow) for the two rules on this card
     st_card = [r for r in graded if r.get("Method") and safe_float(r.get("Study Edge %")) is not None]
