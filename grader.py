@@ -29,6 +29,7 @@ from common import (
     CAL_BACKTEST_FROM, CAL_START, meets_calienta,
     WTF_BACKTEST_FROM, WTF_START, meets_wtf,
     LUCKY_BACKTEST_FROM, LUCKY_START, meets_lucky,
+    CAL_MIN_EDGE, CAL_TRACK_START, fit_calibration, passes_calibration, CT,
     R5_BACKTEST_FROM, R5_BOOK, R5_MAX_ODDS, R5_MIN_ODDS, R5_START, meets_rule5,
     R3_BACKTEST_FROM, R3_MAX_EDGE, R3_MAX_ODDS, R3_MIN_EDGE, R3_MIN_ODDS, R3_START, meets_rule3, UNIT_SIZE, american_to_decimal, load_rows, match_name,
     normalize_name, parse_american, parse_iso, safe_float, save_rows, similarity,
@@ -988,6 +989,26 @@ def build_report(batch, all_rows):
     compact.append({"name": "🍀 Lucky Charm",
                     "value": "Sharp consensus • fd floor 2% • Over haircut • NBA/NHL/NFL windows\n"
                              + _rule_section(meets_lucky, lc_all, lc_live, LUCKY_START, LUCKY_BACKTEST_FROM)})
+    # 🎯 Calibration: plays that still have >= CAL_MIN_EDGE after the sport+side correction vs not
+    cal_rows = [r for r in graded if r.get("Method") and (r.get("Cal Edge %") or "").strip()
+                and (r["Timestamp"] or "")[:10] >= CAL_TRACK_START]
+    ctab = []
+    for label, sub in [("🎯 Pass", [r for r in cal_rows if passes_calibration(r)]),
+                       ("Don't pass", [r for r in cal_rows if not passes_calibration(r)])]:
+        b = _bucket(sub)
+        ctab.append([label, _rec(b), _units(b), _roi(b)])
+    if cal_rows:
+        cval = (f"Plays with calibrated edge ≥{CAL_MIN_EDGE:g}% vs the rest, since {CAL_TRACK_START[5:]}\n"
+                + _table(["", "Rec", "Units", "ROI"], ctab, [12, 8, 7, 6]))
+    else:
+        cval = "No calibrated plays graded yet. They start with plays logged after the update."
+    nowcal = fit_calibration(all_rows, datetime.now(timezone.utc).astimezone(CT).strftime("%Y-%m-%d"))
+    adj = " • ".join(f"{k[0].split('_')[-1].upper()} {k[1][0]} {v:+.1f}" for k, v in sorted(nowcal.items(), key=lambda kv: str(kv[0]))
+                     if isinstance(k, tuple) and k[0] in ("icehockey_nhl", "basketball_nba", "americanfootball_nfl"))
+    if adj:
+        cval += f"\nCurrent adjustments (win-chance pts): {adj}"
+    compact.append({"name": "🎯 Calibration", "value": cval})
+
     # 🔬 Study weights (shadow) for the two rules on this card
     st_card = [r for r in graded if r.get("Method") and safe_float(r.get("Study Edge %")) is not None]
     if st_card:
