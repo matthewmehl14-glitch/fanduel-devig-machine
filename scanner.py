@@ -19,7 +19,7 @@ import requests
 
 from common import (
     CT, UNIT_SIZE, american_to_decimal, american_to_prob, fmt_american,
-    load_rows, match_name, STUDY_AGREE_EDGE, meets_lucky, meets_wtf, meets_calienta, meets_candidate, meets_chaching, meets_dogs, meets_rule, meets_hope, meets_rule3, meets_rule5, meets_unders, normalize_name, parse_american, parse_iso,
+    load_rows, match_name, STUDY_AGREE_EDGE, CAL_MIN_EDGE, calibrated_prob_edge, fit_calibration, meets_lucky, meets_wtf, meets_calienta, meets_candidate, meets_chaching, meets_dogs, meets_rule, meets_hope, meets_rule3, meets_rule5, meets_unders, normalize_name, parse_american, parse_iso,
     play_key, prob_to_american, safe_float, save_rows,
 )
 
@@ -410,6 +410,13 @@ def _method_word(r):
     return {"both": "BOTH", "consensus": "CONS"}.get(r.get("Method"), "")
 
 
+def _cal_bit(r):
+    ce = safe_float(r.get("Cal Edge %"))
+    if ce is None:
+        return ""
+    return f"🎯 cal {ce:+.2f}%" if ce >= CAL_MIN_EDGE else f"cal {ce:+.2f}%"
+
+
 def _study_bit(r):
     st = safe_float(r.get("Study Edge %"))
     if st is None:
@@ -429,6 +436,11 @@ def send_discord_digest(new_rows, run_ts):
     rest = sorted([r for r in new_rows if not meets_calienta(r) and not any(f(r) for _, f in other_rules)],
                   key=lambda r: -float(r["Edge %"]))
     counts = {e: sum(f(r) for r in new_rows) for e, f in other_rules}
+
+    def passes(r):
+        ce = safe_float(r.get("Cal Edge %"))
+        return ce is not None and ce >= CAL_MIN_EDGE
+    n_cal_pass = sum(passes(r) for r in new_rows)
     n_cal = len(cal)
 
     entries = []   # (text, is_play)
@@ -439,7 +451,7 @@ def send_discord_digest(new_rows, run_ts):
             entries.append((
                 f"🚒 **{r['Player']}** {_short_side(r)}\n"
                 f"**{r['Odds']} @ {r['Bookmaker']}** • **{r['Kelly Units']}u (${r['Bet Amount']})** • "
-                f"edge {float(r['Edge %']):.2f}% • {_method_word(r)} • {_study_bit(r)}\n"
+                f"edge {float(r['Edge %']):.2f}% • {_cal_bit(r)} • {_method_word(r)} • {_study_bit(r)}\n"
                 f"{r['Game']} • 🕒 {fmt_start(r['Commence Time'])}" + (f" • also {also}" if also else ""), True))
     else:
         entries.append(("**🚒 No Calienta plays this scan**", False))
@@ -447,12 +459,12 @@ def send_discord_digest(new_rows, run_ts):
         entries.append(("**Other rule plays**", False))
         for r in ruled:
             tags = "".join(e for e, f in other_rules if f(r))
-            entries.append((f"{tags} {r['Player']} {_short_side(r)} • {r['Odds']} @ {r['Bookmaker']} • "
+            entries.append((f"{tags}{' 🎯' if passes(r) else ''} {r['Player']} {_short_side(r)} • {r['Odds']} @ {r['Bookmaker']} • "
                             f"{r['Kelly Units']}u • {float(r['Edge %']):.2f}% • 🕒 {fmt_start(r['Commence Time'])}", True))
     if rest:
         entries.append((f"**Everything else ({len(rest)})**", False))
         for r in rest:
-            entries.append((f"· {r['Player']} {_short_side(r)} • {r['Odds']} @ {r['Bookmaker']} • "
+            entries.append((f"{'🎯' if passes(r) else '·'} {r['Player']} {_short_side(r)} • {r['Odds']} @ {r['Bookmaker']} • "
                             f"{float(r['Edge %']):.2f}%", True))
 
     def u16(text):
@@ -473,7 +485,7 @@ def send_discord_digest(new_rows, run_ts):
 
     total = len(new_rows)
     title_base = (f"🚒 {n_cal} Calienta • 🚀 {counts['🚀']} • 🏴‍☠️ {counts['🏴‍☠️']} • 💪 {counts['💪']} • "
-                  f"🍀 {counts['🍀']} / {total} logged")
+                  f"🍀 {counts['🍀']} • 🎯 {n_cal_pass} / {total} logged")
     first = 1
     for i, page in enumerate(pages):
         body = ""
@@ -526,6 +538,9 @@ def run():
         return
 
     rows = load_rows()
+    cal = fit_calibration(rows, datetime.now(timezone.utc).astimezone(CT).strftime("%Y-%m-%d"))
+    print("Calibration (win-chance points): " + ", ".join(
+        f"{k[0].split('_')[-1]} {k[1]} {v:+.1f}" for k, v in cal.items() if isinstance(k, tuple)))
     seen = {play_key(r["Game"], r["Market"], r["Player"], r["Side"], r["Line"]) for r in rows}
     exposure = defaultdict(float)
     directions = defaultdict(set)   # (game, player) -> {"over","under"} across ALL markets
@@ -623,6 +638,9 @@ def run():
                         f"Cons {prob_to_american(c['cons_p'])} ({len(c['used'])} bks)" if c["cons_p"] is not None else "",
                     ) if x),
                 }
+                cp, ce = calibrated_prob_edge(row, cal)
+                row["Cal Prob %"] = f"{cp:.1f}" if cp is not None else ""
+                row["Cal Edge %"] = f"{ce:.2f}" if ce is not None else ""
                 new_rows.append(row)
                 print(f"  + [{c['method']}] {row['Edge %']}% {row['Player']} {row['Side']} {row['Line']} {market} {row['Odds']} @ {row['Bookmaker']}")
 
