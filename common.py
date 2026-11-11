@@ -31,6 +31,8 @@ FIELDNAMES = [
     # shadow "study" weights (Novig 7, DK 1.4, FanDuel 1, Caesars 0.5; BetMGM/theScore off).
     # Tracking only: never used to pick, stake, star or mark a play.
     "Study Fair %", "Study Edge %", "Study Books", "Study Close Fair %", "Study CLV %",
+    # calibration: True Prob % corrected by how far off the scanner has been for this sport + side
+    "Cal Prob %", "Cal Edge %",
 ]
 GRADED = {"WIN", "LOSS", "PUSH", "VOID"}
 
@@ -386,6 +388,69 @@ def meets_lucky(row):
                 and 4.0 <= edge <= 7.5)
     return (-139 <= odds <= 139 and 1.0 <= h <= 6.0 and method in ("fd", "consensus")
             and 3.5 <= edge <= 7.5)
+
+
+# ---------------------------------------------------------------- calibration
+# The scanner's win chances run a few points high. Every scan refits a correction from the last
+# CAL_WINDOW_DAYS of graded plays: for each sport + side, (actual win rate - predicted win rate),
+# pulled toward the overall gap for small groups (weight n / (n + CAL_SHRINK)). The corrected
+# edge is logged as "Cal Edge %". Display and tracking only: it never changes what gets logged.
+CAL_WINDOW_DAYS = 28
+CAL_SHRINK = 40              # plays; how strongly small groups lean on the overall gap
+CAL_MIN_EDGE = 3.5           # a play "passes calibration" at Cal Edge % >= this
+CAL_TRACK_START = "2026-11-11"
+CAL_SPORTS = ("icehockey_nhl", "basketball_nba", "americanfootball_nfl")
+
+
+def fit_calibration(rows, today_iso):
+    """Returns {"global": pts, (sport, side): pts, "_n": {...}} in percentage points of win chance."""
+    from datetime import date, timedelta as _td
+    end = date.fromisoformat(today_iso)
+    start = (end - _td(days=CAL_WINDOW_DAYS)).isoformat()
+    use = []
+    for r in rows:
+        d = (r.get("Timestamp") or "")[:10]
+        if not (start <= d < today_iso) or r.get("Result") not in ("WIN", "LOSS") or not r.get("Method"):
+            continue
+        try:
+            p = float(r.get("True Prob %") or "")
+        except ValueError:
+            continue
+        use.append((r.get("Sport"), (r.get("Side") or "").strip(), p, 100.0 if r["Result"] == "WIN" else 0.0))
+    cal = {"global": 0.0, "_n": {}}
+    if not use:
+        return cal
+    glob = sum(w - p for _, _, p, w in use) / len(use)
+    cal["global"] = glob
+    groups = {}
+    for sport, side, p, w in use:
+        groups.setdefault((sport, side), []).append(w - p)
+    for key, gaps in groups.items():
+        n = len(gaps)
+        wt = n / (n + CAL_SHRINK)
+        cal[key] = wt * (sum(gaps) / n) + (1 - wt) * glob
+        cal["_n"][key] = n
+    return cal
+
+
+def calibrated_prob_edge(row, cal):
+    """(calibrated prob %, calibrated edge %) for a row, or (None, None)."""
+    try:
+        p = float(row.get("True Prob %") or "")
+        odds = float(str(row.get("Odds") or "").replace("+", "").strip())
+    except ValueError:
+        return None, None
+    adj = cal.get((row.get("Sport"), (row.get("Side") or "").strip()), cal.get("global", 0.0))
+    cp = min(98.0, max(2.0, p + adj))
+    dec = odds / 100 + 1 if odds > 0 else 100 / -odds + 1
+    return cp, (cp / 100 * dec - 1) * 100
+
+
+def passes_calibration(row):
+    try:
+        return float(row.get("Cal Edge %") or "") >= CAL_MIN_EDGE
+    except ValueError:
+        return False
 
 
 # ---------------------------------------------------------------- study weights (shadow)
