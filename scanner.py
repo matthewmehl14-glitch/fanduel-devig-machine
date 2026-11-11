@@ -414,7 +414,7 @@ def _cal_bit(r):
     ce = safe_float(r.get("Cal Edge %"))
     if ce is None:
         return ""
-    return f"🎯 cal {ce:+.2f}%" if ce >= CAL_MIN_EDGE else f"cal {ce:+.2f}%"
+    return f"🏹 cal {ce:+.2f}%" if ce >= CAL_MIN_EDGE else f"cal {ce:+.2f}%"
 
 
 def _study_bit(r):
@@ -459,12 +459,12 @@ def send_discord_digest(new_rows, run_ts):
         entries.append(("**Other rule plays**", False))
         for r in ruled:
             tags = "".join(e for e, f in other_rules if f(r))
-            entries.append((f"{tags}{' 🎯' if passes(r) else ''} {r['Player']} {_short_side(r)} • {r['Odds']} @ {r['Bookmaker']} • "
+            entries.append((f"{tags}{' 🏹' if passes(r) else ''} {r['Player']} {_short_side(r)} • {r['Odds']} @ {r['Bookmaker']} • "
                             f"{r['Kelly Units']}u • {float(r['Edge %']):.2f}% • 🕒 {fmt_start(r['Commence Time'])}", True))
     if rest:
         entries.append((f"**Everything else ({len(rest)})**", False))
         for r in rest:
-            entries.append((f"{'🎯' if passes(r) else '·'} {r['Player']} {_short_side(r)} • {r['Odds']} @ {r['Bookmaker']} • "
+            entries.append((f"{'🏹' if passes(r) else '·'} {r['Player']} {_short_side(r)} • {r['Odds']} @ {r['Bookmaker']} • "
                             f"{float(r['Edge %']):.2f}%", True))
 
     def u16(text):
@@ -485,7 +485,7 @@ def send_discord_digest(new_rows, run_ts):
 
     total = len(new_rows)
     title_base = (f"🚒 {n_cal} Calienta • 🚀 {counts['🚀']} • 🏴‍☠️ {counts['🏴‍☠️']} • 💪 {counts['💪']} • "
-                  f"🍀 {counts['🍀']} • 🎯 {n_cal_pass} / {total} logged")
+                  f"🍀 {counts['🍀']} • 🏹 {n_cal_pass} / {total} logged")
     first = 1
     for i, page in enumerate(pages):
         body = ""
