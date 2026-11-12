@@ -29,6 +29,7 @@ from common import (
     CAL_BACKTEST_FROM, CAL_START, meets_calienta,
     WTF_BACKTEST_FROM, WTF_START, meets_wtf,
     LUCKY_BACKTEST_FROM, LUCKY_START, meets_lucky,
+    GEM_BACKTEST_FROM, GEM_START, meets_gemini,
     CAL_MIN_EDGE, CAL_TRACK_START, fit_calibration, passes_calibration, CT,
     R5_BACKTEST_FROM, R5_BOOK, R5_MAX_ODDS, R5_MIN_ODDS, R5_START, meets_rule5,
     R3_BACKTEST_FROM, R3_MAX_EDGE, R3_MAX_ODDS, R3_MIN_EDGE, R3_MIN_ODDS, R3_START, meets_rule3, UNIT_SIZE, american_to_decimal, load_rows, match_name,
@@ -470,6 +471,7 @@ CLV_RULES = [
     ("Calienta", meets_calienta, CAL_START),
     ("WTF", meets_wtf, WTF_START),
     ("Lucky Charm", meets_lucky, LUCKY_START),
+    ("Gemini", meets_gemini, GEM_START),
     ("Unders", meets_unders, UNDERS_START),
     ("Hope", meets_hope, HOPE_START),
     ("My rule", meets_rule, RULE_START),
@@ -819,6 +821,30 @@ def build_report(batch, all_rows):
     fields.append({"name": "🍀 Lucky Charm (sharp consensus • fd floor • Over haircut • NBA/NHL/NFL windows)",
                    "value": lvalue})
 
+    # 5o) Gemini — live since GEM_START, plus a backtest from GEM_BACKTEST_FROM
+    gem_all = [r for r in graded if meets_gemini(r) and (r["Timestamp"] or "")[:10] >= GEM_BACKTEST_FROM]
+    gem_live = [r for r in gem_all if r["Timestamp"][:10] >= GEM_START]
+    if gem_all:
+        mdays = defaultdict(list)
+        for r in gem_live:
+            mdays[r["Timestamp"][:10]].append(r)
+        bm_live, bm_all = _bucket(gem_live), _bucket(gem_all)
+        mtable = [[f"Since {GEM_START[5:]}", _rec(bm_live), _units(bm_live), _roi(bm_live)]]
+        for mday in sorted(mdays)[-5:]:
+            b = _bucket(mdays[mday])
+            mtable.append([mday[5:], _rec(b), _units(b), _roi(b)])
+        for part, sp in [("  NHL part", "icehockey_nhl"), ("  NBA part", "basketball_nba"), ("  NFL part", "americanfootball_nfl")]:
+            b = _bucket([r for r in gem_all if r.get("Sport") == sp])
+            mtable.append([part, _rec(b), _units(b), _roi(b)])
+        b = _bucket([r for r in gem_all if (r.get("Bookmaker") or "") in ("DraftKings", "BetMGM")])
+        mtable.append(["  DK/BetMGM", _rec(b), _units(b), _roi(b)])
+        mtable.append([f"Back {GEM_BACKTEST_FROM[5:]}+", _rec(bm_all), _units(bm_all), _roi(bm_all)])
+        mvalue = _table(["", "Rec", "Units", "ROI"], mtable, [12, 8, 7, 6])
+    else:
+        mvalue = "No graded Gemini plays yet."
+    fields.append({"name": "👽 Gemini (Unders-first pillars + DK/BetMGM, no NBA Reb/3s/Ast, edge ≤7%, NBA Novig 3–9h blocked)",
+                   "value": mvalue})
+
     # 5g) Hope — live since HOPE_START, plus a backtest from HOPE_BACKTEST_FROM
     hope_all = [r for r in graded if meets_hope(r) and (r["Timestamp"] or "")[:10] >= HOPE_BACKTEST_FROM]
     hope_live = [r for r in hope_all if r["Timestamp"][:10] >= HOPE_START]
@@ -989,6 +1015,10 @@ def build_report(batch, all_rows):
     compact.append({"name": "🍀 Lucky Charm",
                     "value": "Sharp consensus • fd floor 2% • Over haircut • NBA/NHL/NFL windows\n"
                              + _rule_section(meets_lucky, lc_all, lc_live, LUCKY_START, LUCKY_BACKTEST_FROM)})
+    compact.append({"name": "👽 Gemini",
+                    "value": "NFL Unders + Rush Yds • NHL SOG Unders • NBA Pts Unders + PR • DK/BetMGM • edge ≤7%\n"
+                             + _rule_section(meets_gemini, gem_all, gem_live, GEM_START, GEM_BACKTEST_FROM)})
+
     # 🏹 Calibration: plays that still have >= CAL_MIN_EDGE after the sport+side correction vs not
     cal_rows = [r for r in graded if r.get("Method") and (r.get("Cal Edge %") or "").strip()
                 and (r["Timestamp"] or "")[:10] >= CAL_TRACK_START]
