@@ -430,7 +430,8 @@ def send_discord_digest(new_rows, run_ts):
     if not DISCORD_WEBHOOK_URL or not new_rows:
         return
     cal = sorted([r for r in new_rows if meets_calienta(r)], key=lambda r: -float(r["Edge %"]))
-    other_rules = [("🚀", meets_chaching), ("🏴‍☠️", meets_unders), ("💪", meets_wtf), ("🍀", meets_lucky)]
+    other_rules = [("🚀", meets_chaching), ("🏴‍☠️", meets_unders), ("💪", meets_wtf), ("🍀", meets_lucky),
+                   ("👽", meets_gemini)]
     ruled = sorted([r for r in new_rows if not meets_calienta(r) and any(f(r) for _, f in other_rules)],
                    key=lambda r: (not meets_chaching(r), not meets_unders(r), -float(r["Edge %"])))
     rest = sorted([r for r in new_rows if not meets_calienta(r) and not any(f(r) for _, f in other_rules)],
@@ -441,7 +442,6 @@ def send_discord_digest(new_rows, run_ts):
         ce = safe_float(r.get("Cal Edge %"))
         return ce is not None and ce >= CAL_MIN_EDGE
     n_cal_pass = sum(passes(r) for r in new_rows)
-    n_gem = sum(meets_gemini(r) for r in new_rows)
     n_cal = len(cal)
 
     entries = []   # (text, is_play)
@@ -453,20 +453,19 @@ def send_discord_digest(new_rows, run_ts):
                 f"🚒 **{r['Player']}** {_short_side(r)}\n"
                 f"**{r['Odds']} @ {r['Bookmaker']}** • **{r['Kelly Units']}u (${r['Bet Amount']})** • "
                 f"edge {float(r['Edge %']):.2f}% • {_cal_bit(r)} • {_method_word(r)}\n"
-                f"{r['Game']} • 🕒 {fmt_start(r['Commence Time'])}" + (f" • also {also}" if also else "")
-                + (" • 👽" if meets_gemini(r) else ""), True))
+                f"{r['Game']} • 🕒 {fmt_start(r['Commence Time'])}" + (f" • also {also}" if also else ""), True))
     else:
         entries.append(("**🚒 No Calienta plays this scan**", False))
     if ruled:
         entries.append(("**Other rule plays**", False))
         for r in ruled:
             tags = "".join(e for e, f in other_rules if f(r))
-            entries.append((f"{tags}{'👽' if meets_gemini(r) else ''}{' 🏹' if passes(r) else ''} {r['Player']} {_short_side(r)} • {r['Odds']} @ {r['Bookmaker']} • "
+            entries.append((f"{tags}{' 🏹' if passes(r) else ''} {r['Player']} {_short_side(r)} • {r['Odds']} @ {r['Bookmaker']} • "
                             f"{r['Kelly Units']}u • {float(r['Edge %']):.2f}% • 🕒 {fmt_start(r['Commence Time'])}", True))
     if rest:
         entries.append((f"**Everything else ({len(rest)})**", False))
         for r in rest:
-            entries.append((f"{'👽' if meets_gemini(r) else ''}{'🏹' if passes(r) else ('' if meets_gemini(r) else '·')} {r['Player']} {_short_side(r)} • {r['Odds']} @ {r['Bookmaker']} • "
+            entries.append((f"{'🏹' if passes(r) else '·'} {r['Player']} {_short_side(r)} • {r['Odds']} @ {r['Bookmaker']} • "
                             f"{float(r['Edge %']):.2f}%", True))
 
     def u16(text):
@@ -487,7 +486,7 @@ def send_discord_digest(new_rows, run_ts):
 
     total = len(new_rows)
     title_base = (f"🚒 {n_cal} Calienta • 🚀 {counts['🚀']} • 🏴‍☠️ {counts['🏴‍☠️']} • 💪 {counts['💪']} • "
-                  f"🍀 {counts['🍀']} • 👽 {n_gem} • 🏹 {n_cal_pass} / {total} logged")
+                  f"🍀 {counts['🍀']} • 👽 {counts['👽']} • 🏹 {n_cal_pass} / {total} logged")
     first = 1
     for i, page in enumerate(pages):
         body = ""
