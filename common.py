@@ -390,6 +390,50 @@ def meets_lucky(row):
             and 3.5 <= edge <= 7.5)
 
 
+# ---------------------------------------------------------------- gemini (tracking only)
+# NHL / NBA / NFL only.
+# Kill:  NBA Rebounds, Threes and Assists (any book); FD edge above 7.0% (logged Edge % if no FD edge);
+#        NBA plays at Novig logged 3 to 9 hours before tip.
+# Keep:  NFL Unders and NFL Rush Yds (either side); NHL Shots On Goal Unders; NBA Points Unders and
+#        NBA Points Rebounds (either side); plus any other play at DraftKings or BetMGM.
+GEM_MAX_EDGE = 7.0
+GEM_NBA_KILL_MARKETS = {"Rebounds", "Threes", "Assists"}
+GEM_NOVIG_NBA_BLOCK = (3.0, 9.0)   # hours before tip, lower bound included, upper excluded
+GEM_OPEN_BOOKS = {"DraftKings", "BetMGM"}
+GEM_START = "2026-11-12"     # live tracking starts
+GEM_BACKTEST_FROM = "2026-10-16"
+
+
+def meets_gemini(row):
+    if not (row.get("Event ID") or "").strip():
+        return False
+    sport, market, book = row.get("Sport"), (row.get("Market") or "").strip(), (row.get("Bookmaker") or "").strip()
+    side = (row.get("Side") or "").strip()
+    if sport not in ("icehockey_nhl", "basketball_nba", "americanfootball_nfl"):
+        return False
+    nba = sport == "basketball_nba"
+    if nba and market in GEM_NBA_KILL_MARKETS:
+        return False
+    try:
+        fd = (row.get("FD Edge %") or "").strip()
+        edge = float(fd) if fd else float(row.get("Edge %") or "")
+    except ValueError:
+        return False
+    if edge > GEM_MAX_EDGE:
+        return False
+    if nba and book == "Novig":
+        h = hours_before_start(row)
+        if h is not None and GEM_NOVIG_NBA_BLOCK[0] <= h < GEM_NOVIG_NBA_BLOCK[1]:
+            return False
+    if sport == "americanfootball_nfl" and (side == "Under" or market == "Rush Yds"):
+        return True
+    if sport == "icehockey_nhl" and market == "Shots On Goal" and side == "Under":
+        return True
+    if nba and ((market == "Points" and side == "Under") or market == "Points Rebounds"):
+        return True
+    return book in GEM_OPEN_BOOKS
+
+
 # ---------------------------------------------------------------- calibration
 # The scanner's win chances run a few points high. Every scan refits a correction from the last
 # CAL_WINDOW_DAYS of graded plays: for each sport + side, (actual win rate - predicted win rate),
