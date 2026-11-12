@@ -451,7 +451,7 @@ def send_discord_digest(new_rows, run_ts):
             entries.append((
                 f"🚒 **{r['Player']}** {_short_side(r)}\n"
                 f"**{r['Odds']} @ {r['Bookmaker']}** • **{r['Kelly Units']}u (${r['Bet Amount']})** • "
-                f"edge {float(r['Edge %']):.2f}% • {_cal_bit(r)} • {_method_word(r)} • {_study_bit(r)}\n"
+                f"edge {float(r['Edge %']):.2f}% • {_cal_bit(r)} • {_method_word(r)}\n"
                 f"{r['Game']} • 🕒 {fmt_start(r['Commence Time'])}" + (f" • also {also}" if also else ""), True))
     else:
         entries.append(("**🚒 No Calienta plays this scan**", False))
