@@ -1009,25 +1009,7 @@ def build_report(batch, all_rows):
         cval += f"\nCurrent adjustments (win-chance pts): {adj}"
     compact.append({"name": "🏹 Calibration", "value": cval})
 
-    # 🔬 Study weights (shadow) for the two rules on this card
-    st_card = [r for r in graded if r.get("Method") and safe_float(r.get("Study Edge %")) is not None]
-    if st_card:
-        first = min(r["Timestamp"][:10] for r in st_card)
-        groups = [("Calienta", meets_calienta), ("Cha Ching", meets_chaching), ("Unders", meets_unders),
-                  ("WTF", meets_wtf), ("Lucky Charm", meets_lucky)]
-        sval = _study_table(st_card, groups)
-        beats = []
-        for label, f in groups:
-            v = [x for x in (safe_float(r.get("Study CLV %")) for r in st_card if f(r)) if x is not None]
-            if v:
-                beats.append(f"{label} {sum(x > 0 for x in v) / len(v) * 100:.0f}% of {len(v)}")
-        if beats:
-            sval += "\n📏 Beat the study close: " + " • ".join(beats)
-        compact.append({"name": f"🔬 Study weights (shadow, since {first[5:]})",
-                        "value": f"Agree = study edge ≥{STUDY_AGREE_EDGE:g}% too\n" + sval})
-    else:
-        compact.append({"name": "🔬 Study weights (shadow)",
-                        "value": "No plays with study prices yet. They start with plays logged after the update."})
+    # (🔬 study weights retired from the card on Nov 12; still logged and in the Full report)
     footer = ("⚠️ **Totals mismatch:** " + "; ".join(failed)) if failed else "✅ Totals verified"
     compact.append({"name": "\u200b", "value": footer + " • other rules in the Full report"})
 
