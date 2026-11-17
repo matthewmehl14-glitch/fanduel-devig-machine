@@ -434,6 +434,39 @@ def meets_gemini(row):
     return book in GEM_OPEN_BOOKS
 
 
+# ---------------------------------------------------------------- PJ (🏀)
+# Three pieces that won in every stretch of the log (Oct 15–31, Nov 1–12, Nov 13–16), flat 1u:
+#   1) NHL Shots On Goal, either side, when the method is BOTH or the odds are -111 to -149
+#   2) NBA BetMGM Unders, any stat
+#   3) NFL Receptions Unders, FD method
+PJ_START = "2026-11-17"            # live tracking starts
+PJ_BACKTEST_FROM = "2026-10-15"
+PJ_FAV_ODDS = (-149, -111)         # inclusive
+
+
+def meets_pj(row):
+    if not (row.get("Event ID") or "").strip():
+        return False
+    sport, market = row.get("Sport"), (row.get("Market") or "").strip()
+    side, book = (row.get("Side") or "").strip(), (row.get("Bookmaker") or "").strip()
+    method = (row.get("Method") or "").strip()
+    if not method:
+        return False
+    if sport == "icehockey_nhl" and market == "Shots On Goal":
+        if method == "both":
+            return True
+        try:
+            odds = parse_american(row.get("Odds"))
+        except (TypeError, ValueError):
+            return False
+        return odds is not None and PJ_FAV_ODDS[0] <= odds <= PJ_FAV_ODDS[1]
+    if sport == "basketball_nba" and book == "BetMGM" and side == "Under":
+        return True
+    if sport == "americanfootball_nfl" and market == "Receptions" and side == "Under" and method == "fd":
+        return True
+    return False
+
+
 # ---------------------------------------------------------------- calibration
 # The scanner's win chances run a few points high. Every scan refits a correction from the last
 # CAL_WINDOW_DAYS of graded plays: for each sport + side, (actual win rate - predicted win rate),
