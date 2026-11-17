@@ -19,7 +19,7 @@ import requests
 
 from common import (
     CT, UNIT_SIZE, american_to_decimal, american_to_prob, fmt_american,
-    load_rows, match_name, STUDY_AGREE_EDGE, meets_gemini, CAL_MIN_EDGE, calibrated_prob_edge, fit_calibration, meets_lucky, meets_wtf, meets_calienta, meets_candidate, meets_chaching, meets_dogs, meets_rule, meets_hope, meets_rule3, meets_rule5, meets_unders, normalize_name, parse_american, parse_iso,
+    load_rows, match_name, STUDY_AGREE_EDGE, meets_gemini, meets_pj, CAL_MIN_EDGE, calibrated_prob_edge, fit_calibration, meets_lucky, meets_wtf, meets_calienta, meets_candidate, meets_chaching, meets_dogs, meets_rule, meets_hope, meets_rule3, meets_rule5, meets_unders, normalize_name, parse_american, parse_iso,
     play_key, prob_to_american, safe_float, save_rows,
 )
 
@@ -70,7 +70,7 @@ MIN_UNITS = 0.10
 
 # Credit control. Each game costs ~1 credit per prop market with odds posted,
 # so only games starting soon are scanned. Hourly scans see every game ~3 times.
-LOOKAHEAD_HOURS = 5      # scan games starting within this many hours
+LOOKAHEAD_HOURS = 15      # scan games starting within this many hours
 QUOTA_RESERVE = 200      # stop fetching odds if remaining credits drop below this
 
 SPORTS_CONFIG = {
@@ -431,7 +431,7 @@ def send_discord_digest(new_rows, run_ts):
         return
     cal = sorted([r for r in new_rows if meets_calienta(r)], key=lambda r: -float(r["Edge %"]))
     other_rules = [("🚀", meets_chaching), ("🏴‍☠️", meets_unders), ("💪", meets_wtf), ("🍀", meets_lucky),
-                   ("👽", meets_gemini)]
+                   ("👽", meets_gemini), ("🏀", meets_pj)]
     ruled = sorted([r for r in new_rows if not meets_calienta(r) and any(f(r) for _, f in other_rules)],
                    key=lambda r: (not meets_chaching(r), not meets_unders(r), -float(r["Edge %"])))
     rest = sorted([r for r in new_rows if not meets_calienta(r) and not any(f(r) for _, f in other_rules)],
@@ -486,7 +486,7 @@ def send_discord_digest(new_rows, run_ts):
 
     total = len(new_rows)
     title_base = (f"🚒 {n_cal} Calienta • 🚀 {counts['🚀']} • 🏴‍☠️ {counts['🏴‍☠️']} • 💪 {counts['💪']} • "
-                  f"🍀 {counts['🍀']} • 👽 {counts['👽']} • 🏹 {n_cal_pass} / {total} logged")
+                  f"🍀 {counts['🍀']} • 👽 {counts['👽']} • 🏀 {counts['🏀']} • 🏹 {n_cal_pass} / {total} logged")
     first = 1
     for i, page in enumerate(pages):
         body = ""
