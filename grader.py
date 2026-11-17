@@ -468,13 +468,9 @@ def _bucket(rows):
 # "CLV %" = the consensus fair price at the last pre-game scan (excluding the book you bet) applied
 # to the odds you got. Positive = your price was better than where the market closed ("beat the close").
 CLV_RULES = [
-    ("Cha Ching", meets_chaching, CHA_START),
     ("Calienta", meets_calienta, CAL_START),
-    ("WTF", meets_wtf, WTF_START),
     ("Lucky Charm", meets_lucky, LUCKY_START),
-    ("Gemini", meets_gemini, GEM_START),
     ("PJ", meets_pj, PJ_START),
-    ("Unders", meets_unders, UNDERS_START),
     ("Hope", meets_hope, HOPE_START),
     ("My rule", meets_rule, RULE_START),
     ("Candidate", meets_candidate, CANDIDATE_START),
@@ -728,29 +724,6 @@ def build_report(batch, all_rows):
         r5value = "No graded rule-5 plays yet."
     fields.append({"name": f"😈 Rule 5: {r5_label}", "value": r5value})
 
-    # 5i) Cha Ching — live since CHA_START, plus a backtest from CHA_BACKTEST_FROM
-    cc_all = [r for r in graded if meets_chaching(r) and (r["Timestamp"] or "")[:10] >= CHA_BACKTEST_FROM]
-    cc_live = [r for r in cc_all if r["Timestamp"][:10] >= CHA_START]
-    cc_label = "Cha Ching (NBA Points Unders at -105 or longer + NHL Unders with Kelly ≥ 1u (no Saves))"
-    if cc_all:
-        cdays = defaultdict(list)
-        for r in cc_live:
-            cdays[r["Timestamp"][:10]].append(r)
-        bc_live, bc_all = _bucket(cc_live), _bucket(cc_all)
-        ctable = [[f"Since {CHA_START[5:]}", _rec(bc_live), _units(bc_live), _roi(bc_live)]]
-        for cday in sorted(cdays)[-5:]:
-            b = _bucket(cdays[cday])
-            ctable.append([cday[5:], _rec(b), _units(b), _roi(b)])
-        for part, f in [("  NBA part", lambda r: r.get("Sport") == "basketball_nba"),
-                        ("  NHL part", lambda r: r.get("Sport") == "icehockey_nhl")]:
-            b = _bucket([r for r in cc_all if f(r)])
-            ctable.append([part, _rec(b), _units(b), _roi(b)])
-        ctable.append([f"Back {CHA_BACKTEST_FROM[5:]}+", _rec(bc_all), _units(bc_all), _roi(bc_all)])
-        cvalue = _table(["", "Rec", "Units", "ROI"], ctable, [12, 8, 7, 6])
-    else:
-        cvalue = "No graded Cha Ching plays yet."
-    fields.append({"name": f"🚀 {cc_label}", "value": cvalue})
-
     # 5k) Calienta — live since CAL_START, plus a backtest from CAL_BACKTEST_FROM
     cal_all = [r for r in graded if meets_calienta(r) and (r["Timestamp"] or "")[:10] >= CAL_BACKTEST_FROM]
     cal_live = [r for r in cal_all if r["Timestamp"][:10] >= CAL_START]
@@ -772,31 +745,6 @@ def build_report(batch, all_rows):
     else:
         kvalue = "No graded Calienta plays yet."
     fields.append({"name": "🚒 Calienta (NHL SOG Unders ≥4%, BOTH or FD • NBA Points Unders, BOTH)", "value": kvalue})
-
-    # 5l) WTF — live since WTF_START, plus a backtest from WTF_BACKTEST_FROM
-    wtf_all = [r for r in graded if meets_wtf(r) and (r["Timestamp"] or "")[:10] >= WTF_BACKTEST_FROM]
-    wtf_live = [r for r in wtf_all if r["Timestamp"][:10] >= WTF_START]
-    if wtf_all:
-        wdays = defaultdict(list)
-        for r in wtf_live:
-            wdays[r["Timestamp"][:10]].append(r)
-        bw_live, bw_all = _bucket(wtf_live), _bucket(wtf_all)
-        wtable = [[f"Since {WTF_START[5:]}", _rec(bw_live), _units(bw_live), _roi(bw_live)]]
-        for wday in sorted(wdays)[-5:]:
-            b = _bucket(wdays[wday])
-            wtable.append([wday[5:], _rec(b), _units(b), _roi(b)])
-        for part, sp in [("  NHL part", "icehockey_nhl"), ("  NBA part", "basketball_nba"), ("  NFL part", "americanfootball_nfl")]:
-            b = _bucket([r for r in wtf_all if r.get("Sport") == sp])
-            wtable.append([part, _rec(b), _units(b), _roi(b)])
-        for part, sd in [("  Unders", "Under"), ("  Overs", "Over")]:
-            b = _bucket([r for r in wtf_all if r.get("Side") == sd])
-            wtable.append([part, _rec(b), _units(b), _roi(b)])
-        wtable.append([f"Back {WTF_BACKTEST_FROM[5:]}+", _rec(bw_all), _units(bw_all), _roi(bw_all)])
-        wvalue = _table(["", "Rec", "Units", "ROI"], wtable, [12, 8, 7, 6])
-    else:
-        wvalue = "No graded WTF plays yet."
-    fields.append({"name": "💪 WTF (Configuration A: NHL / NBA / NFL windows on odds, hours out, method, edge)",
-                   "value": wvalue})
 
     # 5m) Lucky Charm — live since LUCKY_START, plus a backtest from LUCKY_BACKTEST_FROM
     lc_all = [r for r in graded if meets_lucky(r) and (r["Timestamp"] or "")[:10] >= LUCKY_BACKTEST_FROM]
@@ -847,30 +795,6 @@ def build_report(batch, all_rows):
     fields.append({"name": "🏀 PJ (NHL SOG: BOTH or −111 to −149 • NBA BetMGM Unders • NFL Receptions Unders, FD)",
                    "value": pvalue})
 
-    # 5o) Gemini — live since GEM_START, plus a backtest from GEM_BACKTEST_FROM
-    gem_all = [r for r in graded if meets_gemini(r) and (r["Timestamp"] or "")[:10] >= GEM_BACKTEST_FROM]
-    gem_live = [r for r in gem_all if r["Timestamp"][:10] >= GEM_START]
-    if gem_all:
-        mdays = defaultdict(list)
-        for r in gem_live:
-            mdays[r["Timestamp"][:10]].append(r)
-        bm_live, bm_all = _bucket(gem_live), _bucket(gem_all)
-        mtable = [[f"Since {GEM_START[5:]}", _rec(bm_live), _units(bm_live), _roi(bm_live)]]
-        for mday in sorted(mdays)[-5:]:
-            b = _bucket(mdays[mday])
-            mtable.append([mday[5:], _rec(b), _units(b), _roi(b)])
-        for part, sp in [("  NHL part", "icehockey_nhl"), ("  NBA part", "basketball_nba"), ("  NFL part", "americanfootball_nfl")]:
-            b = _bucket([r for r in gem_all if r.get("Sport") == sp])
-            mtable.append([part, _rec(b), _units(b), _roi(b)])
-        b = _bucket([r for r in gem_all if (r.get("Bookmaker") or "") in ("DraftKings", "BetMGM")])
-        mtable.append(["  DK/BetMGM", _rec(b), _units(b), _roi(b)])
-        mtable.append([f"Back {GEM_BACKTEST_FROM[5:]}+", _rec(bm_all), _units(bm_all), _roi(bm_all)])
-        mvalue = _table(["", "Rec", "Units", "ROI"], mtable, [12, 8, 7, 6])
-    else:
-        mvalue = "No graded Gemini plays yet."
-    fields.append({"name": "👽 Gemini (Unders-first pillars + DK/BetMGM, no NBA Reb/3s/Ast, edge ≤7%, NBA Novig 3–9h blocked)",
-                   "value": mvalue})
-
     # 5g) Hope — live since HOPE_START, plus a backtest from HOPE_BACKTEST_FROM
     hope_all = [r for r in graded if meets_hope(r) and (r["Timestamp"] or "")[:10] >= HOPE_BACKTEST_FROM]
     hope_live = [r for r in hope_all if r["Timestamp"][:10] >= HOPE_START]
@@ -893,44 +817,15 @@ def build_report(batch, all_rows):
         hvalue = "No graded Hope plays yet."
     fields.append({"name": f"👻 {hope_label}", "value": hvalue})
 
-    # 5f) Unders — live since UNDERS_START, plus a backtest from UNDERS_BACKTEST_FROM
-    un_all = [r for r in graded if meets_unders(r) and (r["Timestamp"] or "")[:10] >= UNDERS_BACKTEST_FROM]
-    un_live = [r for r in un_all if r["Timestamp"][:10] >= UNDERS_START]
-    un_label = (f"Unders (FD disagreed, edge {UNDERS_MIN_EDGE:g}-<{UNDERS_MAX_EDGE:g}%, "
-                f"odds {UNDERS_MIN_ODDS:+d} to {UNDERS_MAX_ODDS:+d}, no Ast/Saves/3s/Reb/combos)")
-    if un_all:
-        undays = defaultdict(list)
-        for r in un_live:
-            undays[r["Timestamp"][:10]].append(r)
-        bu_live, bu_all = _bucket(un_live), _bucket(un_all)
-        untable = [[f"Since {UNDERS_START[5:]}", _rec(bu_live), _units(bu_live), _roi(bu_live),
-                    _avg(bu_live, "MOVE FD"), _toward(bu_live, "MOVE FD")]]
-        for unday in sorted(undays)[-5:]:
-            b = _bucket(undays[unday])
-            untable.append([unday[5:], _rec(b), _units(b), _roi(b), _avg(b, "MOVE FD"), _toward(b, "MOVE FD")])
-        untable.append([f"Back {UNDERS_BACKTEST_FROM[5:]}+", _rec(bu_all), _units(bu_all), _roi(bu_all),
-                        _avg(bu_all, "MOVE FD"), _toward(bu_all, "MOVE FD")])
-        unvalue = _table(["", "Rec", "Units", "ROI", "Move", "Tw"], untable, [12, 8, 7, 6, 6, 5])
-    else:
-        unvalue = "No graded Unders plays yet."
-    fields.append({"name": f"🏴‍☠️ {un_label}", "value": unvalue})
-    if un_all:
-        fields.append({"name": f"🏴‍☠️ Unders overlap — since {UNDERS_START[5:]}",
-                       "value": _unders_overlap_table(un_live)})
-        fields.append({"name": f"🏴‍☠️ Unders overlap — back {UNDERS_BACKTEST_FROM[5:]}+",
-                       "value": _unders_overlap_table(un_all)})
-
     # 5j) Study weights (shadow) — only plays logged after the study columns were added
     st_rows = [r for r in graded if r.get("Method") and safe_float(r.get("Study Edge %")) is not None]
     if st_rows:
         first = min(r["Timestamp"][:10] for r in st_rows)
         fields.append({"name": f"🔬 Study weights (shadow, since {first[5:]}) — study edge ≥{STUDY_AGREE_EDGE:g}% vs not",
                        "value": _study_table(st_rows, [("All plays", lambda r: True),
-                                                       ("Cha Ching", meets_chaching),
-                                                       ("Unders", meets_unders),
                                                        ("Calienta", meets_calienta),
-                                                       ("WTF", meets_wtf),
-                                                       ("Lucky Charm", meets_lucky)])})
+                                                       ("Lucky Charm", meets_lucky),
+                                                       ("PJ", meets_pj)])})
         cur = _clv_values(st_rows)
         stc = [v for v in (safe_float(r.get("Study CLV %")) for r in st_rows) if v is not None]
         sb = [r for r in st_rows if safe_float(r.get("Study CLV %")) is not None]
@@ -1029,44 +924,12 @@ def build_report(batch, all_rows):
     compact.append({"name": "🚒 Calienta  ⬅ main focus",
                     "value": "NHL SOG Unders, edge ≥4%, BOTH or FD • NBA Points Unders, BOTH\n"
                              + _rule_section(meets_calienta, cal_all, cal_live, CAL_START, CAL_BACKTEST_FROM)})
-    compact.append({"name": "🚀 Cha Ching",
-                    "value": "NBA Points Unders at −105 or longer • NHL Unders with Kelly ≥ 1u (no Saves)\n"
-                             + _rule_section(meets_chaching, cc_all, cc_live, CHA_START, CHA_BACKTEST_FROM)})
-    compact.append({"name": "🏴‍☠️ Unders",
-                    "value": "FD disagreed • edge 3–5% • odds −149 to +125 • no Ast/Saves/3s/Reb/combos\n"
-                             + _rule_section(meets_unders, un_all, un_live, UNDERS_START, UNDERS_BACKTEST_FROM)})
-    compact.append({"name": "💪 WTF",
-                    "value": "NHL 5–7.5%, ≤3h or ≥9h out • NBA +100 to +199, 9–12h out • NFL ≥4%, 3–6h out\n"
-                             + _rule_section(meets_wtf, wtf_all, wtf_live, WTF_START, WTF_BACKTEST_FROM)})
     compact.append({"name": "🍀 Lucky Charm",
                     "value": "Sharp consensus • fd floor 2% • Over haircut • NBA/NHL/NFL windows\n"
                              + _rule_section(meets_lucky, lc_all, lc_live, LUCKY_START, LUCKY_BACKTEST_FROM)})
-    compact.append({"name": "👽 Gemini",
-                    "value": "NFL Unders + Rush Yds • NHL SOG Unders • NBA Pts Unders + PR • DK/BetMGM • edge ≤7%\n"
-                             + _rule_section(meets_gemini, gem_all, gem_live, GEM_START, GEM_BACKTEST_FROM)})
     compact.append({"name": "🏀 PJ",
                     "value": "NHL SOG: BOTH or −111 to −149 • NBA BetMGM Unders • NFL Receptions Unders, FD\n"
                              + _rule_section(meets_pj, pj_all, pj_live, PJ_START, PJ_BACKTEST_FROM)})
-
-    # 🏹 Calibration: plays that still have >= CAL_MIN_EDGE after the sport+side correction vs not
-    cal_rows = [r for r in graded if r.get("Method") and (r.get("Cal Edge %") or "").strip()
-                and (r["Timestamp"] or "")[:10] >= CAL_TRACK_START]
-    ctab = []
-    for label, sub in [("🏹 Pass", [r for r in cal_rows if passes_calibration(r)]),
-                       ("Don't pass", [r for r in cal_rows if not passes_calibration(r)])]:
-        b = _bucket(sub)
-        ctab.append([label, _rec(b), _units(b), _roi(b)])
-    if cal_rows:
-        cval = (f"Plays with calibrated edge ≥{CAL_MIN_EDGE:g}% vs the rest, since {CAL_TRACK_START[5:]}\n"
-                + _table(["", "Rec", "Units", "ROI"], ctab, [12, 8, 7, 6]))
-    else:
-        cval = "No calibrated plays graded yet. They start with plays logged after the update."
-    nowcal = fit_calibration(all_rows, datetime.now(timezone.utc).astimezone(CT).strftime("%Y-%m-%d"))
-    adj = " • ".join(f"{k[0].split('_')[-1].upper()} {k[1][0]} {v:+.1f}" for k, v in sorted(nowcal.items(), key=lambda kv: str(kv[0]))
-                     if isinstance(k, tuple) and k[0] in ("icehockey_nhl", "basketball_nba", "americanfootball_nfl"))
-    if adj:
-        cval += f"\nCurrent adjustments (win-chance pts): {adj}"
-    compact.append({"name": "🏹 Calibration", "value": cval})
 
     # (🔬 study weights retired from the card on Nov 12; still logged and in the Full report)
     footer = ("⚠️ **Totals mismatch:** " + "; ".join(failed)) if failed else "✅ Totals verified"
