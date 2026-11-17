@@ -30,6 +30,7 @@ from common import (
     WTF_BACKTEST_FROM, WTF_START, meets_wtf,
     LUCKY_BACKTEST_FROM, LUCKY_START, meets_lucky,
     GEM_BACKTEST_FROM, GEM_START, meets_gemini,
+    PJ_BACKTEST_FROM, PJ_START, meets_pj,
     CAL_MIN_EDGE, CAL_TRACK_START, fit_calibration, passes_calibration, CT,
     R5_BACKTEST_FROM, R5_BOOK, R5_MAX_ODDS, R5_MIN_ODDS, R5_START, meets_rule5,
     R3_BACKTEST_FROM, R3_MAX_EDGE, R3_MAX_ODDS, R3_MIN_EDGE, R3_MIN_ODDS, R3_START, meets_rule3, UNIT_SIZE, american_to_decimal, load_rows, match_name,
@@ -472,6 +473,7 @@ CLV_RULES = [
     ("WTF", meets_wtf, WTF_START),
     ("Lucky Charm", meets_lucky, LUCKY_START),
     ("Gemini", meets_gemini, GEM_START),
+    ("PJ", meets_pj, PJ_START),
     ("Unders", meets_unders, UNDERS_START),
     ("Hope", meets_hope, HOPE_START),
     ("My rule", meets_rule, RULE_START),
@@ -821,6 +823,30 @@ def build_report(batch, all_rows):
     fields.append({"name": "🍀 Lucky Charm (sharp consensus • fd floor • Over haircut • NBA/NHL/NFL windows)",
                    "value": lvalue})
 
+    # 5p) PJ — live since PJ_START, plus a backtest from PJ_BACKTEST_FROM
+    pj_all = [r for r in graded if meets_pj(r) and (r["Timestamp"] or "")[:10] >= PJ_BACKTEST_FROM]
+    pj_live = [r for r in pj_all if r["Timestamp"][:10] >= PJ_START]
+    if pj_all:
+        pdays = defaultdict(list)
+        for r in pj_live:
+            pdays[r["Timestamp"][:10]].append(r)
+        bp_live, bp_all = _bucket(pj_live), _bucket(pj_all)
+        ptable = [[f"Since {PJ_START[5:]}", _rec(bp_live), _units(bp_live), _roi(bp_live)]]
+        for pday in sorted(pdays)[-5:]:
+            b = _bucket(pdays[pday])
+            ptable.append([pday[5:], _rec(b), _units(b), _roi(b)])
+        for part, f in [("  NHL shots", lambda r: r.get("Sport") == "icehockey_nhl"),
+                        ("  NBA MGM U", lambda r: r.get("Sport") == "basketball_nba"),
+                        ("  NFL Rec U", lambda r: r.get("Sport") == "americanfootball_nfl")]:
+            b = _bucket([r for r in pj_all if f(r)])
+            ptable.append([part, _rec(b), _units(b), _roi(b)])
+        ptable.append([f"Back {PJ_BACKTEST_FROM[5:]}+", _rec(bp_all), _units(bp_all), _roi(bp_all)])
+        pvalue = _table(["", "Rec", "Units", "ROI"], ptable, [12, 8, 7, 6])
+    else:
+        pvalue = "No graded PJ plays yet."
+    fields.append({"name": "🏀 PJ (NHL SOG: BOTH or −111 to −149 • NBA BetMGM Unders • NFL Receptions Unders, FD)",
+                   "value": pvalue})
+
     # 5o) Gemini — live since GEM_START, plus a backtest from GEM_BACKTEST_FROM
     gem_all = [r for r in graded if meets_gemini(r) and (r["Timestamp"] or "")[:10] >= GEM_BACKTEST_FROM]
     gem_live = [r for r in gem_all if r["Timestamp"][:10] >= GEM_START]
@@ -993,7 +1019,7 @@ def build_report(batch, all_rows):
         bl, ba = _bucket(live_rows), _bucket(all_rows_rule)
         tbl.append([f"Since {start[5:]}", _rec(bl), _units(bl), _roi(bl)])
         tbl.append([f"Back {back_from[5:]}+", _rec(ba), _units(ba), _roi(ba)])
-        out = _table(["", "Rec", "Units", "ROI"], tbl, [12, 8, 7, 6])
+        out = _table(["", "Rec", "Units", "ROI"], tbl, [12, 8, 8, 6])
         v = _clv_values(live_rows)
         if v:
             out += (f"\n📏 Beat the close since {start[5:]}: {sum(x > 0 for x in v) / len(v) * 100:.0f}% "
@@ -1018,6 +1044,9 @@ def build_report(batch, all_rows):
     compact.append({"name": "👽 Gemini",
                     "value": "NFL Unders + Rush Yds • NHL SOG Unders • NBA Pts Unders + PR • DK/BetMGM • edge ≤7%\n"
                              + _rule_section(meets_gemini, gem_all, gem_live, GEM_START, GEM_BACKTEST_FROM)})
+    compact.append({"name": "🏀 PJ",
+                    "value": "NHL SOG: BOTH or −111 to −149 • NBA BetMGM Unders • NFL Receptions Unders, FD\n"
+                             + _rule_section(meets_pj, pj_all, pj_live, PJ_START, PJ_BACKTEST_FROM)})
 
     # 🏹 Calibration: plays that still have >= CAL_MIN_EDGE after the sport+side correction vs not
     cal_rows = [r for r in graded if r.get("Method") and (r.get("Cal Edge %") or "").strip()
