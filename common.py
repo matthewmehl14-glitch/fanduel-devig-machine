@@ -467,6 +467,26 @@ def meets_pj(row):
     return False
 
 
+# ---------------------------------------------------------------- 'Merica (🇺🇸)
+# Four groups, any book, any method, flat 1u:
+#   NHL Shots On Goal + Total Saves Unders • NFL Receptions Unders • NBA Threes Unders • NBA Points Overs
+MERICA_START = "2026-11-18"        # live tracking starts
+MERICA_BACKTEST_FROM = "2026-10-15"
+
+
+def meets_merica(row):
+    if not (row.get("Event ID") or "").strip() or not (row.get("Method") or "").strip():
+        return False
+    sport, market, side = row.get("Sport"), (row.get("Market") or "").strip(), (row.get("Side") or "").strip()
+    if sport == "icehockey_nhl":
+        return side == "Under" and market in ("Shots On Goal", "Total Saves")
+    if sport == "americanfootball_nfl":
+        return side == "Under" and market == "Receptions"
+    if sport == "basketball_nba":
+        return (side == "Under" and market == "Threes") or (side == "Over" and market == "Points")
+    return False
+
+
 # ---------------------------------------------------------------- calibration
 # The scanner's win chances run a few points high. Every scan refits a correction from the last
 # CAL_WINDOW_DAYS of graded plays: for each sport + side, (actual win rate - predicted win rate),
