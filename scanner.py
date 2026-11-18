@@ -19,7 +19,7 @@ import requests
 
 from common import (
     CT, UNIT_SIZE, american_to_decimal, american_to_prob, fmt_american,
-    load_rows, match_name, STUDY_AGREE_EDGE, meets_gemini, meets_pj, CAL_MIN_EDGE, calibrated_prob_edge, fit_calibration, meets_lucky, meets_wtf, meets_calienta, meets_candidate, meets_chaching, meets_dogs, meets_rule, meets_hope, meets_rule3, meets_rule5, meets_unders, normalize_name, parse_american, parse_iso,
+    load_rows, match_name, STUDY_AGREE_EDGE, meets_gemini, meets_pj, meets_merica, CAL_MIN_EDGE, calibrated_prob_edge, fit_calibration, meets_lucky, meets_wtf, meets_calienta, meets_candidate, meets_chaching, meets_dogs, meets_rule, meets_hope, meets_rule3, meets_rule5, meets_unders, normalize_name, parse_american, parse_iso,
     play_key, prob_to_american, safe_float, save_rows,
 )
 
@@ -70,7 +70,7 @@ MIN_UNITS = 0.10
 
 # Credit control. Each game costs ~1 credit per prop market with odds posted,
 # so only games starting soon are scanned. Hourly scans see every game ~3 times.
-LOOKAHEAD_HOURS = 5      # scan games starting within this many hours
+LOOKAHEAD_HOURS = 5          # only scan games starting within the next 5 hours
 QUOTA_RESERVE = 200      # stop fetching odds if remaining credits drop below this
 
 SPORTS_CONFIG = {
@@ -430,7 +430,7 @@ def send_discord_digest(new_rows, run_ts):
     if not DISCORD_WEBHOOK_URL or not new_rows:
         return
     cal = sorted([r for r in new_rows if meets_calienta(r)], key=lambda r: -float(r["Edge %"]))
-    other_rules = [("🍀", meets_lucky), ("🏀", meets_pj)]
+    other_rules = [("🍀", meets_lucky), ("🏀", meets_pj), ("🇺🇸", meets_merica)]
     ruled = sorted([r for r in new_rows if not meets_calienta(r) and any(f(r) for _, f in other_rules)],
                    key=lambda r: (not meets_pj(r), -float(r["Edge %"])))
     rest = sorted([r for r in new_rows if not meets_calienta(r) and not any(f(r) for _, f in other_rules)],
@@ -480,7 +480,8 @@ def send_discord_digest(new_rows, run_ts):
         pages.append(cur)
 
     total = len(new_rows)
-    title_base = f"🚒 {n_cal} Calienta • 🍀 {counts['🍀']} • 🏀 {counts['🏀']} / {total} logged"
+    title_base = (f"🚒 {n_cal} Calienta • 🍀 {counts['🍀']} • 🏀 {counts['🏀']} • 🇺🇸 {counts['🇺🇸']} "
+                  f"/ {total} logged")
     first = 1
     for i, page in enumerate(pages):
         body = ""
