@@ -31,6 +31,7 @@ from common import (
     LUCKY_BACKTEST_FROM, LUCKY_START, meets_lucky,
     GEM_BACKTEST_FROM, GEM_START, meets_gemini,
     PJ_BACKTEST_FROM, PJ_START, meets_pj,
+    MERICA_BACKTEST_FROM, MERICA_START, meets_merica,
     CAL_MIN_EDGE, CAL_TRACK_START, fit_calibration, passes_calibration, CT,
     R5_BACKTEST_FROM, R5_BOOK, R5_MAX_ODDS, R5_MIN_ODDS, R5_START, meets_rule5,
     R3_BACKTEST_FROM, R3_MAX_EDGE, R3_MAX_ODDS, R3_MIN_EDGE, R3_MIN_ODDS, R3_START, meets_rule3, UNIT_SIZE, american_to_decimal, load_rows, match_name,
@@ -471,6 +472,7 @@ CLV_RULES = [
     ("Calienta", meets_calienta, CAL_START),
     ("Lucky Charm", meets_lucky, LUCKY_START),
     ("PJ", meets_pj, PJ_START),
+    ("'Merica", meets_merica, MERICA_START),
     ("Hope", meets_hope, HOPE_START),
     ("My rule", meets_rule, RULE_START),
     ("Candidate", meets_candidate, CANDIDATE_START),
@@ -795,6 +797,31 @@ def build_report(batch, all_rows):
     fields.append({"name": "🏀 PJ (NHL SOG: BOTH or −111 to −149 • NBA BetMGM Unders • NFL Receptions Unders, FD)",
                    "value": pvalue})
 
+    # 5q) 'Merica — live since MERICA_START, plus a backtest from MERICA_BACKTEST_FROM
+    me_all = [r for r in graded if meets_merica(r) and (r["Timestamp"] or "")[:10] >= MERICA_BACKTEST_FROM]
+    me_live = [r for r in me_all if r["Timestamp"][:10] >= MERICA_START]
+    if me_all:
+        mdays = defaultdict(list)
+        for r in me_live:
+            mdays[r["Timestamp"][:10]].append(r)
+        bm_live, bm_all = _bucket(me_live), _bucket(me_all)
+        mtable = [[f"Since {MERICA_START[5:]}", _rec(bm_live), _units(bm_live), _roi(bm_live)]]
+        for mday in sorted(mdays)[-5:]:
+            b = _bucket(mdays[mday])
+            mtable.append([mday[5:], _rec(b), _units(b), _roi(b)])
+        for part, f in [("  NHL Unders", lambda r: r.get("Sport") == "icehockey_nhl"),
+                        ("  NFL Rec U", lambda r: r.get("Sport") == "americanfootball_nfl"),
+                        ("  NBA 3s U", lambda r: r.get("Sport") == "basketball_nba" and r.get("Market") == "Threes"),
+                        ("  NBA Pts O", lambda r: r.get("Sport") == "basketball_nba" and r.get("Market") == "Points")]:
+            b = _bucket([r for r in me_all if f(r)])
+            mtable.append([part, _rec(b), _units(b), _roi(b)])
+        mtable.append([f"Back {MERICA_BACKTEST_FROM[5:]}+", _rec(bm_all), _units(bm_all), _roi(bm_all)])
+        mvalue = _table(["", "Rec", "Units", "ROI"], mtable, [12, 8, 8, 6])
+    else:
+        mvalue = "No graded 'Merica plays yet."
+    fields.append({"name": "🇺🇸 'Merica (NHL SOG + Saves Unders • NFL Receptions Unders • NBA Threes Unders • NBA Points Overs)",
+                   "value": mvalue})
+
     # 5g) Hope — live since HOPE_START, plus a backtest from HOPE_BACKTEST_FROM
     hope_all = [r for r in graded if meets_hope(r) and (r["Timestamp"] or "")[:10] >= HOPE_BACKTEST_FROM]
     hope_live = [r for r in hope_all if r["Timestamp"][:10] >= HOPE_START]
@@ -825,7 +852,8 @@ def build_report(batch, all_rows):
                        "value": _study_table(st_rows, [("All plays", lambda r: True),
                                                        ("Calienta", meets_calienta),
                                                        ("Lucky Charm", meets_lucky),
-                                                       ("PJ", meets_pj)])})
+                                                       ("PJ", meets_pj),
+                                                       ("'Merica", meets_merica)])})
         cur = _clv_values(st_rows)
         stc = [v for v in (safe_float(r.get("Study CLV %")) for r in st_rows) if v is not None]
         sb = [r for r in st_rows if safe_float(r.get("Study CLV %")) is not None]
@@ -930,6 +958,9 @@ def build_report(batch, all_rows):
     compact.append({"name": "🏀 PJ",
                     "value": "NHL SOG: BOTH or −111 to −149 • NBA BetMGM Unders • NFL Receptions Unders, FD\n"
                              + _rule_section(meets_pj, pj_all, pj_live, PJ_START, PJ_BACKTEST_FROM)})
+    compact.append({"name": "🇺🇸 'Merica",
+                    "value": "NHL SOG + Saves Unders • NFL Receptions Unders • NBA Threes Unders • NBA Points Overs\n"
+                             + _rule_section(meets_merica, me_all, me_live, MERICA_START, MERICA_BACKTEST_FROM)})
 
     # (🔬 study weights retired from the card on Nov 12; still logged and in the Full report)
     footer = ("⚠️ **Totals mismatch:** " + "; ".join(failed)) if failed else "✅ Totals verified"
