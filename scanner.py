@@ -71,6 +71,7 @@ MIN_UNITS = 0.10
 # Credit control. Each game costs ~1 credit per prop market with odds posted,
 # so only games starting soon are scanned. Hourly scans see every game ~3 times.
 LOOKAHEAD_HOURS = 5          # only scan games starting within the next 5 hours
+STEAM_MIN_PP = 1.0           # steam alert when your book's price gets this many win-% points more expensive (−110 → −115 ≈ 1.1)
 QUOTA_RESERVE = 200      # stop fetching odds if remaining credits drop below this
 
 SPORTS_CONFIG = {
@@ -341,6 +342,65 @@ def find_edges(lines):
     return out
 
 
+STEAM_RULES = [("🚒", meets_calienta), ("🍀", meets_lucky), ("🏀", meets_pj), ("🇺🇸", meets_merica)]
+STEAM_ALERTS = []   # filled during the scan, posted to Discord at the end
+
+
+def _implied(price):
+    return 1 / american_to_decimal(price)
+
+
+def _steam_tags(row):
+    return "".join(e for e, f in STEAM_RULES if f(row))
+
+
+def _steam_price(row, cur_price, fair):
+    """Price at your book moved against you since the last check -> queue an alert."""
+    tags = _steam_tags(row)
+    last = row.get("Last Seen Odds") or ""
+    base = last if last and not last.startswith("line:") else row["Odds"]
+    try:
+        base_p = parse_american(base)
+    except (TypeError, ValueError):
+        base_p = None
+    if base_p is None or cur_price is None:
+        return
+    moved = (_implied(cur_price) - _implied(base_p)) * 100
+    if moved >= STEAM_MIN_PP:
+        row["Last Seen Odds"] = fmt_american(cur_price)
+        if tags:
+            edge = (fair * american_to_decimal(cur_price) - 1) * 100 if fair else None
+            STEAM_ALERTS.append({"row": row, "tags": tags, "kind": "price", "from": fmt_american(base_p),
+                                 "to": fmt_american(cur_price), "edge": edge})
+    elif moved < 0:
+        row["Last Seen Odds"] = fmt_american(cur_price)   # got cheaper: reset the baseline
+
+
+def _steam_line(row, lines, m_key, side):
+    """Your line is gone and the same player now sits at a worse line -> queue an alert once per new line."""
+    line = safe_float(row["Line"])
+    all_players = {p for (mk, p, pt) in lines if mk == m_key}
+    player = match_name(row["Player"], all_players)
+    if player is None:
+        return
+    pts = sorted(pt for (mk, p, pt) in lines if mk == m_key and p == player)
+    worse = [pt for pt in pts if (pt < line if side == "Under" else pt > line)]
+    if not worse:
+        return
+    new = max(worse) if side == "Under" else min(worse)
+    marker = f"line:{new:g}"
+    if row.get("Last Seen Odds") == marker:
+        return
+    row["Last Seen Odds"] = marker
+    tags = _steam_tags(row)
+    if not tags:
+        return
+    q = next((q for q in lines[(m_key, player, new)].values() if q["title"] == row["Bookmaker"]), None)
+    price = fmt_american(q[side]) if q and q.get(side) is not None else None
+    STEAM_ALERTS.append({"row": row, "tags": tags, "kind": "line", "from": row["Line"], "to": f"{new:g}",
+                         "price": price})
+
+
 def update_closing_lines(pending_rows, lines):
     """Snapshot current price + fair probs for pending plays on this event.
     Overwritten each run until tip, so the last pre-game run is the close.
@@ -354,10 +414,11 @@ def update_closing_lines(pending_rows, lines):
             continue
         players = {p for (mk, p, pt) in lines if mk == m_key and pt == line}
         player = match_name(row["Player"], players)
+        side = row["Side"].strip().title()
         if player is None:
+            _steam_line(row, lines, m_key, side)
             continue
         quotes = lines[(m_key, player, line)]
-        side = row["Side"].strip().title()
         bet_dec = american_to_decimal(parse_american(row["Odds"]))
         got = False
 
@@ -382,8 +443,9 @@ def update_closing_lines(pending_rows, lines):
         if got:
             row["Close Time"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
             for q in quotes.values():
-                if q["title"] == row["Bookmaker"] and side in q:
+                if q["title"] == row["Bookmaker"] and q.get(side) is not None:
                     row["Close Odds"] = fmt_american(q[side])
+                    _steam_price(row, q[side], fp[0] if fp else fd_p)
             updated += 1
     return updated
 
@@ -528,6 +590,42 @@ def send_discord_no_plays(run_ts, games_scanned, edges_found):
 
 
 # ------------------------------------------------------------------ main
+def send_discord_steam(run_ts):
+    """🔥 Rule plays whose price (or line) at your book got worse since the last scan."""
+    if not DISCORD_WEBHOOK_URL or not STEAM_ALERTS:
+        return
+    lines_out = []
+    for a in sorted(STEAM_ALERTS, key=lambda a: a["row"]["Commence Time"]):
+        r = a["row"]
+        head = f"{a['tags']} **{r['Player']} {_short_side(r)}**"
+        when = f"🕒 {fmt_start(r['Commence Time'])}"
+        if a["kind"] == "price":
+            edge = f" • edge now {a['edge']:.1f}%" if a["edge"] is not None else ""
+            lines_out.append(f"{head} • {r['Bookmaker']} **{a['from']} → {a['to']}** "
+                             f"(logged {r['Odds']}){edge} • {when}")
+        else:
+            px = f" at {a['price']}" if a["price"] else ""
+            lines_out.append(f"{head} • {r['Bookmaker']} line moved **{a['from']} → {a['to']}**{px} "
+                             f"(logged {r['Odds']}) • {when}")
+    n = len(lines_out)
+    pages, cur = [], ""
+    for ln in lines_out:
+        if cur and len(cur) + len(ln) + 2 > 3500:
+            pages.append(cur)
+            cur = ""
+        cur += ("\n\n" if cur else "") + ln
+    pages.append(cur)
+    for i, body in enumerate(pages):
+        part = f" (Part {i + 1}/{len(pages)})" if len(pages) > 1 else ""
+        embed = {"title": f"🔥 Steam — {n} rule play{'s' if n != 1 else ''} getting more expensive{part}",
+                 "description": body, "color": 0xFF6B00,
+                 "footer": {"text": f"Since last scan • threshold {STEAM_MIN_PP:g} win-% pts • {run_ts} CT"}}
+        try:
+            SESSION.post(DISCORD_WEBHOOK_URL, json={"embeds": [embed]}, timeout=10)
+        except requests.RequestException as e:
+            print(f"Discord error: {e}")
+
+
 def run():
     if not API_KEY:
         print("CRITICAL ERROR: ODDS_API_KEY missing.")
@@ -647,6 +745,9 @@ def run():
         send_discord_digest(new_rows, run_ts)
     else:
         send_discord_no_plays(run_ts, games_scanned, edges_found)
+    send_discord_steam(run_ts)
+    if STEAM_ALERTS:
+        print(f"🔥 {len(STEAM_ALERTS)} steam alerts posted")
     print(f"\nDone. {edges_found} edges seen, {len(new_rows)} new plays logged, "
           f"{closes} closing-line snapshots updated.\n{credit_summary()}")
 
