@@ -33,6 +33,7 @@ FIELDNAMES = [
     "Study Fair %", "Study Edge %", "Study Books", "Study Close Fair %", "Study CLV %",
     # calibration: True Prob % corrected by how far off the scanner has been for this sport + side
     "Cal Prob %", "Cal Edge %",
+    "Last Seen Odds",   # steam tracker: price (or "line:X") at your book the last time it was checked
 ]
 GRADED = {"WIN", "LOSS", "PUSH", "VOID"}
 
