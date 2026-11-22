@@ -10,6 +10,7 @@ Also captures closing lines: every run re-snapshots pending plays for games
 that haven't started, so the last pre-game snapshot becomes the "close" and
 the grader can report CLV.
 """
+import csv
 import os
 import time
 from collections import defaultdict
@@ -401,6 +402,57 @@ def _steam_line(row, lines, m_key, side):
                          "price": price})
 
 
+# ------------------------------------------------------------------ line history
+HISTORY_FILE = "line_history.csv"
+HISTORY_BOOKS = list(BOOK_WEIGHTS)          # every book the scanner pulls
+HISTORY_BOOK_NAMES = {"novig": "Novig", "fanduel": "FanDuel", "draftkings": "DraftKings", "betmgm": "BetMGM",
+                      "caesars": "Caesars", "espnbet": "theScore"}
+HISTORY_FIELDS = (["Scan Time", "Mins To Start", "Status", "Rules", "Logged At", "Event ID", "Game", "Sport",
+                   "Player", "Market", "Side", "Line", "Book", "Logged Odds", "Logged Edge %",
+                   "Book Now", "Cons Fair %", "FD Fair %", "Edge Now %", "Seen Line"]
+                  + [f"{HISTORY_BOOK_NAMES.get(b, b)} Price" for b in HISTORY_BOOKS])
+HISTORY = []   # rows appended during the scan, written once at the end
+
+
+def _history_row(row, status, quotes=None, side=None, cons_p=None, fd_p=None, seen_line=""):
+    """One snapshot of a pending rule play: your book's price, every book's price, and the fair prices."""
+    tags = _steam_tags(row)
+    if not tags:
+        return
+    now = datetime.now(timezone.utc)
+    start = parse_iso(row.get("Commence Time"))
+    h = {"Scan Time": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+         "Mins To Start": f"{(start - now).total_seconds() / 60:.0f}" if start else "",
+         "Status": status, "Rules": tags, "Logged At": row["Timestamp"], "Event ID": row["Event ID"],
+         "Game": row["Game"], "Sport": row["Sport"], "Player": row["Player"], "Market": row["Market"],
+         "Side": row["Side"], "Line": row["Line"], "Book": row["Bookmaker"], "Logged Odds": row["Odds"],
+         "Logged Edge %": row["Edge %"], "Seen Line": seen_line,
+         "Cons Fair %": f"{cons_p * 100:.2f}" if cons_p else "", "FD Fair %": f"{fd_p * 100:.2f}" if fd_p else ""}
+    if quotes and side:
+        for bkey in HISTORY_BOOKS:
+            q = quotes.get(bkey)
+            h[f"{HISTORY_BOOK_NAMES.get(bkey, bkey)} Price"] = fmt_american(q[side]) if q and q.get(side) is not None and q.get("fresh") else ""
+        mine = next((q for q in quotes.values() if q["title"] == row["Bookmaker"]), None)
+        if mine and mine.get(side) is not None:
+            h["Book Now"] = fmt_american(mine[side])
+            fair = cons_p or fd_p
+            if fair:
+                h["Edge Now %"] = f"{(fair * american_to_decimal(mine[side]) - 1) * 100:.2f}"
+    HISTORY.append(h)
+
+
+def save_history():
+    if not HISTORY:
+        return
+    new = not os.path.isfile(HISTORY_FILE) or os.path.getsize(HISTORY_FILE) == 0
+    with open(HISTORY_FILE, "a", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=HISTORY_FIELDS, extrasaction="ignore")
+        if new:
+            w.writeheader()
+        w.writerows(HISTORY)
+    print(f"📈 {len(HISTORY)} line-history snapshots saved to {HISTORY_FILE}")
+
+
 def update_closing_lines(pending_rows, lines):
     """Snapshot current price + fair probs for pending plays on this event.
     Overwritten each run until tip, so the last pre-game run is the close.
@@ -417,6 +469,9 @@ def update_closing_lines(pending_rows, lines):
         side = row["Side"].strip().title()
         if player is None:
             _steam_line(row, lines, m_key, side)
+            seen = row.get("Last Seen Odds", "")
+            _history_row(row, "line moved" if seen.startswith("line:") else "not listed",
+                         seen_line=seen[5:] if seen.startswith("line:") else "")
             continue
         quotes = lines[(m_key, player, line)]
         bet_dec = american_to_decimal(parse_american(row["Odds"]))
@@ -440,6 +495,7 @@ def update_closing_lines(pending_rows, lines):
             row["Study Close Fair %"] = f"{st[0] * 100:.1f}"
             row["Study CLV %"] = f"{(st[0] * bet_dec - 1) * 100:.2f}"
 
+        _history_row(row, "ok", quotes, side, fp[0] if fp else None, fd_p)
         if got:
             row["Close Time"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
             for q in quotes.values():
@@ -745,6 +801,7 @@ def run():
         send_discord_digest(new_rows, run_ts)
     else:
         send_discord_no_plays(run_ts, games_scanned, edges_found)
+    save_history()
     send_discord_steam(run_ts)
     if STEAM_ALERTS:
         print(f"🔥 {len(STEAM_ALERTS)} steam alerts posted")
