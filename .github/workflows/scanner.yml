@@ -37,6 +37,7 @@ jobs:
 
           if [ -f ev_plays_log.csv ]; then
             git add ev_plays_log.csv
+            [ -f line_history.csv ] && git add line_history.csv
             if ! git diff --quiet --cached; then
               git commit -m "Auto-log new EV plays"
               git pull origin main --rebase
