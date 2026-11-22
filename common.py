@@ -324,7 +324,7 @@ def meets_wtf(row):
 # Step 3  No Total Saves. Overs must clear a 1.5-point haircut on True Prob %:
 #         ((True Prob % - 1.5) / 100 * decimal odds - 1) * 100 >= 3.5
 # NBA: Unders only; no Rebounds or Threes; odds -139..+114; >=9h or <=6h out; edge >= 4.5%
-# NHL: Shots On Goal; Under or haircut-passing Over; odds -139..+139; >=6h or <=3h out; edge 4.0-7.5%
+# NHL: Shots On Goal; Under or haircut-passing Over; odds -139..+139; >=6h or <=5h out; edge 4.0-7.5%
 # NFL: any market; Under or haircut-passing Over; odds -139..+139; 1-6h out; fd or consensus; edge 3.5-7.5%
 # All bounds inclusive. Not starred, not bet.
 LUCKY_SHARP_BOOKS = {"FanDuel", "DraftKings", "Novig", "Pinnacle"}
@@ -332,6 +332,7 @@ LUCKY_FLOOR = 2.0            # Step 2 floor for Cons Edge % and Study Edge %, pe
 LUCKY_OVER_HAIRCUT = 1.5     # Step 3, percentage points off True Prob %
 LUCKY_OVER_MIN_EDGE = 3.5    # Step 3, adjusted edge needed for an Over
 LUCKY_START = "2026-11-07"   # live tracking starts
+LUCKY_NHL_MAX_H = 5.1        # NHL plays found up to ~5h out count (was 3h before the 5-hour lookahead)
 LUCKY_BACKTEST_FROM = "2026-10-15"
 
 
@@ -385,7 +386,9 @@ def meets_lucky(row):
         return (side == "under" and market not in ("Rebounds", "Threes") and -139 <= odds <= 114
                 and (h >= 9.0 or h <= 6.0) and edge >= 4.5)
     if sport == "icehockey_nhl":
-        return (market == "Shots On Goal" and -139 <= odds <= 139 and (h >= 6.0 or h <= 3.0)
+        # Window widened Nov 22: the 5-hour lookahead made ">= 6h" impossible, so plays found 3-5h out
+        # were silently dropped. Now: found <= 5h (every play under the 5-hour lookahead) or >= 6h.
+        return (market == "Shots On Goal" and -139 <= odds <= 139 and (h >= 6.0 or h <= LUCKY_NHL_MAX_H)
                 and 4.0 <= edge <= 7.5)
     return (-139 <= odds <= 139 and 1.0 <= h <= 6.0 and method in ("fd", "consensus")
             and 3.5 <= edge <= 7.5)
