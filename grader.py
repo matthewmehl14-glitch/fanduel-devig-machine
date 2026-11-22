@@ -949,12 +949,12 @@ def build_report(batch, all_rows):
                     f"of {len(v)} • avg CLV {sum(v) / len(v):+.2f}")
         return out
 
-    compact.append({"name": "🚒 Calienta  ⬅ main focus",
+    compact.append({"name": "🍀 Lucky Charm  ⬅ main focus",
+                    "value": "Sharp consensus • fd floor 2% • Over haircut • NBA/NHL/NFL windows (NHL ≤5h)\n"
+                             + _rule_section(meets_lucky, lc_all, lc_live, LUCKY_START, LUCKY_BACKTEST_FROM)})
+    compact.append({"name": "🚒 Calienta",
                     "value": "NHL SOG Unders, edge ≥4%, BOTH or FD • NBA Points Unders, BOTH\n"
                              + _rule_section(meets_calienta, cal_all, cal_live, CAL_START, CAL_BACKTEST_FROM)})
-    compact.append({"name": "🍀 Lucky Charm",
-                    "value": "Sharp consensus • fd floor 2% • Over haircut • NBA/NHL/NFL windows\n"
-                             + _rule_section(meets_lucky, lc_all, lc_live, LUCKY_START, LUCKY_BACKTEST_FROM)})
     compact.append({"name": "🏀 PJ",
                     "value": "NHL SOG: BOTH or −111 to −149 • NBA BetMGM Unders • NFL Receptions Unders, FD\n"
                              + _rule_section(meets_pj, pj_all, pj_live, PJ_START, PJ_BACKTEST_FROM)})
