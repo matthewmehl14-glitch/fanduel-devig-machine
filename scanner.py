@@ -543,32 +543,32 @@ def _study_bit(r):
 
 
 def send_discord_digest(new_rows, run_ts):
-    """Clean digest: 🚒 Calienta plays first with full detail, then other card-rule plays on one line
+    """Clean digest: 🍀 Lucky plays first with full detail, then other card-rule plays on one line
     each, then everything else on one plain line each. Messages are packed by size, never trimmed."""
     if not DISCORD_WEBHOOK_URL or not new_rows:
         return
-    cal = sorted([r for r in new_rows if meets_calienta(r)], key=lambda r: -float(r["Edge %"]))
-    other_rules = [("🍀", meets_lucky), ("🏀", meets_pj), ("🇺🇸", meets_merica)]
-    ruled = sorted([r for r in new_rows if not meets_calienta(r) and any(f(r) for _, f in other_rules)],
-                   key=lambda r: (not meets_pj(r), -float(r["Edge %"])))
-    rest = sorted([r for r in new_rows if not meets_calienta(r) and not any(f(r) for _, f in other_rules)],
+    focus = sorted([r for r in new_rows if meets_lucky(r)], key=lambda r: -float(r["Edge %"]))
+    other_rules = [("🚒", meets_calienta), ("🏀", meets_pj), ("🇺🇸", meets_merica)]
+    ruled = sorted([r for r in new_rows if not meets_lucky(r) and any(f(r) for _, f in other_rules)],
+                   key=lambda r: (not meets_calienta(r), not meets_pj(r), -float(r["Edge %"])))
+    rest = sorted([r for r in new_rows if not meets_lucky(r) and not any(f(r) for _, f in other_rules)],
                   key=lambda r: -float(r["Edge %"]))
     counts = {e: sum(f(r) for r in new_rows) for e, f in other_rules}
 
-    n_cal = len(cal)
+    n_focus = len(focus)
 
     entries = []   # (text, is_play)
-    if cal:
-        entries.append((f"**🚒 CALIENTA — {n_cal} play{'s' if n_cal != 1 else ''} to focus on**", False))
-        for r in cal:
+    if focus:
+        entries.append((f"**🍀 LUCKY — {n_focus} play{'s' if n_focus != 1 else ''} to focus on**", False))
+        for r in focus:
             also = "".join(e for e, f in other_rules if f(r))
             entries.append((
-                f"🚒 **{r['Player']}** {_short_side(r)}\n"
+                f"🍀 **{r['Player']}** {_short_side(r)}\n"
                 f"**{r['Odds']} @ {r['Bookmaker']}** • **{r['Kelly Units']}u (${r['Bet Amount']})** • "
                 f"edge {float(r['Edge %']):.2f}% • {_method_word(r)}\n"
                 f"{r['Game']} • 🕒 {fmt_start(r['Commence Time'])}" + (f" • also {also}" if also else ""), True))
     else:
-        entries.append(("**🚒 No Calienta plays this scan**", False))
+        entries.append(("**🍀 No Lucky plays this scan**", False))
     if ruled:
         entries.append(("**Other rule plays**", False))
         for r in ruled:
@@ -587,7 +587,7 @@ def send_discord_digest(new_rows, run_ts):
     header = f"**{credit_summary()}**\n\n"
     pages, cur, size = [], [], u16(header)
     for text, is_play in entries:
-        sep = "\n\n" if (is_play and text.startswith("🚒")) or not is_play else "\n"
+        sep = "\n\n" if (is_play and text.startswith("🍀")) or not is_play else "\n"
         add = u16(text) + len(sep)
         if cur and size + add > DIGEST_BUDGET:
             pages.append(cur)
@@ -598,7 +598,7 @@ def send_discord_digest(new_rows, run_ts):
         pages.append(cur)
 
     total = len(new_rows)
-    title_base = (f"🚒 {n_cal} Calienta • 🍀 {counts['🍀']} • 🏀 {counts['🏀']} • 🇺🇸 {counts['🇺🇸']} "
+    title_base = (f"🍀 {n_focus} Lucky • 🚒 {counts['🚒']} • 🏀 {counts['🏀']} • 🇺🇸 {counts['🇺🇸']} "
                   f"/ {total} logged")
     first = 1
     for i, page in enumerate(pages):
@@ -611,7 +611,7 @@ def send_discord_digest(new_rows, run_ts):
         embed = {
             "title": title_base + part,
             "description": (header if i == 0 else "") + body,
-            "color": 0xE8471C if n_cal else 0x808080,   # fire-truck red when there are Calienta plays
+            "color": 0x2ECC71 if n_focus else 0x808080,   # clover green when there are Lucky plays
             "footer": {"text": (f"Plays {first}–{last} of {total} • " if n_plays else "") + f"Scanned {run_ts} CT"},
         }
         first = last + 1 if n_plays else first
