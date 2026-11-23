@@ -72,6 +72,7 @@ MIN_UNITS = 0.10
 # Credit control. Each game costs ~1 credit per prop market with odds posted,
 # so only games starting soon are scanned. Hourly scans see every game ~3 times.
 LOOKAHEAD_HOURS = 5          # only scan games starting within the next 5 hours
+STEAM_DISCORD = False        # steam moves are still tracked (Last Seen Odds, line_history.csv) but not posted
 STEAM_MIN_PP = 1.0           # steam alert when your book's price gets this many win-% points more expensive (−110 → −115 ≈ 1.1)
 QUOTA_RESERVE = 200      # stop fetching odds if remaining credits drop below this
 
@@ -522,6 +523,14 @@ def _short_side(r):
     return f"{'U' if r['Side'] == 'Under' else 'O'} {r['Line']} {r['Market']}"
 
 
+def _odds_pct(odds):
+    """'+108' -> '+108 (48%)': American odds followed by the implied win chance, the way Novig shows prices."""
+    try:
+        return f"{odds} ({american_to_prob(parse_american(odds)) * 100:.0f}%)"
+    except (TypeError, ValueError, ZeroDivisionError):
+        return str(odds)
+
+
 def _method_word(r):
     if r.get("Method") == "fd":
         return "FD" if (r.get("Cons Edge %") or "").strip() else "FD SOLO"
@@ -564,7 +573,7 @@ def send_discord_digest(new_rows, run_ts):
             also = "".join(e for e, f in other_rules if f(r))
             entries.append((
                 f"🍀 **{r['Player']}** {_short_side(r)}\n"
-                f"**{r['Odds']} @ {r['Bookmaker']}** • **{r['Kelly Units']}u (${r['Bet Amount']})** • "
+                f"**{_odds_pct(r['Odds'])} @ {r['Bookmaker']}** • **{r['Kelly Units']}u (${r['Bet Amount']})** • "
                 f"edge {float(r['Edge %']):.2f}% • {_method_word(r)}\n"
                 f"{r['Game']} • 🕒 {fmt_start(r['Commence Time'])}" + (f" • also {also}" if also else ""), True))
     else:
@@ -573,12 +582,12 @@ def send_discord_digest(new_rows, run_ts):
         entries.append(("**Other rule plays**", False))
         for r in ruled:
             tags = "".join(e for e, f in other_rules if f(r))
-            entries.append((f"{tags} {r['Player']} {_short_side(r)} • {r['Odds']} @ {r['Bookmaker']} • "
+            entries.append((f"{tags} {r['Player']} {_short_side(r)} • {_odds_pct(r['Odds'])} @ {r['Bookmaker']} • "
                             f"{r['Kelly Units']}u • {float(r['Edge %']):.2f}% • 🕒 {fmt_start(r['Commence Time'])}", True))
     if rest:
         entries.append((f"**Everything else ({len(rest)})**", False))
         for r in rest:
-            entries.append((f"· {r['Player']} {_short_side(r)} • {r['Odds']} @ {r['Bookmaker']} • "
+            entries.append((f"· {r['Player']} {_short_side(r)} • {_odds_pct(r['Odds'])} @ {r['Bookmaker']} • "
                             f"{float(r['Edge %']):.2f}%", True))
 
     def u16(text):
@@ -648,7 +657,7 @@ def send_discord_no_plays(run_ts, games_scanned, edges_found):
 # ------------------------------------------------------------------ main
 def send_discord_steam(run_ts):
     """🔥 Rule plays whose price (or line) at your book got worse since the last scan."""
-    if not DISCORD_WEBHOOK_URL or not STEAM_ALERTS:
+    if not STEAM_DISCORD or not DISCORD_WEBHOOK_URL or not STEAM_ALERTS:
         return
     lines_out = []
     for a in sorted(STEAM_ALERTS, key=lambda a: a["row"]["Commence Time"]):
@@ -804,7 +813,7 @@ def run():
     save_history()
     send_discord_steam(run_ts)
     if STEAM_ALERTS:
-        print(f"🔥 {len(STEAM_ALERTS)} steam alerts posted")
+        print(f"🔥 {len(STEAM_ALERTS)} steam moves {'posted' if STEAM_DISCORD else 'tracked (Discord posting off)'}")
     print(f"\nDone. {edges_found} edges seen, {len(new_rows)} new plays logged, "
           f"{closes} closing-line snapshots updated.\n{credit_summary()}")
 
