@@ -507,6 +507,196 @@ def update_closing_lines(pending_rows, lines):
     return updated
 
 
+# ------------------------------------------------------------------ last-10 hit rate (ESPN, free)
+# For rule plays only: how many of the player's last 10 games landed on your side of the line.
+# Uses ESPN's public game logs (same source as the grader), so it costs no Odds API credits.
+# Any failure (name mismatch, missing data, ESPN down) just leaves the L10 columns blank.
+L10_GAMES = 10
+ESPN_WEB = "https://site.web.api.espn.com/apis/common/v3/sports"
+# market -> list of recipes (summed); each part = (gamelog stat names, gamelog labels)
+L10_STATS = {
+    "Points": [(("points",), ("PTS",))],
+    "Rebounds": [(("totalRebounds", "rebounds"), ("REB",))],
+    "Assists": [(("assists",), ("AST", "A"))],
+    "Threes": [(("threePointFieldGoalsMade-threePointFieldGoalsAttempted", "threePointFieldGoalsMade"), ("3PT", "3PM"))],
+    "Points Rebounds": [(("points",), ("PTS",)), (("totalRebounds", "rebounds"), ("REB",))],
+    "Points Rebounds Assists": [(("points",), ("PTS",)), (("totalRebounds", "rebounds"), ("REB",)),
+                                (("assists",), ("AST",))],
+    "Shots On Goal": [(("shotsTotal", "shots", "shotsOnGoal"), ("S", "SOG"))],
+    "Total Saves": [(("saves",), ("SV", "SAVES"))],
+    "Pass Yds": [(("passingYards",), ())],
+    "Pass Attempts": [(("passingAttempts",), ())],
+    "Rush Yds": [(("rushingYards",), ())],
+    "Rush Attempts": [(("rushingAttempts",), ("CAR",))],
+    "Reception Yds": [(("receivingYards",), ())],
+    "Receptions": [(("receptions",), ("REC",))],
+}
+_l10_cache = {"roster": {}, "log": {}, "games": {}}
+_l10_warned = set()
+
+
+def _l10_warn(key, msg):
+    if key not in _l10_warned:
+        _l10_warned.add(key)
+        print(f"  L10: {msg}")
+
+
+def _espn_get(url):
+    try:
+        res = SESSION.get(url, timeout=8)
+        return res.json() if res.status_code == 200 else None
+    except (requests.RequestException, ValueError):
+        return None
+
+
+def _l10_teams(row):
+    """ESPN team ids for the row's game, via the same matching the grader uses."""
+    import grader
+    league = grader.ESPN_LEAGUES.get(row["Sport"])
+    start = parse_iso(row.get("Commence Time"))
+    if not league or not start:
+        return league, []
+    key = (row["Sport"], row["Game"], row["Commence Time"])
+    if key not in _l10_cache["games"]:
+        d = start.astimezone(grader.ET).date()
+        events = [ev for o in (-1, 0, 1)
+                  for ev in grader.scoreboard(*league, (d + timedelta(days=o)).strftime("%Y%m%d"))]
+        ev = grader.find_game(row["Game"], events, start, exact_start=True,
+                              college=league[1] in grader.COLLEGE_LEAGUES)
+        comps = ((ev or {}).get("competitions") or [{}])[0].get("competitors", [])
+        _l10_cache["games"][key] = [c.get("team", {}).get("id") for c in comps if c.get("team", {}).get("id")]
+    return league, _l10_cache["games"][key]
+
+
+def _l10_athlete(row, league, team_ids):
+    """ESPN athlete id for the row's player, from the two teams' rosters."""
+    people = {}
+    for tid in team_ids:
+        ck = (league, tid)
+        if ck not in _l10_cache["roster"]:
+            data = _espn_get(f"https://site.api.espn.com/apis/site/v2/sports/{league[0]}/{league[1]}/teams/{tid}/roster") or {}
+            found = {}
+            for a in data.get("athletes", []):
+                for p in (a.get("items") or [a]):          # NFL groups players by unit
+                    if p.get("id") and p.get("displayName"):
+                        found[p["displayName"]] = p["id"]
+            _l10_cache["roster"][ck] = found
+        people.update(_l10_cache["roster"][ck])
+    name = match_name(row["Player"], list(people))
+    return people.get(name) if name else None
+
+
+def _l10_value(raw):
+    if raw in (None, "", "--", "-"):
+        return None
+    s = str(raw).strip()
+    if "-" in s[1:] or "/" in s:                     # "3-7" made-attempted -> 3
+        s = s.replace("/", "-").split("-")[0]
+    return safe_float(s)
+
+
+def _l10_games(league, athlete_id):
+    """Most recent games first: list of {stat key: raw value} for regular season / postseason games."""
+    ck = (league, athlete_id)
+    if ck in _l10_cache["log"]:
+        return _l10_cache["log"][ck]
+    data = _espn_get(f"{ESPN_WEB}/{league[0]}/{league[1]}/athletes/{athlete_id}/gamelog") or {}
+    names, labels = data.get("names") or [], data.get("labels") or []
+    info = data.get("events") or {}
+    games = []
+    for st in data.get("seasonTypes") or []:
+        if "pre" in (st.get("displayName") or "").lower():
+            continue                                     # skip preseason
+        for cat in st.get("categories") or []:
+            if cat.get("type") not in (None, "event"):
+                continue                                 # skip monthly totals / averages
+            for ev in cat.get("events") or []:
+                stats = ev.get("stats") or []
+                if not stats:
+                    continue
+                row = {}
+                for i, v in enumerate(stats):
+                    if i < len(names):
+                        row.setdefault(("n", names[i]), v)
+                    if i < len(labels):
+                        row.setdefault(("l", labels[i]), v)
+                when = (info.get(str(ev.get("eventId"))) or {}).get("gameDate") or ""
+                games.append((when, row))
+    if not games and data:
+        _l10_warn(("shape", league), f"no games parsed from ESPN game log for {league[1]} (keys: {sorted(data)[:8]})")
+    games.sort(key=lambda g: g[0], reverse=True)
+    _l10_cache["log"][ck] = [g for _, g in games]
+    return _l10_cache["log"][ck]
+
+
+def _l10_stat(game, recipe):
+    total = 0.0
+    for names, labels in recipe:
+        val = None
+        for n in names:
+            val = _l10_value(game.get(("n", n)))
+            if val is not None:
+                break
+        if val is None:
+            for lab in labels:
+                val = _l10_value(game.get(("l", lab)))
+                if val is not None:
+                    break
+        if val is None:
+            return None
+        total += val
+    return total
+
+
+def add_l10(rows):
+    """Fill 'L10 Hits' ('6/10') and 'L10 Avg' on rule plays. Never raises."""
+    for row in rows:
+        try:
+            if not any(f(row) for _, f in STEAM_RULES):
+                continue
+            recipe = L10_STATS.get(row["Market"])
+            line = safe_float(row["Line"])
+            if not recipe or line is None:
+                continue
+            league, teams = _l10_teams(row)
+            if not teams:
+                _l10_warn(("game", row["Game"]), f"no ESPN game found for {row['Game']}")
+                continue
+            aid = _l10_athlete(row, league, teams)
+            if not aid:
+                _l10_warn(("player", row["Player"]), f"{row['Player']} not found on ESPN rosters")
+                continue
+            vals = []
+            for g in _l10_games(league, aid):
+                v = _l10_stat(g, recipe)
+                if row["Sport"].startswith("basketball"):
+                    mins = _l10_value(g.get(("l", "MIN")))
+                    if mins is not None and mins <= 0:
+                        continue                          # DNP
+                if v is not None:
+                    vals.append(v)
+                if len(vals) == L10_GAMES:
+                    break
+            if not vals:
+                _l10_warn(("stat", row["Market"]), f"no {row['Market']} values in ESPN game logs")
+                continue
+            under = row["Side"].strip().lower() == "under"
+            hits = sum((v < line) if under else (v > line) for v in vals)
+            row["L10 Hits"] = f"{hits}/{len(vals)}"
+            row["L10 Avg"] = f"{sum(vals) / len(vals):.1f}"
+        except Exception as e:                            # never let form lookups break a scan
+            _l10_warn(("err", type(e).__name__), f"lookup error {type(e).__name__}: {e}")
+
+
+def _l10_bit(r, long=False):
+    if not r.get("L10 Hits"):
+        return ""
+    side = "under" if r["Side"] == "Under" else "over"
+    if long:
+        return f"📊 **L10: {r['L10 Hits']} {side} {r['Line']}** • avg {r['L10 Avg']}"
+    return f" • L10 {r['L10 Hits']}"
+
+
 # ------------------------------------------------------------------ discord
 def fmt_start(commence):
     dt = parse_iso(commence)
@@ -575,6 +765,7 @@ def send_discord_digest(new_rows, run_ts):
                 f"🍀 **{r['Player']}** {_short_side(r)}\n"
                 f"**{_odds_pct(r['Odds'])} @ {r['Bookmaker']}** • **{r['Kelly Units']}u (${r['Bet Amount']})** • "
                 f"edge {float(r['Edge %']):.2f}% • {_method_word(r)}\n"
+                + (f"{_l10_bit(r, True)}\n" if r.get("L10 Hits") else "") +
                 f"{r['Game']} • 🕒 {fmt_start(r['Commence Time'])}" + (f" • also {also}" if also else ""), True))
     else:
         entries.append(("**🍀 No Lucky plays this scan**", False))
@@ -583,7 +774,7 @@ def send_discord_digest(new_rows, run_ts):
         for r in ruled:
             tags = "".join(e for e, f in other_rules if f(r))
             entries.append((f"{tags} {r['Player']} {_short_side(r)} • {_odds_pct(r['Odds'])} @ {r['Bookmaker']} • "
-                            f"{r['Kelly Units']}u • {float(r['Edge %']):.2f}% • 🕒 {fmt_start(r['Commence Time'])}", True))
+                            f"{r['Kelly Units']}u • {float(r['Edge %']):.2f}%{_l10_bit(r)} • 🕒 {fmt_start(r['Commence Time'])}", True))
     if rest:
         entries.append((f"**Everything else ({len(rest)})**", False))
         for r in rest:
@@ -803,6 +994,10 @@ def run():
                 new_rows.append(row)
                 print(f"  + [{c['method']}] {row['Edge %']}% {row['Player']} {row['Side']} {row['Line']} {market} {row['Odds']} @ {row['Bookmaker']}")
 
+    if new_rows:
+        add_l10(new_rows)
+        n_l10 = sum(bool(r.get("L10 Hits")) for r in new_rows)
+        print(f"📊 L10 hit rates found for {n_l10} of {sum(any(f(r) for _, f in STEAM_RULES) for r in new_rows)} rule plays")
     if new_rows or closes:
         rows.extend(new_rows)
         save_rows(rows)
