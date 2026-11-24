@@ -34,6 +34,8 @@ FIELDNAMES = [
     # calibration: True Prob % corrected by how far off the scanner has been for this sport + side
     "Cal Prob %", "Cal Edge %",
     "Last Seen Odds",   # steam tracker: price (or "line:X") at your book the last time it was checked
+    # recent form for rule plays: games on your side of the line in the player's last 10 games ("6/10")
+    "L10 Hits", "L10 Avg",
 ]
 GRADED = {"WIN", "LOSS", "PUSH", "VOID"}
 
