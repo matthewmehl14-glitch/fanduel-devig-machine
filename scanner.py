@@ -12,6 +12,7 @@ the grader can report CLV.
 """
 import csv
 import os
+import re
 import time
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
@@ -761,9 +762,14 @@ def _odds_pct(odds):
 BET_STATE = "ks"   # fills the {state} placeholder some books use in their links (e.g. sports.{state}.betmgm.com)
 
 
+BET_WAGER = 35     # fills the {wager} placeholder (Novig puts the stake in its bet-slip link)
+
+
 def _bet_link(r):
     """' • [Bet @ DraftKings](url)' when the Odds API returned a link for this play, else ''."""
-    url = (r.get("_link") or "").strip().replace("{state}", BET_STATE)
+    url = ((r.get("_link") or r.get("Bet Link") or "").strip()
+           .replace("{state}", BET_STATE).replace("{wager}", str(BET_WAGER)))
+    url = re.sub(r"/?\{[^}]*\}", "", url)   # drop any other unfilled placeholder rather than send a broken link
     if not url.startswith("http"):
         return ""
     return f" • [Bet @ {r['Bookmaker']}]({url.replace(' ', '%20').replace(')', '%29')})"
