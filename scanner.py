@@ -282,6 +282,10 @@ def build_lines(event_data, now_utc):
                     bkey, {"title": book.get("title", bkey), "fresh": fresh, "raw": raw}
                 )
                 quote[side] = o["price"]
+                # betslip / market / event link, most specific first (only present with includeLinks=true)
+                link = o.get("link") or market.get("link") or book.get("link")
+                if link:
+                    quote.setdefault("links", {})[side] = link
     return lines
 
 
@@ -343,6 +347,7 @@ def find_edges(lines):
                 st = study_fair(quotes, side, exclude=bkey)   # shadow only; doesn't affect selection
                 out.append({
                     "study_p": st[0] if st else None, "study_used": st[1] if st else [],
+                    "link": (q.get("links") or {}).get(side),
                     "m_key": m_key, "player": player, "raw": q["raw"], "pt": pt,
                     "side": side, "book": q["title"], "price": price, "dec": dec,
                     "p": p, "edge": edge, "used": used, "method": method,
@@ -748,6 +753,17 @@ def _odds_pct(odds):
         return str(odds)
 
 
+BET_STATE = "ks"   # fills the {state} placeholder some books use in their links (e.g. sports.{state}.betmgm.com)
+
+
+def _bet_link(r):
+    """' • [Bet @ DraftKings](url)' when the Odds API returned a link for this play, else ''."""
+    url = (r.get("_link") or "").strip().replace("{state}", BET_STATE)
+    if not url.startswith("http"):
+        return ""
+    return f" • [Bet @ {r['Bookmaker']}]({url.replace(' ', '%20').replace(')', '%29')})"
+
+
 def _method_word(r):
     if r.get("Method") == "fd":
         return "FD" if (r.get("Cons Edge %") or "").strip() else "FD SOLO"
@@ -783,7 +799,7 @@ def send_discord_digest(new_rows, run_ts):
         also = "".join(e for e, f in tag_rules if e != emoji and f(r))
         return (f"{emoji} **{r['Player']}** {_short_side(r)}\n"
                 f"**{_odds_pct(r['Odds'])} @ {r['Bookmaker']}** • **{r['Kelly Units']}u (${r['Bet Amount']})** • "
-                f"edge {float(r['Edge %']):.2f}% • {_method_word(r)}\n"
+                f"edge {float(r['Edge %']):.2f}% • {_method_word(r)}{_bet_link(r)}\n"
                 + (f"{_l10_bit(r, True)}\n" if r.get("L10 Hits") else "") +
                 f"{r['Game']} • 🕒 {fmt_start(r['Commence Time'])}" + (f" • also {also}" if also else ""))
 
@@ -956,7 +972,8 @@ def run():
             game = f"{ev['away_team']} @ {ev['home_team']}"
             data = get_json(
                 f"{BASE_URL}/sports/{sport}/events/{ev['id']}/odds",
-                {"apiKey": API_KEY, "markets": markets, "bookmakers": KS_BOOKS, "oddsFormat": "american"},
+                {"apiKey": API_KEY, "markets": markets, "bookmakers": KS_BOOKS, "oddsFormat": "american",
+                 "includeLinks": "true"},
             )
             if not data:
                 continue
@@ -1003,6 +1020,7 @@ def run():
                     "Study Books": ", ".join(c["study_used"]),
                     "Scanner Version": SCANNER_VERSION,
                     "Study Close Fair %": "", "Study CLV %": "",
+                    "_link": c.get("link") or "",
                     "_fair": " | ".join(x for x in (
                         f"FD {prob_to_american(c['fd_p'])}" if c["fd_p"] is not None else "",
                         f"Cons {prob_to_american(c['cons_p'])} ({len(c['used'])} bks)" if c["cons_p"] is not None else "",
