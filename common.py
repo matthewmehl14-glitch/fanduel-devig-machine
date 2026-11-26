@@ -38,6 +38,7 @@ FIELDNAMES = [
     "L10 Hits", "L10 Avg",
     # Novig exchange close (sharpest benchmark) + which scanner setup logged the row
     "Novig Close Fair %", "Novig CLV %", "Scanner Version",
+    "Bet Link",   # the link the Odds API returned for this play (betslip, market or game page)
 ]
 GRADED = {"WIN", "LOSS", "PUSH", "VOID"}
 
