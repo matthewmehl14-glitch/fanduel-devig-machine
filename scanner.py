@@ -15,6 +15,7 @@ import os
 import re
 import time
 from collections import defaultdict
+from urllib.parse import quote
 from datetime import datetime, timedelta, timezone
 
 import requests
@@ -765,6 +766,23 @@ BET_STATE = "ks"   # fills the {state} placeholder some books use in their links
 BET_WAGER = 35     # fills the {wager} placeholder (Novig puts the stake in its bet-slip link)
 
 
+MGM_ONELINK = "https://playmgmsports.onelink.me/TkMx"   # BetMGM's app-opening link service
+
+
+def _mgm_app_link(url):
+    """Wrap a BetMGM bet-slip link in BetMGM's app link so the phone opens the app with the bet loaded
+    (same format Pikkit uses, minus Pikkit's referral tags). Falls back to the plain link."""
+    m = re.search(r"[?&]options=([^&]+)", url)
+    if not m:
+        return url
+    opts = quote(m.group(1).replace("%3A", ":"), safe="-")          # 6:44017-... -> 6%3A44017-...
+    web = f"https://sports.betmgm.com/en/sports?options={opts}"
+    app = f"playmgmsportswrp://navigation?scheme=https&url=sports.betmgm.com/en/sports?options={opts}"
+    q = lambda x: quote(x, safe="")
+    return (f"{MGM_ONELINK}?af_force_deeplink=true&af_dp={q(app)}&af_android_url={q(web)}"
+            f"&af_ios_url={q(web)}&af_web_dp={q(web)}&options={opts}")
+
+
 def _bet_link(r):
     """' • [Bet @ DraftKings](url)' when the Odds API returned a link for this play, else ''."""
     url = ((r.get("_link") or r.get("Bet Link") or "").strip()
@@ -772,6 +790,12 @@ def _bet_link(r):
     url = re.sub(r"/?\{[^}]*\}", "", url)   # drop any other unfilled placeholder rather than send a broken link
     if not url.startswith("http"):
         return ""
+    if r.get("Bookmaker") == "BetMGM":
+        url = _mgm_app_link(url)
+    elif r.get("Bookmaker") == "Novig":
+        m = re.search(r"novig\.com/events/([0-9a-f-]+)", url)
+        if m:   # go straight to the bet slip (where novig.com/events/... redirects) with the stake filled in
+            url = f"https://novig.com/?orderslip_outcomes={m.group(1)}&partner_id=oddsapi&amount={BET_WAGER}"
     return f" • [Bet @ {r['Bookmaker']}]({url.replace(' ', '%20').replace(')', '%29')})"
 
 
