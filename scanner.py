@@ -77,7 +77,7 @@ MIN_UNITS = 0.10
 
 # Credit control. Each game costs ~1 credit per prop market with odds posted,
 # so only games starting soon are scanned. Hourly scans see every game ~3 times.
-LOOKAHEAD_HOURS = 5          # only scan games starting within the next 5 hours
+LOOKAHEAD_HOURS = 12          # only scan games starting within the next 5 hours
 STEAM_DISCORD = False        # steam moves are still tracked (Last Seen Odds, line_history.csv) but not posted
 STEAM_MIN_PP = 1.0           # steam alert when your book's price gets this many win-% points more expensive (−110 → −115 ≈ 1.1)
 CLOSE_MIN_LEAD_MINUTES = 2   # closing-line snapshots stop 2 minutes before start
