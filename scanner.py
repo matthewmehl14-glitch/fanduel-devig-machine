@@ -286,6 +286,10 @@ def build_lines(event_data, now_utc):
                 link = o.get("link") or market.get("link") or book.get("link")
                 if link:
                     quote.setdefault("links", {})[side] = link
+                sids = "|".join(f"{lvl}={x.get('sid')}" for lvl, x in (("event", book), ("market", market), ("sel", o))
+                                if x.get("sid"))
+                if sids:
+                    quote.setdefault("sids", {})[side] = sids
     return lines
 
 
@@ -348,6 +352,7 @@ def find_edges(lines):
                 out.append({
                     "study_p": st[0] if st else None, "study_used": st[1] if st else [],
                     "link": (q.get("links") or {}).get(side),
+                    "sids": (q.get("sids") or {}).get(side) or "",
                     "m_key": m_key, "player": player, "raw": q["raw"], "pt": pt,
                     "side": side, "book": q["title"], "price": price, "dec": dec,
                     "p": p, "edge": edge, "used": used, "method": method,
@@ -973,7 +978,7 @@ def run():
             data = get_json(
                 f"{BASE_URL}/sports/{sport}/events/{ev['id']}/odds",
                 {"apiKey": API_KEY, "markets": markets, "bookmakers": KS_BOOKS, "oddsFormat": "american",
-                 "includeLinks": "true"},
+                 "includeLinks": "true", "includeSids": "true"},
             )
             if not data:
                 continue
@@ -1022,6 +1027,7 @@ def run():
                     "Study Close Fair %": "", "Study CLV %": "",
                     "_link": c.get("link") or "",
                     "Bet Link": c.get("link") or "",
+                    "Bet Sids": c.get("sids") or "",
                     "_fair": " | ".join(x for x in (
                         f"FD {prob_to_american(c['fd_p'])}" if c["fd_p"] is not None else "",
                         f"Cons {prob_to_american(c['cons_p'])} ({len(c['used'])} bks)" if c["cons_p"] is not None else "",
