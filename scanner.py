@@ -20,7 +20,7 @@ import requests
 
 from common import (
     CT, UNIT_SIZE, american_to_decimal, american_to_prob, fmt_american,
-    load_rows, match_name, STUDY_AGREE_EDGE, meets_gemini, meets_pj, meets_merica, CAL_MIN_EDGE, calibrated_prob_edge, fit_calibration, meets_lucky, meets_wtf, meets_calienta, meets_candidate, meets_chaching, meets_dogs, meets_rule, meets_hope, meets_rule3, meets_rule5, meets_unders, normalize_name, parse_american, parse_iso,
+    load_rows, match_name, STUDY_AGREE_EDGE, meets_gemini, meets_pj, meets_merica, meets_retail, CAL_MIN_EDGE, calibrated_prob_edge, fit_calibration, meets_lucky, meets_wtf, meets_calienta, meets_candidate, meets_chaching, meets_dogs, meets_rule, meets_hope, meets_rule3, meets_rule5, meets_unders, normalize_name, parse_american, parse_iso,
     play_key, prob_to_american, safe_float, save_rows,
 )
 
@@ -34,11 +34,17 @@ BASE_URL = "https://api.the-odds-api.com/v4"
 BOOK_WEIGHTS = {
     "novig": 3.0,
     "fanduel": 2.5,
+    "pinnacle": 3.0,        # reference only (added Nov 26; may not post props through the Odds API)
     "draftkings": 1.0,
     "betmgm": 0.75,
-    "caesars": 0.75,
-    "espnbet": 0.75,
+    "williamhill_us": 0.75, # Caesars. The Odds API key is "williamhill_us": "caesars" never returned prices
+    "espnbet": 0.75,        # theScore Bet: reference only (account limited)
+    "fanatics": 0.5,        # reference only (account limited)
 }
+# Books a play can be logged at. Reference-only books still shape the fair price, but a play is
+# never logged at them; when one has the best price, the next-best bettable book gets the play.
+BETTABLE_BOOKS = {"novig", "fanduel", "draftkings", "betmgm", "williamhill_us"}
+SCANNER_VERSION = "2026-11-26"   # Caesars fixed, Pinnacle/Fanatics added, theScore/Fanatics reference-only
 ANCHOR_BOOKS = {"novig", "fanduel"}
 
 # Shadow "study" weights from the published player-prop study. Only books we already pull are
@@ -48,7 +54,7 @@ STUDY_WEIGHTS = {
     "novig": 7.0,
     "draftkings": 1.4,
     "fanduel": 1.0,
-    "caesars": 0.5,
+    "williamhill_us": 0.5,
     "betmgm": 0.0,      # "everything else off"
     "espnbet": 0.0,     # theScore Bet
 }
@@ -74,6 +80,7 @@ MIN_UNITS = 0.10
 LOOKAHEAD_HOURS = 5          # only scan games starting within the next 5 hours
 STEAM_DISCORD = False        # steam moves are still tracked (Last Seen Odds, line_history.csv) but not posted
 STEAM_MIN_PP = 1.0           # steam alert when your book's price gets this many win-% points more expensive (−110 → −115 ≈ 1.1)
+CLOSE_MIN_LEAD_MINUTES = 2   # closing-line snapshots stop 2 minutes before start
 QUOTA_RESERVE = 200      # stop fetching odds if remaining credits drop below this
 
 SPORTS_CONFIG = {
@@ -294,7 +301,7 @@ def find_edges(lines):
         cons_allowed = anchors_ok(quotes)
         skip = SKIP_SIDES.get(format_market_name(m_key), set())
         for bkey, q in quotes.items():
-            if not q["fresh"]:
+            if not q["fresh"] or bkey not in BETTABLE_BOOKS:
                 continue
             for side in ("Over", "Under"):
                 if side in skip:
@@ -344,7 +351,7 @@ def find_edges(lines):
     return out
 
 
-STEAM_RULES = [("🚒", meets_calienta), ("🍀", meets_lucky), ("🏀", meets_pj), ("🇺🇸", meets_merica)]
+STEAM_RULES = [("🍀", meets_lucky), ("⚡", meets_retail), ("🚒", meets_calienta), ("🏀", meets_pj), ("🇺🇸", meets_merica)]
 STEAM_ALERTS = []   # filled during the scan, posted to Discord at the end
 
 
@@ -406,8 +413,8 @@ def _steam_line(row, lines, m_key, side):
 # ------------------------------------------------------------------ line history
 HISTORY_FILE = "line_history.csv"
 HISTORY_BOOKS = list(BOOK_WEIGHTS)          # every book the scanner pulls
-HISTORY_BOOK_NAMES = {"novig": "Novig", "fanduel": "FanDuel", "draftkings": "DraftKings", "betmgm": "BetMGM",
-                      "caesars": "Caesars", "espnbet": "theScore"}
+HISTORY_BOOK_NAMES = {"novig": "Novig", "fanduel": "FanDuel", "pinnacle": "Pinnacle", "draftkings": "DraftKings",
+                      "betmgm": "BetMGM", "williamhill_us": "Caesars", "espnbet": "theScore", "fanatics": "Fanatics"}
 HISTORY_FIELDS = (["Scan Time", "Mins To Start", "Status", "Rules", "Logged At", "Event ID", "Game", "Sport",
                    "Player", "Market", "Side", "Line", "Book", "Logged Odds", "Logged Edge %",
                    "Book Now", "Cons Fair %", "FD Fair %", "Edge Now %", "Seen Line"]
@@ -446,6 +453,16 @@ def save_history():
     if not HISTORY:
         return
     new = not os.path.isfile(HISTORY_FILE) or os.path.getsize(HISTORY_FILE) == 0
+    if not new:
+        with open(HISTORY_FILE, newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            if reader.fieldnames != HISTORY_FIELDS:      # new book columns: rewrite once with the new header
+                old = list(reader)
+                with open(HISTORY_FILE + ".tmp", "w", newline="", encoding="utf-8") as g:
+                    w = csv.DictWriter(g, fieldnames=HISTORY_FIELDS, extrasaction="ignore")
+                    w.writeheader()
+                    w.writerows(old)
+                os.replace(HISTORY_FILE + ".tmp", HISTORY_FILE)
     with open(HISTORY_FILE, "a", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=HISTORY_FIELDS, extrasaction="ignore")
         if new:
@@ -460,7 +477,11 @@ def update_closing_lines(pending_rows, lines):
     Records both the consensus close and FanDuel's devigged close, so the two
     methods can be judged against the SAME yardstick."""
     updated = 0
+    now = datetime.now(timezone.utc)
     for row in pending_rows:
+        start = parse_iso(row.get("Commence Time"))
+        if start is not None and (start - now) < timedelta(minutes=CLOSE_MIN_LEAD_MINUTES):
+            continue   # never take a "close" within 2 minutes of (or after) tip-off
         m_key = DISPLAY_TO_KEY.get(row["Market"])
         line = safe_float(row["Line"])
         if not m_key or line is None:
@@ -490,6 +511,12 @@ def update_closing_lines(pending_rows, lines):
             row["Close FD Fair %"] = f"{fd_p * 100:.1f}"
             row["CLV FD %"] = f"{(fd_p * bet_dec - 1) * 100:.2f}"
             got = True
+
+        nq = quotes.get("novig")
+        if nq and nq["fresh"] and "Over" in nq and "Under" in nq and row["Bookmaker"] != "Novig":
+            nv_p = devigged(nq, side)                       # Novig exchange close, the sharpest benchmark
+            row["Novig Close Fair %"] = f"{nv_p * 100:.1f}"
+            row["Novig CLV %"] = f"{(nv_p * bet_dec - 1) * 100:.2f}"
 
         st = study_fair(quotes, side, exclude=bet_bkey)   # shadow close under study weights
         if st is not None:
@@ -742,44 +769,37 @@ def _study_bit(r):
 
 
 def send_discord_digest(new_rows, run_ts):
-    """Clean digest: 🍀 Lucky plays first with full detail, then other card-rule plays on one line
-    each, then everything else on one plain line each. Messages are packed by size, never trimmed."""
+    """Bet-list digest: 🍀 Lucky plays, then ⚡ Retail plays, each with full detail. Every other logged
+    play is summarized in one line (still logged and graded, just not recommended)."""
     if not DISCORD_WEBHOOK_URL or not new_rows:
         return
     focus = sorted([r for r in new_rows if meets_lucky(r)], key=lambda r: -float(r["Edge %"]))
-    other_rules = [("🚒", meets_calienta), ("🏀", meets_pj), ("🇺🇸", meets_merica)]
-    ruled = sorted([r for r in new_rows if not meets_lucky(r) and any(f(r) for _, f in other_rules)],
-                   key=lambda r: (not meets_calienta(r), not meets_pj(r), -float(r["Edge %"])))
-    rest = sorted([r for r in new_rows if not meets_lucky(r) and not any(f(r) for _, f in other_rules)],
-                  key=lambda r: -float(r["Edge %"]))
-    counts = {e: sum(f(r) for r in new_rows) for e, f in other_rules}
+    retail = sorted([r for r in new_rows if not meets_lucky(r) and meets_retail(r)], key=lambda r: -float(r["Edge %"]))
+    rest = [r for r in new_rows if not meets_lucky(r) and not meets_retail(r)]
+    tag_rules = [("⚡", meets_retail), ("🚒", meets_calienta), ("🏀", meets_pj), ("🇺🇸", meets_merica)]
+    n_focus, n_retail = len(focus), len(retail)
 
-    n_focus = len(focus)
-
-    entries = []   # (text, is_play)
-    if focus:
-        entries.append((f"**🍀 LUCKY — {n_focus} play{'s' if n_focus != 1 else ''} to focus on**", False))
-        for r in focus:
-            also = "".join(e for e, f in other_rules if f(r))
-            entries.append((
-                f"🍀 **{r['Player']}** {_short_side(r)}\n"
+    def detail(r, emoji):
+        also = "".join(e for e, f in tag_rules if e != emoji and f(r))
+        return (f"{emoji} **{r['Player']}** {_short_side(r)}\n"
                 f"**{_odds_pct(r['Odds'])} @ {r['Bookmaker']}** • **{r['Kelly Units']}u (${r['Bet Amount']})** • "
                 f"edge {float(r['Edge %']):.2f}% • {_method_word(r)}\n"
                 + (f"{_l10_bit(r, True)}\n" if r.get("L10 Hits") else "") +
-                f"{r['Game']} • 🕒 {fmt_start(r['Commence Time'])}" + (f" • also {also}" if also else ""), True))
+                f"{r['Game']} • 🕒 {fmt_start(r['Commence Time'])}" + (f" • also {also}" if also else ""))
+
+    entries = []   # (text, is_play)
+    if focus:
+        entries.append((f"**🍀 LUCKY — {n_focus} play{'s' if n_focus != 1 else ''}**", False))
+        entries += [(detail(r, "🍀"), True) for r in focus]
     else:
         entries.append(("**🍀 No Lucky plays this scan**", False))
-    if ruled:
-        entries.append(("**Other rule plays**", False))
-        for r in ruled:
-            tags = "".join(e for e, f in other_rules if f(r))
-            entries.append((f"{tags} {r['Player']} {_short_side(r)} • {_odds_pct(r['Odds'])} @ {r['Bookmaker']} • "
-                            f"{r['Kelly Units']}u • {float(r['Edge %']):.2f}%{_l10_bit(r)} • 🕒 {fmt_start(r['Commence Time'])}", True))
+    if retail:
+        entries.append((f"**⚡ RETAIL — {n_retail} play{'s' if n_retail != 1 else ''}**", False))
+        entries += [(detail(r, "⚡"), True) for r in retail]
     if rest:
-        entries.append((f"**Everything else ({len(rest)})**", False))
-        for r in rest:
-            entries.append((f"· {r['Player']} {_short_side(r)} • {_odds_pct(r['Odds'])} @ {r['Bookmaker']} • "
-                            f"{float(r['Edge %']):.2f}%", True))
+        tags = " • ".join(f"{e} {sum(f(r) for r in rest)}" for e, f in tag_rules[1:] if any(f(r) for r in rest))
+        entries.append((f"· {len(rest)} other play{'s' if len(rest) != 1 else ''} logged, not on the bet list"
+                        + (f" ({tags})" if tags else ""), False))
 
     def u16(text):
         return len(text.encode("utf-16-le")) // 2
@@ -787,7 +807,7 @@ def send_discord_digest(new_rows, run_ts):
     header = f"**{credit_summary()}**\n\n"
     pages, cur, size = [], [], u16(header)
     for text, is_play in entries:
-        sep = "\n\n" if (is_play and text.startswith("🍀")) or not is_play else "\n"
+        sep = "\n\n"
         add = u16(text) + len(sep)
         if cur and size + add > DIGEST_BUDGET:
             pages.append(cur)
@@ -798,8 +818,7 @@ def send_discord_digest(new_rows, run_ts):
         pages.append(cur)
 
     total = len(new_rows)
-    title_base = (f"🍀 {n_focus} Lucky • 🚒 {counts['🚒']} • 🏀 {counts['🏀']} • 🇺🇸 {counts['🇺🇸']} "
-                  f"/ {total} logged")
+    title_base = f"🍀 {n_focus} Lucky • ⚡ {n_retail} Retail / {total} logged"
     first = 1
     for i, page in enumerate(pages):
         body = ""
@@ -811,8 +830,8 @@ def send_discord_digest(new_rows, run_ts):
         embed = {
             "title": title_base + part,
             "description": (header if i == 0 else "") + body,
-            "color": 0x2ECC71 if n_focus else 0x808080,   # clover green when there are Lucky plays
-            "footer": {"text": (f"Plays {first}–{last} of {total} • " if n_plays else "") + f"Scanned {run_ts} CT"},
+            "color": 0x2ECC71 if n_focus else (0xF1C40F if n_retail else 0x808080),   # green Lucky, yellow Retail
+            "footer": {"text": (f"Plays {first}–{last} of {n_focus + n_retail} bet-list plays • " if n_plays else "") + f"Scanned {run_ts} CT"},
         }
         first = last + 1 if n_plays else first
         try:
@@ -982,6 +1001,7 @@ def run():
                     "Study Fair %": f"{c['study_p'] * 100:.1f}" if c["study_p"] is not None else "",
                     "Study Edge %": f"{(c['study_p'] * c['dec'] - 1) * 100:.2f}" if c["study_p"] is not None else "",
                     "Study Books": ", ".join(c["study_used"]),
+                    "Scanner Version": SCANNER_VERSION,
                     "Study Close Fair %": "", "Study CLV %": "",
                     "_fair": " | ".join(x for x in (
                         f"FD {prob_to_american(c['fd_p'])}" if c["fd_p"] is not None else "",
