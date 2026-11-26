@@ -36,6 +36,8 @@ FIELDNAMES = [
     "Last Seen Odds",   # steam tracker: price (or "line:X") at your book the last time it was checked
     # recent form for rule plays: games on your side of the line in the player's last 10 games ("6/10")
     "L10 Hits", "L10 Avg",
+    # Novig exchange close (sharpest benchmark) + which scanner setup logged the row
+    "Novig Close Fair %", "Novig CLV %", "Scanner Version",
 ]
 GRADED = {"WIN", "LOSS", "PUSH", "VOID"}
 
@@ -491,6 +493,37 @@ def meets_merica(row):
     if sport == "basketball_nba":
         return (side == "Under" and market == "Threes") or (side == "Over" and market == "Points")
     return False
+
+
+# ---------------------------------------------------------------- ⚡ Retail
+# Plays at retail books you can bet, with the guardrails from the "v2" review (Nov 25):
+#   book: DraftKings, BetMGM, Caesars or FanDuel (not Novig; theScore/Fanatics are never logged)
+#   odds -150 to +130 • consensus edge >= 1.5% (so no FD-solo) • logged edge <= 8%
+#   Overs must still show >= 3.5% edge after a 1.5-point haircut on the win chance
+RETAIL_BOOKS = {"DraftKings", "BetMGM", "Caesars", "FanDuel"}
+RETAIL_START = "2026-11-26"        # live tracking starts
+RETAIL_BACKTEST_FROM = "2026-10-15"
+
+
+def meets_retail(row):
+    if not (row.get("Event ID") or "").strip() or not (row.get("Method") or "").strip():
+        return False
+    if (row.get("Bookmaker") or "").strip() not in RETAIL_BOOKS:
+        return False
+    try:
+        odds = parse_american(row.get("Odds"))
+        edge = float(row.get("Edge %") or "")
+        cons = float(row.get("Cons Edge %") or "")
+    except (TypeError, ValueError):
+        return False
+    dec = american_to_decimal(odds)
+    if not (100 / 60 - 0.0001 <= dec <= 2.30) or cons < 1.5 or edge > 8.0:
+        return False
+    if (row.get("Side") or "").strip() == "Over":
+        p = safe_float(row.get("True Prob %"))
+        if p is None or ((p - 1.5) / 100 * dec - 1) * 100 < 3.5:
+            return False
+    return True
 
 
 # ---------------------------------------------------------------- calibration
