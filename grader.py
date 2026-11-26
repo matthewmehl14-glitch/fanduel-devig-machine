@@ -32,6 +32,7 @@ from common import (
     GEM_BACKTEST_FROM, GEM_START, meets_gemini,
     PJ_BACKTEST_FROM, PJ_START, meets_pj,
     MERICA_BACKTEST_FROM, MERICA_START, meets_merica,
+    RETAIL_BACKTEST_FROM, RETAIL_START, meets_retail,
     CAL_MIN_EDGE, CAL_TRACK_START, fit_calibration, passes_calibration, CT,
     R5_BACKTEST_FROM, R5_BOOK, R5_MAX_ODDS, R5_MIN_ODDS, R5_START, meets_rule5,
     R3_BACKTEST_FROM, R3_MAX_EDGE, R3_MAX_ODDS, R3_MIN_EDGE, R3_MIN_ODDS, R3_START, meets_rule3, UNIT_SIZE, american_to_decimal, load_rows, match_name,
@@ -471,6 +472,7 @@ def _bucket(rows):
 CLV_RULES = [
     ("Calienta", meets_calienta, CAL_START),
     ("Lucky Charm", meets_lucky, LUCKY_START),
+    ("Retail", meets_retail, RETAIL_START),
     ("PJ", meets_pj, PJ_START),
     ("'Merica", meets_merica, MERICA_START),
     ("Hope", meets_hope, HOPE_START),
@@ -947,11 +949,19 @@ def build_report(batch, all_rows):
         if v:
             out += (f"\n📏 Beat the close since {start[5:]}: {sum(x > 0 for x in v) / len(v) * 100:.0f}% "
                     f"of {len(v)} • avg CLV {sum(v) / len(v):+.2f}")
+        nv = [x for x in (safe_float(r.get("Novig CLV %")) for r in live_rows) if x is not None]
+        if nv:
+            out += f"\n🟢 vs Novig close: beat {sum(x > 0 for x in nv) / len(nv) * 100:.0f}% of {len(nv)} • avg {sum(nv) / len(nv):+.2f}"
         return out
 
     compact.append({"name": "🍀 Lucky Charm  ⬅ main focus",
                     "value": "Sharp consensus • fd floor 2% • Over haircut • NBA/NHL/NFL windows (NHL ≤5h)\n"
                              + _rule_section(meets_lucky, lc_all, lc_live, LUCKY_START, LUCKY_BACKTEST_FROM)})
+    rt_all = [r for r in graded if meets_retail(r) and (r["Timestamp"] or "")[:10] >= RETAIL_BACKTEST_FROM]
+    rt_live = [r for r in rt_all if r["Timestamp"][:10] >= RETAIL_START]
+    compact.append({"name": "⚡ Retail",
+                    "value": "DK / BetMGM / Caesars / FanDuel • −150 to +130 • edge ≤8% • consensus agrees • Over haircut\n"
+                             + _rule_section(meets_retail, rt_all, rt_live, RETAIL_START, RETAIL_BACKTEST_FROM)})
     compact.append({"name": "🚒 Calienta",
                     "value": "NHL SOG Unders, edge ≥4%, BOTH or FD • NBA Points Unders, BOTH\n"
                              + _rule_section(meets_calienta, cal_all, cal_live, CAL_START, CAL_BACKTEST_FROM)})
